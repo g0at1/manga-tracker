@@ -19,42 +19,90 @@ struct ContentView: View {
         }
     }
 
+    private var mangaCount: Int {
+        mangas.count
+    }
+
+    private var totalPaid: Double {
+        mangas
+            .flatMap { $0.volumes }
+            .filter { $0.owned }
+            .compactMap { $0.price }
+            .reduce(0, +)
+    }
+
+    private var ownedVolumesCount: Int {
+        mangas
+            .flatMap { $0.volumes }
+            .filter { $0.owned }
+            .count
+    }
+
     var body: some View {
         NavigationSplitView {
-            List(selection: $selectedManga) {
-                ForEach(filteredMangas) { manga in
-                    HStack(spacing: 10) {
-                        CachedAsyncImage(
-                            url: URL(string: manga.coverURL ?? ""),
-                            cornerRadius: 6
-                        )
-                        .frame(width: 40, height: 56)
+            VStack(spacing: 0) {
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(manga.title).font(.headline)
-                            if !manga.note.isEmpty {
-                                Text(manga.note).font(.caption).foregroundStyle(
-                                    .secondary
-                                )
+                HStack(spacing: 12) {
+                    Text("Mangi: \(mangaCount)")
+
+                    Text("•")
+
+                    Text("Tomy: \(ownedVolumesCount)")
+
+                    Text("•")
+
+                    Text("Wydano:")
+                    Text(
+                        totalPaid,
+                        format: .currency(
+                            code: Locale.current.currency?.identifier ?? "PLN"
+                        )
+                    )
+                    .monospacedDigit()
+
+                    Spacer()
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                Divider()
+
+                List(selection: $selectedManga) {
+                    ForEach(filteredMangas) { manga in
+                        HStack(spacing: 10) {
+                            CachedAsyncImage(
+                                url: URL(string: manga.coverURL ?? ""),
+                                cornerRadius: 6
+                            )
+                            .frame(width: 40, height: 56)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(manga.title).font(.headline)
+                                if !manga.note.isEmpty {
+                                    Text(manga.note)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
-                    }
-                    .tag(manga).contextMenu {
-                        Button("Usuń") { deleteManga(manga) }
-                    }
-                }
-            }
-            .navigationTitle("Mangi")
-            .searchable(text: $searchText, prompt: "Szukaj tytułu…")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        addManga()
-                    } label: {
-                        Label("Dodaj", systemImage: "plus")
+                        .tag(manga)
+                        .contextMenu {
+                            Button("Usuń") { deleteManga(manga) }
+                        }
                     }
                 }
-            }
+            }.navigationTitle("Mangi")
+                .searchable(text: $searchText, prompt: "Szukaj tytułu…")
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            addManga()
+                        } label: {
+                            Label("Dodaj", systemImage: "plus")
+                        }
+                    }
+                }
         } detail: {
             if let selectedManga {
                 MangaDetailView(manga: selectedManga)
