@@ -9,6 +9,9 @@ struct MangaDetailView: View {
     @State private var bulkFrom = ""
     @State private var bulkTo = ""
     @State private var showOnlyMissing = false
+    @FocusState private var titleFocused: Bool
+    
+    private var defaultTitle = "Nowa manga"
 
     var sortedVolumes: [Volume] {
         manga.volumes.sorted { $0.number < $1.number }
@@ -19,11 +22,21 @@ struct MangaDetailView: View {
         return sortedVolumes.filter { !$0.owned }
     }
 
+    init(manga: Manga) {
+        self.manga = manga
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 TextField("Tytuł", text: $manga.title)
                     .font(.title2)
+                    .focused($titleFocused)
+                    .onChange(of: titleFocused) { _, focused in
+                        if focused && manga.title == defaultTitle {
+                            manga.title = ""
+                        }
+                    }
                 Spacer()
             }
 
