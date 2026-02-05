@@ -9,9 +9,24 @@ struct MangaDetailView: View {
     @State private var bulkFrom = ""
     @State private var bulkTo = ""
     @State private var showOnlyMissing = false
+    @State private var showBulkConfirm = false
+    @State private var pendingBulkAction: BulkAction?
     @FocusState private var titleFocused: Bool
 
+    private enum BulkAction {
+        case markOwnedUpTo(Volume)
+        case markReadUpTo(Volume)
+    }
+
     private var defaultTitle = "Nowa manga"
+
+    private var pendingVolumeNumber: Int? {
+        switch pendingBulkAction {
+        case .markOwnedUpTo(let v): return v.number
+        case .markReadUpTo(let v): return v.number
+        case nil: return nil
+        }
+    }
 
     var sortedVolumes: [Volume] {
         manga.volumes.sorted { $0.number < $1.number }
@@ -114,14 +129,27 @@ struct MangaDetailView: View {
                 .width(80)
 
                 TableColumn("Kupiony") { v in
-                    Toggle("", isOn: Bindable(v).owned)
-                        .labelsHidden()
-                        .onChange(of: v.owned) { _, newValue in
-                            if newValue && v.purchaseDate == nil {
-                                v.purchaseDate = .now
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { v.owned },
+                            set: { newValue in
+                                if newValue && !v.owned {
+                                    pendingBulkAction = .markOwnedUpTo(v)
+                                    showBulkConfirm = true
+                                    return
+                                }
+
+                                v.owned = newValue
+                                if newValue && v.purchaseDate == nil {
+                                    v.purchaseDate = .now
+                                }
+                                if !newValue { v.purchaseDate = nil }
                             }
-                            if !newValue { v.purchaseDate = nil }
-                        }
+                        )
+                    )
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .width(90)
 
@@ -130,10 +158,21 @@ struct MangaDetailView: View {
                         "",
                         isOn: Binding(
                             get: { v.read ?? false },
-                            set: { v.read = $0 }
+                            set: { newValue in
+                                let current = v.read ?? false
+
+                                if newValue && !current {
+                                    pendingBulkAction = .markReadUpTo(v)
+                                    showBulkConfirm = true
+                                    return
+                                }
+
+                                v.read = newValue
+                            }
                         )
                     )
                     .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .width(90)
 
@@ -176,6 +215,23 @@ struct MangaDetailView: View {
         }
         .padding()
         .navigationTitle(manga.title.isEmpty ? "Szczegóły" : manga.title)
+        .confirmationDialog(
+            "Zastosować także do poprzednich tomów?",
+            isPresented: $showBulkConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Tak — oznacz wszystkie do tego tomu") {
+                applyPendingAction(markPrevious: true)
+            }
+            Button("Nie — tylko ten tom") {
+                applyPendingAction(markPrevious: false)
+            }
+            Button("Anuluj", role: .cancel) {
+                pendingBulkAction = nil
+            }
+        } message: {
+            Text("Możesz oznaczyć tylko ten tom albo wszystkie wcześniejsze.")
+        }
     }
 
     private func addSingleVolume() {
@@ -211,5 +267,38 @@ struct MangaDetailView: View {
     private func deleteVolume(_ v: Volume) {
         manga.volumes.removeAll { $0.persistentModelID == v.persistentModelID }
         modelContext.delete(v)
+    }
+
+    private func applyPendingAction(markPrevious: Bool) {
+        guard let action = pendingBulkAction else { return }
+        defer { pendingBulkAction = nil }
+
+        switch action {
+        case .markOwnedUpTo(let target):
+            let maxNumber = target.number
+            for vol in manga.volumes {
+                if markPrevious {
+                    if vol.number <= maxNumber {
+                        vol.owned = true
+                        if vol.purchaseDate == nil { vol.purchaseDate = .now }
+                    }
+                } else if vol.persistentModelID == target.persistentModelID {
+                    vol.owned = true
+                    if vol.purchaseDate == nil { vol.purchaseDate = .now }
+                }
+            }
+
+        case .markReadUpTo(let target):
+            let maxNumber = target.number
+            for vol in manga.volumes {
+                if markPrevious {
+                    if vol.number <= maxNumber {
+                        vol.read = true
+                    }
+                } else if vol.persistentModelID == target.persistentModelID {
+                    vol.read = true
+                }
+            }
+        }
     }
 }
