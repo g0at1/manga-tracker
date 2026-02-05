@@ -10,7 +10,7 @@ struct MangaDetailView: View {
     @State private var bulkTo = ""
     @State private var showOnlyMissing = false
     @FocusState private var titleFocused: Bool
-    
+
     private var defaultTitle = "Nowa manga"
 
     var sortedVolumes: [Volume] {
@@ -122,6 +122,18 @@ struct MangaDetailView: View {
                             }
                             if !newValue { v.purchaseDate = nil }
                         }
+                }
+                .width(90)
+
+                TableColumn("Przeczytany") { v in
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { v.read ?? false },
+                            set: { v.read = $0 }
+                        )
+                    )
+                    .labelsHidden()
                 }
                 .width(90)
 
