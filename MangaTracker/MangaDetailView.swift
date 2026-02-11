@@ -135,15 +135,20 @@ struct MangaDetailView: View {
                             get: { v.owned },
                             set: { newValue in
                                 if newValue && !v.owned {
-                                    pendingBulkAction = .markOwnedUpTo(v)
-                                    showBulkConfirm = true
-                                    return
+                                    if shouldAskMarkPreviousOwned(upTo: v) {
+                                        pendingBulkAction = .markOwnedUpTo(v)
+                                        showBulkConfirm = true
+                                        return
+                                    } else {
+                                        v.owned = true
+                                        if v.purchaseDate == nil {
+                                            v.purchaseDate = .now
+                                        }
+                                        return
+                                    }
                                 }
 
                                 v.owned = newValue
-                                if newValue && v.purchaseDate == nil {
-                                    v.purchaseDate = .now
-                                }
                                 if !newValue { v.purchaseDate = nil }
                             }
                         )
@@ -162,9 +167,14 @@ struct MangaDetailView: View {
                                 let current = v.read ?? false
 
                                 if newValue && !current {
-                                    pendingBulkAction = .markReadUpTo(v)
-                                    showBulkConfirm = true
-                                    return
+                                    if shouldAskMarkPreviousRead(upTo: v) {
+                                        pendingBulkAction = .markReadUpTo(v)
+                                        showBulkConfirm = true
+                                        return
+                                    } else {
+                                        v.read = true
+                                        return
+                                    }
                                 }
 
                                 v.read = newValue
@@ -299,6 +309,16 @@ struct MangaDetailView: View {
                     vol.read = true
                 }
             }
+        }
+    }
+
+    private func shouldAskMarkPreviousOwned(upTo target: Volume) -> Bool {
+        manga.volumes.contains { $0.number < target.number && !$0.owned }
+    }
+
+    private func shouldAskMarkPreviousRead(upTo target: Volume) -> Bool {
+        manga.volumes.contains {
+            $0.number < target.number && !($0.read ?? false)
         }
     }
 }
