@@ -38,6 +38,22 @@ struct ContentView: View {
             .count
     }
 
+    private var totalReadPercent: Double {
+        let ownedVolumes =
+            mangas
+            .flatMap { $0.volumes }
+            .filter { $0.owned }
+
+        guard !ownedVolumes.isEmpty else { return 0 }
+
+        let readCount =
+            ownedVolumes
+            .filter { $0.read == true }
+            .count
+
+        return (Double(readCount) / Double(ownedVolumes.count)) * 100
+    }
+
     var body: some View {
         NavigationSplitView {
             VStack(spacing: 0) {
@@ -59,6 +75,11 @@ struct ContentView: View {
                         )
                     )
                     .monospacedDigit()
+
+                    Text("•")
+
+                    Text("Przeczytano:")
+                    Text("\(totalReadPercent, specifier: "%.1f")%")
 
                     Spacer()
                 }

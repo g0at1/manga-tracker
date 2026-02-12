@@ -318,7 +318,9 @@ struct MangaDetailView: View {
 
     private func shouldAskMarkPreviousRead(upTo target: Volume) -> Bool {
         manga.volumes.contains {
-            $0.number < target.number && !($0.read ?? false)
+            $0.number < target.number
+                && $0.owned
+                && !($0.read ?? false)
         }
     }
 }
