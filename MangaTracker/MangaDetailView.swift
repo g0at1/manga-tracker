@@ -9,13 +9,29 @@ struct MangaDetailView: View {
     @State private var bulkFrom = ""
     @State private var bulkTo = ""
     @State private var showOnlyMissing = false
+    @State private var showOnlyNonRead = false
     @State private var showBulkConfirm = false
     @State private var pendingBulkAction: BulkAction?
+    @State private var editingDateTarget: EditingDateTarget?
     @FocusState private var titleFocused: Bool
 
     private enum BulkAction {
         case markOwnedUpTo(Volume)
         case markReadUpTo(Volume)
+    }
+
+    private enum EditingDateTarget: Identifiable {
+        case purchase(Volume)
+        case read(Volume)
+
+        var id: String {
+            switch self {
+            case .purchase(let volume):
+                return "purchase-\(volume.persistentModelID)"
+            case .read(let volume):
+                return "read-\(volume.persistentModelID)"
+            }
+        }
     }
 
     private var defaultTitle = "Nowa manga"
@@ -33,8 +49,13 @@ struct MangaDetailView: View {
     }
 
     var displayedVolumes: [Volume] {
-        if !showOnlyMissing { return sortedVolumes }
-        return sortedVolumes.filter { !$0.owned }
+        if showOnlyMissing {
+            return sortedVolumes.filter { !$0.owned }
+        } else if showOnlyNonRead {
+            return sortedVolumes.filter { !($0.read ?? false) }
+        }
+
+        return sortedVolumes
     }
 
     init(manga: Manga) {
@@ -63,13 +84,6 @@ struct MangaDetailView: View {
                     .frame(width: 140, height: 200)
                     .shadow(radius: 2)
                 VStack(alignment: .leading, spacing: 10) {
-                    TextField("Tytuł", text: $manga.title)
-                        .font(.title2)
-                        .textFieldStyle(.roundedBorder)
-
-                    TextField("Notatka (opcjonalnie)", text: $manga.note)
-                        .textFieldStyle(.roundedBorder)
-
                     TextField(
                         "URL okładki",
                         text: Binding(
@@ -89,7 +103,12 @@ struct MangaDetailView: View {
             }
 
             HStack(alignment: .center, spacing: 12) {
-                Toggle("Pokaż tylko brakujące", isOn: $showOnlyMissing)
+                Toggle("Pokaż tylko brakujące", isOn: $showOnlyMissing).tint(
+                    .green
+                )
+                Toggle("Pokaż nieprzeczytane", isOn: $showOnlyNonRead).tint(
+                    .green
+                )
 
                 Spacer()
 
@@ -134,26 +153,29 @@ struct MangaDetailView: View {
                         isOn: Binding(
                             get: { v.owned },
                             set: { newValue in
-                                if newValue && !v.owned {
-                                    if shouldAskMarkPreviousOwned(upTo: v) {
-                                        pendingBulkAction = .markOwnedUpTo(v)
-                                        showBulkConfirm = true
-                                        return
-                                    } else {
-                                        v.owned = true
-                                        if v.purchaseDate == nil {
-                                            v.purchaseDate = .now
-                                        }
-                                        return
-                                    }
+                                if newValue == false {
+                                    v.owned = false
+                                    v.purchaseDate = nil
+                                    return
                                 }
 
-                                v.owned = newValue
-                                if !newValue { v.purchaseDate = nil }
+                                if v.owned == false
+                                    && shouldAskMarkPreviousOwned(upTo: v)
+                                {
+                                    pendingBulkAction = .markOwnedUpTo(v)
+                                    showBulkConfirm = true
+                                    return
+                                }
+
+                                v.owned = true
+                                if v.purchaseDate == nil {
+                                    v.purchaseDate = .now
+                                }
                             }
                         )
                     )
                     .labelsHidden()
+                    .tint(.green)
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .width(90)
@@ -164,36 +186,71 @@ struct MangaDetailView: View {
                         isOn: Binding(
                             get: { v.read ?? false },
                             set: { newValue in
-                                let current = v.read ?? false
-
-                                if newValue && !current {
-                                    if shouldAskMarkPreviousRead(upTo: v) {
-                                        pendingBulkAction = .markReadUpTo(v)
-                                        showBulkConfirm = true
-                                        return
-                                    } else {
-                                        v.read = true
-                                        return
-                                    }
+                                if newValue == false {
+                                    v.read = false
+                                    v.readDate = nil
+                                    return
                                 }
 
-                                v.read = newValue
+                                let current = v.read ?? false
+                                if current == false
+                                    && shouldAskMarkPreviousRead(upTo: v)
+                                {
+                                    pendingBulkAction = .markReadUpTo(v)
+                                    showBulkConfirm = true
+                                    return
+                                }
+
+                                v.read = true
+                                if v.readDate == nil {
+                                    v.readDate = .now
+                                }
                             }
                         )
                     )
                     .labelsHidden()
+                    .tint(.green)
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .width(90)
 
-                TableColumn("Data") { v in
-                    if let d = v.purchaseDate {
-                        Text(d, format: .dateTime.year().month().day())
-                    } else {
-                        Text("—").foregroundStyle(.secondary)
+                TableColumn("Data zakupu") { v in
+                    HStack(spacing: 6) {
+                        if let d = v.purchaseDate {
+                            Text(d, format: .dateTime.day().month().year())
+                        } else {
+                            Text("—")
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Button {
+                            editingDateTarget = .purchase(v)
+                        } label: {
+                            Image(systemName: "calendar")
+                        }
+                        .buttonStyle(.borderless)
                     }
                 }
-                .width(120)
+                .width(140)
+
+                TableColumn("Data przeczytania") { v in
+                    HStack(spacing: 6) {
+                        if let d = v.readDate {
+                            Text(d, format: .dateTime.day().month().year())
+                        } else {
+                            Text("—")
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Button {
+                            editingDateTarget = .read(v)
+                        } label: {
+                            Image(systemName: "calendar")
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                .width(140)
 
                 TableColumn("Cena") { v in
                     HStack {
@@ -204,7 +261,9 @@ struct MangaDetailView: View {
                         )
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 90)
-                        Text("PLN").foregroundStyle(.secondary)
+                        Text("PLN").foregroundStyle(.secondary).fontWeight(
+                            .bold
+                        )
                     }
                 }
                 .width(140)
@@ -213,7 +272,7 @@ struct MangaDetailView: View {
                     Button(role: .destructive) {
                         deleteVolume(v)
                     } label: {
-                        Image(systemName: "trash")
+                        Image(systemName: "trash").foregroundColor(.red)
                     }
                     .buttonStyle(.borderless)
                 }
@@ -241,6 +300,77 @@ struct MangaDetailView: View {
             }
         } message: {
             Text("Możesz oznaczyć tylko ten tom albo wszystkie wcześniejsze.")
+        }
+        .sheet(item: $editingDateTarget) { target in
+            VStack(alignment: .leading, spacing: 16) {
+                switch target {
+                case .purchase(let volume):
+                    Text("Wybierz datę zakupu")
+                        .font(.headline)
+
+                    DatePicker(
+                        "Data zakupu",
+                        selection: Binding(
+                            get: { volume.purchaseDate ?? .now },
+                            set: { volume.purchaseDate = $0 }
+                        ),
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.graphical)
+
+                    HStack {
+                        Button("Anuluj", role: .cancel) {
+                            editingDateTarget = nil
+                        }
+
+                        Button("Usuń datę", role: .destructive) {
+                            volume.purchaseDate = nil
+                            editingDateTarget = nil
+                        }
+
+                        Spacer()
+
+                        Button("Gotowe") {
+                            editingDateTarget = nil
+                        }
+                        .keyboardShortcut(.defaultAction)
+                    }
+
+                case .read(let volume):
+                    Text("Wybierz datę przeczytania")
+                        .font(.headline)
+
+                    DatePicker(
+                        "Data przeczytania",
+                        selection: Binding(
+                            get: { volume.readDate ?? .now },
+                            set: { volume.readDate = $0 }
+                        ),
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.graphical)
+
+                    HStack {
+                        Button("Anuluj", role: .cancel) {
+                            editingDateTarget = nil
+                        }
+
+                        Button("Usuń datę", role: .destructive) {
+                            volume.readDate = nil
+                            editingDateTarget = nil
+                        }
+
+                        Spacer()
+
+                        Button("Gotowe") {
+                            editingDateTarget = nil
+                        }
+                        .keyboardShortcut(.defaultAction)
+                    }
+                }
+            }
+            .padding()
+            .frame(minWidth: 320, minHeight: 320)
         }
     }
 
@@ -313,14 +443,26 @@ struct MangaDetailView: View {
     }
 
     private func shouldAskMarkPreviousOwned(upTo target: Volume) -> Bool {
-        manga.volumes.contains { $0.number < target.number && !$0.owned }
+        guard
+            let previous = manga.volumes.first(where: {
+                $0.number == target.number - 1
+            })
+        else {
+            return false
+        }
+
+        return !previous.owned
     }
 
     private func shouldAskMarkPreviousRead(upTo target: Volume) -> Bool {
-        manga.volumes.contains {
-            $0.number < target.number
-                && $0.owned
-                && !($0.read ?? false)
+        guard
+            let previous = manga.volumes.first(where: {
+                $0.number == target.number - 1
+            })
+        else {
+            return false
         }
+
+        return previous.owned && !(previous.read ?? false)
     }
 }

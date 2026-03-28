@@ -54,12 +54,27 @@ struct ContentView: View {
         return (Double(readCount) / Double(ownedVolumes.count)) * 100
     }
 
+    private func readPercent(for manga: Manga) -> Double {
+        let total = manga.volumes.count
+        guard total > 0 else { return 0 }
+
+        let readCount = manga.volumes.filter { $0.read == true }.count
+        return (Double(readCount) / Double(total)) * 100
+    }
+
+    private func totalPaidForManga(for manga: Manga) -> Double {
+        manga.volumes
+            .filter { $0.owned }
+            .compactMap { $0.price }
+            .reduce(0, +)
+    }
+
     var body: some View {
         NavigationSplitView {
             VStack(spacing: 0) {
 
                 HStack(spacing: 12) {
-                    Text("Mangi: \(mangaCount)")
+                    Text("Serie: \(mangaCount)")
 
                     Text("•")
 
@@ -99,12 +114,52 @@ struct ContentView: View {
                             .frame(width: 40, height: 56)
 
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(manga.title).font(.headline)
+                                HStack {
+                                    Text(manga.title)
+                                        .font(.headline)
+
+                                    Spacer()
+
+                                    let percent = readPercent(for: manga)
+                                    let allVolumes = manga.volumes.count
+                                    let read = manga.volumes.filter {
+                                        $0.read == true
+                                    }.count
+
+                                    if percent >= 100 {
+                                        Image(
+                                            systemName: "checkmark.circle.fill"
+                                        )
+                                        .foregroundStyle(.green)
+                                    } else {
+                                        Text("\(read)/\(allVolumes)")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+
                                 if !manga.note.isEmpty {
                                     Text(manga.note)
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
+                                        .lineLimit(1)
                                 }
+
+                                ProgressView(
+                                    value: readPercent(for: manga),
+                                    total: 100
+                                )
+                                .tint(.green)
+                                .scaleEffect(y: 0.6)
+
+                                Text(
+                                    totalPaidForManga(for: manga),
+                                    format: .currency(code: "PLN")
+                                )
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+
+                                Spacer()
                             }
                         }
                         .tag(manga)
