@@ -179,6 +179,16 @@ struct ContentView: View {
                         }
                     }
                 }
+                .onAppear {
+                    if selectedManga == nil {
+                        selectedManga = filteredMangas.first
+                    }
+                }
+                .onChange(of: mangas) { _, newValue in
+                    if selectedManga == nil {
+                        selectedManga = newValue.first
+                    }
+                }
         } detail: {
             if let selectedManga {
                 MangaDetailView(manga: selectedManga)
