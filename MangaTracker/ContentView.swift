@@ -192,6 +192,7 @@ struct ContentView: View {
         } detail: {
             if let selectedManga {
                 MangaDetailView(manga: selectedManga)
+                    .id(selectedManga.persistentModelID)
             } else {
                 ContentUnavailableView(
                     "Wybierz mangę",

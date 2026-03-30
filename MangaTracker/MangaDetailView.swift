@@ -12,6 +12,7 @@ struct MangaDetailView: View {
     @State private var showBulkConfirm = false
     @State private var pendingBulkAction: BulkAction?
     @State private var editingDateTarget: EditingDateTarget?
+    @State private var volumeValidationMessage: String?
     @FocusState private var titleFocused: Bool
 
     private let defaultTitle = "Nowa manga"
@@ -273,6 +274,14 @@ extension MangaDetailView {
                         HStack(spacing: 10) {
                             TextField("Nr tomu", text: $newVolumeNumber)
                                 .premiumInput(width: 130)
+                                .onChange(of: newVolumeNumber) { _, _ in
+                                    volumeValidationMessage = nil
+                                }
+                            if let volumeValidationMessage {
+                                Text(volumeValidationMessage)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.red)
+                            }
 
                             Button {
                                 addSingleVolume()
@@ -665,10 +674,16 @@ extension MangaDetailView {
 // MARK: - Actions
 extension MangaDetailView {
     fileprivate func addSingleVolume() {
+        volumeValidationMessage = nil
+
         guard let n = Int(newVolumeNumber.trimmingCharacters(in: .whitespaces)),
             n > 0
         else { return }
-        guard !manga.volumes.contains(where: { $0.number == n }) else { return }
+
+        guard !manga.volumes.contains(where: { $0.number == n }) else {
+            volumeValidationMessage = "Tom \(n) już istnieje."
+            return
+        }
 
         let volume = Volume(number: n, owned: false, manga: manga)
         manga.volumes.append(volume)
