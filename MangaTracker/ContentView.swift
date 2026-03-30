@@ -9,6 +9,7 @@ struct ContentView: View {
 
     @State private var selectedManga: Manga?
     @State private var searchText = ""
+    @State private var showDashboard = false
 
     var filteredMangas: [Manga] {
         if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -171,7 +172,14 @@ struct ContentView: View {
             }.navigationTitle("Mangi")
                 .searchable(text: $searchText, prompt: "Szukaj tytułu…")
                 .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
+                    ToolbarItemGroup(placement: .primaryAction) {
+                        Button {
+                            showDashboard = true
+                        } label: {
+                            Label("Dashboard", systemImage: "chart.xyaxis.line")
+                        }
+                        .help("Otworz dashboard")
+
                         Button {
                             addManga()
                         } label: {
@@ -200,6 +208,9 @@ struct ContentView: View {
                     description: Text("Albo dodaj nową po lewej.")
                 )
             }
+        }
+        .sheet(isPresented: $showDashboard) {
+            DashboardView(mangas: mangas)
         }
         .frame(minWidth: 900, minHeight: 600)
     }
