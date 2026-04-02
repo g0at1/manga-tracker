@@ -739,16 +739,34 @@ extension MangaDetailView {
             }
 
         case .markReadUpTo(let target):
-            let maxNumber = target.number
-            for volume in manga.volumes {
-                if markPrevious {
-                    if volume.number <= maxNumber {
+            let targetNumber = target.number
+
+            if markPrevious {
+                let lastPreviouslyReadNumber =
+                    manga.volumes
+                    .filter { $0.number < targetNumber && ($0.read ?? false) }
+                    .map(\.number)
+                    .max() ?? 0
+
+                for volume in manga.volumes {
+                    guard volume.number > lastPreviouslyReadNumber,
+                        volume.number <= targetNumber
+                    else { continue }
+
+                    if !(volume.read ?? false) {
                         volume.read = true
-                        if volume.readDate == nil { volume.readDate = .now }
                     }
-                } else if volume.persistentModelID == target.persistentModelID {
-                    volume.read = true
-                    if volume.readDate == nil { volume.readDate = .now }
+
+                    if volume.readDate == nil {
+                        volume.readDate = .now
+                    }
+                }
+            } else {
+                if !(target.read ?? false) {
+                    target.read = true
+                }
+                if target.readDate == nil {
+                    target.readDate = .now
                 }
             }
         }
