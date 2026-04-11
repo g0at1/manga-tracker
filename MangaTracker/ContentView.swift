@@ -4,7 +4,7 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: \Manga.createdAt, order: .reverse)
+    @Query(sort: \Manga.sortOrder, order: .forward)
     private var mangas: [Manga]
 
     @State private var selectedManga: Manga?
@@ -165,9 +165,15 @@ struct ContentView: View {
                         }
                         .tag(manga)
                         .contextMenu {
-                            Button("Usuń") { deleteManga(manga) }
+                            Button("Przesuń wyżej") { moveMangaUp(manga) }
+                            Button("Przesuń niżej") { moveMangaDown(manga) }
+                            Divider()
+                            Button("Usuń", role: .destructive) {
+                                deleteManga(manga)
+                            }
                         }
                     }
+                    .onMove(perform: moveMangas)
                 }
             }.navigationTitle("Mangi")
                 .searchable(text: $searchText, prompt: "Szukaj tytułu…")
@@ -216,7 +222,8 @@ struct ContentView: View {
     }
 
     private func addManga() {
-        let m = Manga(title: "Nowa manga")
+        let nextOrder = (mangas.compactMap(\.sortOrder).max() ?? -1) + 1
+        let m = Manga(title: "Nowa manga", sortOrder: nextOrder)
         modelContext.insert(m)
         selectedManga = m
     }
@@ -226,5 +233,58 @@ struct ContentView: View {
             selectedManga = nil
         }
         modelContext.delete(manga)
+    }
+
+    private func moveMangas(from source: IndexSet, to destination: Int) {
+        var reordered = mangas
+
+        reordered.move(fromOffsets: source, toOffset: destination)
+
+        for (index, manga) in reordered.enumerated() {
+            manga.sortOrder = index
+        }
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error while saving sort order: \(error)")
+        }
+    }
+
+    private func moveMangaUp(_ manga: Manga) {
+        guard
+            let index = mangas.firstIndex(where: {
+                $0.persistentModelID == manga.persistentModelID
+            }),
+            index > 0
+        else { return }
+
+        swapSortOrder(at: index, and: index - 1)
+    }
+
+    private func moveMangaDown(_ manga: Manga) {
+        guard
+            let index = mangas.firstIndex(where: {
+                $0.persistentModelID == manga.persistentModelID
+            }),
+            index < mangas.count - 1
+        else { return }
+
+        swapSortOrder(at: index, and: index + 1)
+    }
+
+    private func swapSortOrder(at firstIndex: Int, and secondIndex: Int) {
+        let first = mangas[firstIndex]
+        let second = mangas[secondIndex]
+
+        let temp = first.sortOrder
+        first.sortOrder = second.sortOrder
+        second.sortOrder = temp
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error while changing sort order: \(error)")
+        }
     }
 }
