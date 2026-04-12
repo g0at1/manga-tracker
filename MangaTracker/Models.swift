@@ -8,6 +8,7 @@ final class Manga {
     var createdAt: Date
     var coverURL: String?
     var sortOrder: Int?
+    var rating: Double?
 
     @Relationship(deleteRule: .cascade, inverse: \Volume.manga)
     var volumes: [Volume]
@@ -18,7 +19,8 @@ final class Manga {
         createdAt: Date = .now,
         volumes: [Volume] = [],
         coverUrl: String? = "",
-        sortOrder: Int? = 0
+        sortOrder: Int? = 0,
+        rating: Double? = 0
     ) {
         self.title = title
         self.note = note
@@ -26,6 +28,7 @@ final class Manga {
         self.volumes = volumes
         self.coverURL = coverUrl
         self.sortOrder = sortOrder
+        self.rating = rating
     }
 }
 

@@ -164,6 +164,33 @@ extension MangaDetailView {
                             systemImage: "book.closed"
                         )
                     }
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 12) {
+                            Text("Ocena")
+                                .font(.subheadline.weight(.semibold))
+
+                            StarRatingView(
+                                rating: Binding(
+                                    get: { manga.rating ?? 0 },
+                                    set: { manga.rating = $0 }
+                                ),
+                                maxRating: 5,
+                                starSize: 22,
+                                spacing: 6
+                            )
+
+                            Text(
+                                manga.rating == 0
+                                    ? "Brak"
+                                    : String(
+                                        format: "%.1f / 5",
+                                        manga.rating ?? 0
+                                    )
+                            )
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.secondary)
+                        }
+                    }
 
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -545,6 +572,119 @@ extension MangaDetailView {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(.white.opacity(0.06), lineWidth: 1)
         )
+    }
+}
+
+private struct StarRatingView: View {
+    @Binding var rating: Double
+
+    let maxRating: Int
+    let starSize: CGFloat
+    let spacing: CGFloat
+
+    @State private var hoverRating: Double?
+
+    init(
+        rating: Binding<Double>,
+        maxRating: Int = 5,
+        starSize: CGFloat = 24,
+        spacing: CGFloat = 8
+    ) {
+        self._rating = rating
+        self.maxRating = maxRating
+        self.starSize = starSize
+        self.spacing = spacing
+    }
+
+    private var displayedRating: Double {
+        hoverRating ?? rating
+    }
+
+    private var totalWidth: CGFloat {
+        CGFloat(maxRating) * starSize + CGFloat(maxRating - 1) * spacing
+    }
+
+    var body: some View {
+        HStack(spacing: spacing) {
+            ForEach(1...maxRating, id: \.self) { index in
+                Image(
+                    systemName: imageName(for: index, rating: displayedRating)
+                )
+                .resizable()
+                .scaledToFit()
+                .frame(width: starSize, height: starSize)
+                .foregroundStyle(.yellow)
+            }
+        }
+        .frame(width: totalWidth, height: starSize, alignment: .leading)
+        .contentShape(Rectangle())
+        .onContinuousHover { phase in
+            switch phase {
+            case .active(let location):
+                hoverRating = ratingValue(at: location.x)
+            case .ended:
+                hoverRating = nil
+            }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    hoverRating = ratingValue(at: value.location.x)
+                }
+                .onEnded { value in
+                    rating = ratingValue(at: value.location.x)
+                    hoverRating = nil
+                }
+        )
+    }
+
+    private func ratingValue(at x: CGFloat) -> Double {
+        let clampedX = min(max(0, x), totalWidth)
+
+        for index in 1...maxRating {
+            let starStart = CGFloat(index - 1) * (starSize + spacing)
+            let starEnd = starStart + starSize
+
+            let hitStart: CGFloat
+            let hitEnd: CGFloat
+
+            if index == 1 {
+                hitStart = 0
+            } else {
+                let previousStarEnd = starStart - spacing
+                hitStart = previousStarEnd + spacing / 2
+            }
+
+            if index == maxRating {
+                hitEnd = totalWidth
+            } else {
+                hitEnd = starEnd + spacing / 2
+            }
+
+            guard clampedX >= hitStart && clampedX <= hitEnd else { continue }
+
+            let localX = min(max(0, clampedX - starStart), starSize)
+
+            if localX < starSize / 2 {
+                return Double(index) - 0.5
+            } else {
+                return Double(index)
+            }
+        }
+
+        return 0
+    }
+
+    private func imageName(for index: Int, rating: Double) -> String {
+        let value = Double(index)
+
+        if rating >= value {
+            return "star.fill"
+        } else if rating == value - 0.5 {
+            return "star.leadinghalf.filled"
+        } else {
+            return "star"
+        }
     }
 }
 
