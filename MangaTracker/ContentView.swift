@@ -24,6 +24,46 @@ struct ContentView: View {
         mangas.count
     }
 
+    private var currentReadStreak: Int {
+        let calendar = Calendar.current
+
+        let readDays = Array(
+            Set(
+                mangas
+                    .flatMap { $0.volumes }
+                    .compactMap { $0.readDate }
+                    .map { calendar.startOfDay(for: $0) }
+            )
+        )
+        .sorted(by: >)
+
+        guard let firstDay = readDays.first else { return 0 }
+
+        var streak = 1
+        var expectedDay = firstDay
+
+        for day in readDays.dropFirst() {
+            guard
+                let previousDay = calendar.date(
+                    byAdding: .day,
+                    value: -1,
+                    to: expectedDay
+                )
+            else {
+                break
+            }
+
+            if calendar.isDate(day, inSameDayAs: previousDay) {
+                streak += 1
+                expectedDay = previousDay
+            } else if day < previousDay {
+                break
+            }
+        }
+
+        return streak
+    }
+
     private var totalPaid: Double {
         mangas
             .flatMap { $0.volumes }
@@ -175,6 +215,28 @@ struct ContentView: View {
                     }
                     .onMove(perform: moveMangas)
                 }
+                Divider()
+                HStack(spacing: 8) {
+                    Image(
+                        systemName: currentReadStreak > 0
+                            ? "flame.fill" : "flame"
+                    )
+                    .foregroundStyle(
+                        currentReadStreak > 0 ? .orange : .secondary
+                    )
+
+                    Text("Streak:")
+                        .foregroundStyle(.secondary)
+
+                    Text("\(currentReadStreak) dni")
+                        .fontWeight(.semibold)
+
+                    Spacer()
+                }
+                .font(.subheadline)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial)
             }.navigationTitle("Mangi")
                 .searchable(text: $searchText, prompt: "Szukaj tytułu…")
                 .toolbar {
