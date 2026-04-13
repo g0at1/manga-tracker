@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: List schemes
+        run: xcodebuild -list -project MangaTracker.xcodeproj
+
+      - name: Build app
+        run: |
+          xcodebuild \
+            -project MangaTracker.xcodeproj \
+            -scheme MangaTracker \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            clean build
