@@ -12,6 +12,7 @@ struct MangaGridView: View {
     let onMoveMangaUp: (Manga) -> Void
     let onMoveMangaDown: (Manga) -> Void
     let onMoveMangaInGrid: (Manga, Manga) -> Void
+    let onMarkNextAsRead: (Manga) -> Void
 
     var body: some View {
         ScrollView {
@@ -44,6 +45,8 @@ struct MangaGridView: View {
                         )
                     )
                     .contextMenu {
+                        Button("Oznacz kolejny tom jako przeczytany") { onMarkNextAsRead(manga) }
+                        Divider()
                         Button("Przesuń wyżej") { onMoveMangaUp(manga) }
                         Button("Przesuń niżej") { onMoveMangaDown(manga) }
                         Divider()

@@ -8,6 +8,7 @@ struct MangaListView: View {
     let onMoveMangaUp: (Manga) -> Void
     let onMoveMangaDown: (Manga) -> Void
     let onMoveMangas: (IndexSet, Int) -> Void
+    let onMarkNextAsRead: (Manga) -> Void
 
     var body: some View {
         List(selection: $selectedManga) {
@@ -15,6 +16,8 @@ struct MangaListView: View {
                 MangaListRowView(manga: manga)
                     .tag(manga)
                     .contextMenu {
+                        Button("Oznacz kolejny tom jako przeczytany") { onMarkNextAsRead(manga) }
+                        Divider()
                         Button("Przesuń wyżej") { onMoveMangaUp(manga) }
                         Button("Przesuń niżej") { onMoveMangaDown(manga) }
                         Divider()
