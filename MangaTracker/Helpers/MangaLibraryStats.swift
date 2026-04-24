@@ -45,6 +45,12 @@ struct MangaLibraryStats {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
 
+        guard
+            let yesterday = calendar.date(byAdding: .day, value: -1, to: today)
+        else {
+            return 0
+        }
+
         let readDays = Array(
             Set(
                 mangas
@@ -56,7 +62,12 @@ struct MangaLibraryStats {
 
         guard let firstDay = readDays.first else { return 0 }
 
-        guard calendar.isDate(firstDay, inSameDayAs: today) else { return 0 }
+        guard
+            calendar.isDate(firstDay, inSameDayAs: today)
+                || calendar.isDate(firstDay, inSameDayAs: yesterday)
+        else {
+            return 0
+        }
 
         var streak = 1
         var expectedDay = firstDay
