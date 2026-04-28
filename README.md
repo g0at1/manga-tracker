@@ -32,5 +32,5 @@ A lightweight macOS app built with **SwiftUI** and **SwiftData** to track your m
 ### Installation
 
 ```bash
-git clone https://github.com/your-username/MangaTracker.git
+git clone https://github.com/g0at1/manga-tracker.git
 cd MangaTracker
