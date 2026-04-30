@@ -13,6 +13,8 @@ struct MangaDetailView: View {
     @State private var pendingBulkAction: BulkAction?
     @State private var editingDateTarget: EditingDateTarget?
     @State private var volumeValidationMessage: String?
+    @State private var isFetchingCover = false
+    @State private var coverFetchMessage: String?
     @FocusState private var titleFocused: Bool
 
     private let defaultTitle = "Nowa manga"
@@ -211,9 +213,38 @@ extension MangaDetailView {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("URL okładki")
+                        HStack {
+                            Text("URL okładki")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+
+                            Spacer()
+
+                            Button {
+                                Task {
+                                    await fetchCoverFromAniList()
+                                }
+                            } label: {
+                                if isFetchingCover {
+                                    ProgressView()
+                                        .scaleEffect(0.7)
+                                } else {
+                                    Label(
+                                        "Pobierz z AniList",
+                                        systemImage: "sparkles"
+                                    )
+                                }
+                            }
+                            .buttonStyle(.plain)
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.green)
+                            .disabled(
+                                isFetchingCover
+                                    || manga.title.trimmingCharacters(
+                                        in: .whitespacesAndNewlines
+                                    ).isEmpty
+                            )
+                        }
 
                         TextField(
                             "https://...",
@@ -240,11 +271,17 @@ extension MangaDetailView {
                             .stroke(.white.opacity(0.08), lineWidth: 1)
                         )
 
-                        Text(
-                            "Wklej link do obrazka jpg, png albo webp. Miniatura zostanie zcache’owana lokalnie."
-                        )
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        if let coverFetchMessage {
+                            Text(coverFetchMessage)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text(
+                                "Wklej link do obrazka jpg, png albo webp. Miniatura zostanie zcache’owana lokalnie."
+                            )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -813,6 +850,34 @@ extension MangaDetailView {
 
 // MARK: - Actions
 extension MangaDetailView {
+    fileprivate func fetchCoverFromAniList() async {
+        let title = manga.title.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !title.isEmpty else {
+            coverFetchMessage = "Najpierw wpisz tytuł mangi."
+            return
+        }
+
+        isFetchingCover = true
+        coverFetchMessage = nil
+
+        do {
+            if let url = try await AniListService.fetchMangaCoverURL(
+                title: title
+            ) {
+                manga.coverURL = url
+                coverFetchMessage = "Okładka pobrana z AniList."
+            } else {
+                coverFetchMessage = "Nie znaleziono okładki dla: \(title)"
+            }
+        } catch {
+            coverFetchMessage = "Nie udało się pobrać okładki."
+            print("AniList error:", error)
+        }
+
+        isFetchingCover = false
+    }
+
     fileprivate func addSingleVolume() {
         volumeValidationMessage = nil
 
