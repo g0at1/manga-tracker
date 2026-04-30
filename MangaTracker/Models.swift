@@ -9,6 +9,13 @@ final class Manga {
     var coverURL: String?
     var sortOrder: Int?
     var rating: Double?
+    var aniListId: Int?
+    var aniListStatus: String?
+    var aniListAverageScore: Int?
+    var aniListStartDate: Date?
+    var aniListEndDate: Date?
+    var aniListGenresRaw: String?
+    var aniListAuthor: String?
 
     @Relationship(deleteRule: .cascade, inverse: \Volume.manga)
     var volumes: [Volume]
@@ -20,7 +27,14 @@ final class Manga {
         volumes: [Volume] = [],
         coverUrl: String? = "",
         sortOrder: Int? = 0,
-        rating: Double? = 0
+        rating: Double? = 0,
+        aniListId: Int? = nil,
+        aniListStatus: String? = nil,
+        aniListAverageScore: Int? = nil,
+        aniListStartDate: Date? = nil,
+        aniListEndDate: Date? = nil,
+        aniListGenresRaw: String? = nil,
+        aniListAuthor: String? = nil
     ) {
         self.title = title
         self.note = note
@@ -29,6 +43,13 @@ final class Manga {
         self.coverURL = coverUrl
         self.sortOrder = sortOrder
         self.rating = rating
+        self.aniListId = aniListId
+        self.aniListStatus = aniListStatus
+        self.aniListAverageScore = aniListAverageScore
+        self.aniListStartDate = aniListStartDate
+        self.aniListEndDate = aniListEndDate
+        self.aniListGenresRaw = aniListGenresRaw
+        self.aniListAuthor = aniListAuthor
     }
 }
 

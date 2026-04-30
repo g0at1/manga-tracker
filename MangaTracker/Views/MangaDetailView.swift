@@ -15,6 +15,8 @@ struct MangaDetailView: View {
     @State private var volumeValidationMessage: String?
     @State private var isFetchingCover = false
     @State private var coverFetchMessage: String?
+    @State private var isRefreshingAniList = false
+    @State private var aniListMessage: String?
     @FocusState private var titleFocused: Bool
 
     private let defaultTitle = "Nowa manga"
@@ -77,6 +79,12 @@ struct MangaDetailView: View {
         manga.volumes.count
     }
 
+    private var aniListGenres: [String] {
+        manga.aniListGenresRaw?
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } ?? []
+    }
+
     private var completionValue: Double {
         guard totalCount > 0 else { return 0 }
         return Double(readCount) / Double(totalCount)
@@ -122,6 +130,59 @@ struct MangaDetailView: View {
 
 // MARK: - Sections
 extension MangaDetailView {
+    fileprivate var aniListInfoSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                if let status = manga.aniListStatus {
+                    MetadataPill(
+                        icon: "dot.radiowaves.left.and.right",
+                        text: formatAniListStatus(status),
+                        tint: .green
+                    )
+                }
+
+                if let score = manga.aniListAverageScore {
+                    MetadataPill(
+                        icon: "star.fill",
+                        text: "\(score)% AniList",
+                        tint: .yellow
+                    )
+                }
+
+                if manga.aniListStartDate != nil || manga.aniListEndDate != nil
+                {
+                    MetadataPill(
+                        icon: "calendar",
+                        text:
+                            "\(formattedAniListDate(manga.aniListStartDate)) – \(formattedAniListDate(manga.aniListEndDate))",
+                        tint: .secondary
+                    )
+                }
+            }
+
+            if !aniListGenres.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(aniListGenres, id: \.self) { genre in
+                            Text(genre)
+                                .font(.caption.weight(.medium))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(.white.opacity(0.06), in: Capsule())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+
+            if let aniListMessage {
+                Text(aniListMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     fileprivate var heroSection: some View {
         PremiumCard {
             HStack(alignment: .top, spacing: 22) {
@@ -129,16 +190,44 @@ extension MangaDetailView {
 
                 VStack(alignment: .leading, spacing: 18) {
                     VStack(alignment: .leading, spacing: 10) {
-                        TextField("Tytuł", text: $manga.title)
-                            .font(.system(size: 30, weight: .bold))
-                            .textFieldStyle(.plain)
-                            .focused($titleFocused)
-                            .onChange(of: titleFocused) { _, focused in
-                                if focused && manga.title == defaultTitle {
-                                    manga.title = ""
+                        HStack(alignment: .center) {
+                            TextField("Tytuł", text: $manga.title)
+                                .font(.system(size: 30, weight: .bold))
+                                .textFieldStyle(.plain)
+                                .focused($titleFocused)
+                                .onChange(of: titleFocused) { _, focused in
+                                    if focused && manga.title == defaultTitle {
+                                        manga.title = ""
+                                    }
+                                }
+
+                            Spacer()
+
+                            Button {
+                                Task {
+                                    await refreshAniListInfo()
+                                }
+                            } label: {
+                                if isRefreshingAniList {
+                                    ProgressView()
+                                        .scaleEffect(0.75)
+                                } else {
+                                    Label(
+                                        "Odśwież z AniList",
+                                        systemImage: "arrow.clockwise"
+                                    )
                                 }
                             }
-
+                            .buttonStyle(.plain)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.green)
+                            .disabled(
+                                isRefreshingAniList
+                                    || manga.title.trimmingCharacters(
+                                        in: .whitespacesAndNewlines
+                                    ).isEmpty
+                            )
+                        }
                         TextField(
                             "Notatka (opcjonalnie)",
                             text: $manga.note,
@@ -147,6 +236,17 @@ extension MangaDetailView {
                         .textFieldStyle(.plain)
                         .foregroundStyle(.secondary)
                         .lineLimit(2...4)
+                        TextField(
+                            "Autor",
+                            text: Binding(
+                                get: { manga.aniListAuthor ?? "" },
+                                set: {
+                                    manga.aniListAuthor = $0.isEmpty ? nil : $0
+                                }
+                            )
+                        )
+                        .font(.system(size: 30, weight: .bold))
+                        .textFieldStyle(.plain)
                     }
 
                     HStack(spacing: 12) {
@@ -165,6 +265,7 @@ extension MangaDetailView {
                             value: "\(readCount)",
                             systemImage: "book.closed"
                         )
+                        aniListInfoSection
                     }
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 12) {
@@ -850,6 +951,58 @@ extension MangaDetailView {
 
 // MARK: - Actions
 extension MangaDetailView {
+    fileprivate func formattedAniListDate(_ date: Date?) -> String {
+        guard let date else { return "Brak" }
+
+        return date.formatted(
+            .dateTime
+                .day()
+                .month()
+                .year()
+        )
+    }
+
+    fileprivate func refreshAniListInfo() async {
+        let title = manga.title.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !title.isEmpty else {
+            aniListMessage = "Najpierw wpisz tytuł mangi."
+            return
+        }
+
+        isRefreshingAniList = true
+        aniListMessage = nil
+
+        do {
+            guard
+                let info = try await AniListService.fetchMangaInfo(title: title)
+            else {
+                aniListMessage = "Nie znaleziono danych w AniList dla: \(title)"
+                isRefreshingAniList = false
+                return
+            }
+
+            manga.aniListId = info.id
+            manga.aniListStatus = info.status
+            manga.aniListGenresRaw = info.genres.joined(separator: ", ")
+            manga.aniListAverageScore = info.averageScore
+            manga.aniListStartDate = info.startDate
+            manga.aniListEndDate = info.endDate
+            manga.aniListAuthor = info.author
+
+            if manga.coverURL == nil || manga.coverURL?.isEmpty == true {
+                manga.coverURL = info.coverURL
+            }
+
+            aniListMessage = "Dane z AniList odświeżone."
+        } catch {
+            aniListMessage = "Nie udało się odświeżyć danych z AniList."
+            print("AniList refresh error:", error)
+        }
+
+        isRefreshingAniList = false
+    }
+
     fileprivate func fetchCoverFromAniList() async {
         let title = manga.title.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -998,6 +1151,23 @@ extension MangaDetailView {
         }
         return previous.owned && !(previous.read ?? false)
     }
+
+    fileprivate func formatAniListStatus(_ status: String) -> String {
+        switch status {
+        case "FINISHED":
+            return "Zakończona"
+        case "RELEASING":
+            return "Wydawana"
+        case "NOT_YET_RELEASED":
+            return "Jeszcze niewydana"
+        case "CANCELLED":
+            return "Anulowana"
+        case "HIATUS":
+            return "Wstrzymana"
+        default:
+            return status
+        }
+    }
 }
 
 // MARK: - Reusable Views
@@ -1068,5 +1238,30 @@ extension View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(.white.opacity(0.08), lineWidth: 1)
             )
+    }
+}
+
+private struct MetadataPill: View {
+    let icon: String
+    let text: String
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(tint)
+
+            Text(text)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary.opacity(0.9))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.white.opacity(0.055), in: Capsule())
+        .overlay(
+            Capsule()
+                .stroke(.white.opacity(0.07), lineWidth: 1)
+        )
     }
 }
