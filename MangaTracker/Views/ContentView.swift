@@ -102,24 +102,27 @@ struct ContentView: View {
             }
             .frame(minWidth: 900, minHeight: 600)
 
-            if let toast = toastService.currentToast {
-                VStack {
-                    HStack {
-                        Spacer()
-
+            if !toastService.toasts.isEmpty {
+                VStack(alignment: .trailing, spacing: 10) {
+                    ForEach(toastService.toasts) { toast in
                         ToastView(message: toast)
-                            .padding(.top, 20)
-                            .padding(.trailing, 20)
+                            .transition(
+                                .move(edge: .top).combined(with: .opacity)
+                            )
                     }
-
-                    Spacer()
                 }
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .padding(.top, 20)
+                .padding(.trailing, 20)
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity,
+                    alignment: .topTrailing
+                )
             }
         }
         .animation(
             .spring(response: 0.35, dampingFraction: 0.85),
-            value: toastService.currentToast
+            value: toastService.toasts
         )
     }
 }

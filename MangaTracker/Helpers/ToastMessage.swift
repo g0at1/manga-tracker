@@ -4,6 +4,7 @@ struct ToastMessage: Identifiable, Equatable {
     let id = UUID()
     let text: String
     let type: ToastType
+    let duration: TimeInterval
 }
 
 enum ToastType {
