@@ -966,7 +966,10 @@ extension MangaDetailView {
         let title = manga.title.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !title.isEmpty else {
-            aniListMessage = "Najpierw wpisz tytuł mangi."
+            ToastService.shared.show(
+                "Najpierw wpisz tytuł mangi.",
+                type: .error
+            )
             return
         }
 
@@ -977,7 +980,10 @@ extension MangaDetailView {
             guard
                 let info = try await AniListService.fetchMangaInfo(title: title)
             else {
-                aniListMessage = "Nie znaleziono danych w AniList dla: \(title)"
+                ToastService.shared.show(
+                    "Nie znaleziono danych w AniList dla: \(title)",
+                    type: .error
+                )
                 isRefreshingAniList = false
                 return
             }
@@ -994,9 +1000,15 @@ extension MangaDetailView {
                 manga.coverURL = info.coverURL
             }
 
-            aniListMessage = "Dane z AniList odświeżone."
+            ToastService.shared.show(
+                "Dane z AniList odświeżone.",
+                type: .success
+            )
         } catch {
-            aniListMessage = "Nie udało się odświeżyć danych z AniList."
+            ToastService.shared.show(
+                "Nie udało się odświeżyć danych z AniList.",
+                type: .error
+            )
             print("AniList refresh error:", error)
         }
 
@@ -1007,7 +1019,10 @@ extension MangaDetailView {
         let title = manga.title.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !title.isEmpty else {
-            coverFetchMessage = "Najpierw wpisz tytuł mangi."
+            ToastService.shared.show(
+                "Najpierw wpisz tytuł mangi.",
+                type: .error
+            )
             return
         }
 
@@ -1019,12 +1034,21 @@ extension MangaDetailView {
                 title: title
             ) {
                 manga.coverURL = url
-                coverFetchMessage = "Okładka pobrana z AniList."
+                ToastService.shared.show(
+                    "Okładka pobrana z AniList.",
+                    type: .success
+                )
             } else {
-                coverFetchMessage = "Nie znaleziono okładki dla: \(title)"
+                ToastService.shared.show(
+                    "Nie znaleziono okładki dla: \(title)",
+                    type: .error
+                )
             }
         } catch {
-            coverFetchMessage = "Nie udało się pobrać okładki."
+            ToastService.shared.show(
+                "Nie udało się pobrać okładki.",
+                type: .error
+            )
             print("AniList error:", error)
         }
 
