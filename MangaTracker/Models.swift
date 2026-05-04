@@ -5,10 +5,12 @@ import SwiftData
 final class Manga {
     var title: String
     var note: String
+    var summary: String?
     var createdAt: Date
     var coverURL: String?
     var sortOrder: Int?
     var rating: Double?
+    var bannerImage: String?
     var aniListId: Int?
     var aniListStatus: String?
     var aniListAverageScore: Int?
@@ -23,6 +25,7 @@ final class Manga {
     init(
         title: String,
         note: String = "",
+        summary: String? = "",
         createdAt: Date = .now,
         volumes: [Volume] = [],
         coverUrl: String? = "",
@@ -34,10 +37,12 @@ final class Manga {
         aniListStartDate: Date? = nil,
         aniListEndDate: Date? = nil,
         aniListGenresRaw: String? = nil,
-        aniListAuthor: String? = nil
+        aniListAuthor: String? = nil,
+        bannerImage: String? = ""
     ) {
         self.title = title
         self.note = note
+        self.summary = summary
         self.createdAt = createdAt
         self.volumes = volumes
         self.coverURL = coverUrl
@@ -50,6 +55,7 @@ final class Manga {
         self.aniListEndDate = aniListEndDate
         self.aniListGenresRaw = aniListGenresRaw
         self.aniListAuthor = aniListAuthor
+        self.bannerImage = bannerImage
     }
 }
 
