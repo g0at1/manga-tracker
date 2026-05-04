@@ -11,6 +11,7 @@ struct AniListMangaInfo {
     let coverURL: String?
     let author: String?
     let description: String?
+    let bannerImage: String?
 }
 
 struct AniListService {
@@ -77,34 +78,43 @@ struct AniListService {
     {
         let query = """
             query ($search: String) {
-              Media(search: $search, type: MANGA) {
-                id
-                status
-                genres
-                averageScore
-                description
-                startDate {
-                  year
-                  month
-                  day
-                }
-                endDate {
-                  year
-                  month
-                  day
-                }
-                coverImage {
-                  extraLarge
-                  large
-                  medium
-                }
-                staff {
-                  edges {
-                    role
-                    node {
-                      id
-                      name {
-                        full
+              Page(page: 1, perPage: 10) {
+                media(search: $search, type: MANGA, sort: SEARCH_MATCH) {
+                  id
+                  status
+                  genres
+                  averageScore
+                  description
+                  bannerImage
+                  format
+                  title {
+                    romaji
+                    english
+                    native
+                  }
+                  startDate {
+                    year
+                    month
+                    day
+                  }
+                  endDate {
+                    year
+                    month
+                    day
+                  }
+                  coverImage {
+                    extraLarge
+                    large
+                    medium
+                  }
+                  staff {
+                    edges {
+                      role
+                      node {
+                        id
+                        name {
+                          full
+                        }
                       }
                     }
                   }
@@ -139,10 +149,25 @@ struct AniListService {
             from: data
         )
 
-        guard let media = decoded.data?.Media else {
+        guard let results = decoded.data?.Page?.media, !results.isEmpty else {
             return nil
         }
 
+        let normalizedSearch = normalizeTitle(title)
+
+        let media =
+            results.first(where: { item in
+                item.format == "MANGA"
+                    && [
+                        item.title?.english,
+                        item.title?.romaji,
+                        item.title?.native,
+                    ]
+                    .compactMap { $0 }
+                    .contains(where: { normalizeTitle($0) == normalizedSearch })
+            })
+            ?? results.first(where: { $0.format == "MANGA" })
+            ?? results[0]
         let coverURL =
             media.coverImage?.extraLarge
             ?? media.coverImage?.large
@@ -165,7 +190,8 @@ struct AniListService {
             endDate: media.endDate?.date,
             coverURL: coverURL,
             author: mainAuthor,
-            description: plainText(from: media.description)
+            description: plainText(from: media.description),
+            bannerImage: media.bannerImage
         )
     }
 
@@ -193,13 +219,27 @@ struct AniListService {
         )
         return trimmed.isEmpty ? nil : trimmed
     }
+
+    private static func normalizeTitle(_ value: String) -> String {
+        value
+            .lowercased()
+            .replacingOccurrences(of: ":", with: "")
+            .replacingOccurrences(of: "-", with: " ")
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: ".", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 private struct AniListInfoResponse: Decodable {
     let data: DataContainer?
 
     struct DataContainer: Decodable {
-        let Media: Media?
+        let Page: Page?
+    }
+
+    struct Page: Decodable {
+        let media: [Media]?
     }
 
     struct Media: Decodable {
@@ -212,6 +252,15 @@ private struct AniListInfoResponse: Decodable {
         let coverImage: CoverImage?
         let staff: Staff?
         let description: String?
+        let bannerImage: String?
+        let format: String?
+        let title: MediaTitle?
+    }
+
+    struct MediaTitle: Decodable {
+        let romaji: String?
+        let english: String?
+        let native: String?
     }
 
     struct CoverImage: Decodable {

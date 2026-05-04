@@ -104,6 +104,7 @@ struct MangaDetailView: View {
             alignment: .topLeading
         )
         .background(backgroundGradient)
+        .foregroundStyle(.primary)
         .navigationTitle(manga.title.isEmpty ? "Szczegóły" : manga.title)
         .confirmationDialog(
             "Zastosować także do poprzednich tomów?",
@@ -185,273 +186,417 @@ extension MangaDetailView {
     }
 
     fileprivate var heroSection: some View {
-        PremiumCard {
-            HStack(alignment: .top, spacing: 22) {
+        VStack(alignment: .leading, spacing: 28) {
+            HStack(alignment: .top, spacing: 34) {
                 coverSection
+                    .frame(width: 230)
+                    .shadow(
+                        color: .black.opacity(0.55),
+                        radius: 24,
+                        x: 0,
+                        y: 18
+                    )
 
-                VStack(alignment: .leading, spacing: 18) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack(alignment: .center) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                TextField("Tytuł", text: $manga.title)
-                                    .font(.system(size: 30, weight: .bold))
-                                    .textFieldStyle(.plain)
-                                    .focused($titleFocused)
-                                    .onChange(of: titleFocused) { _, focused in
-                                        if focused
-                                            && manga.title == defaultTitle
-                                        {
-                                            manga.title = ""
-                                        }
-                                    }
-
-                                HStack(spacing: 8) {
-                                    Image(systemName: "person.fill")
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(.secondary)
-
-                                    TextField(
-                                        "Autor",
-                                        text: Binding(
-                                            get: { manga.aniListAuthor ?? "" },
-                                            set: {
-                                                manga.aniListAuthor =
-                                                    $0.isEmpty ? nil : $0
-                                            }
-                                        )
-                                    )
-                                    .font(.title3.weight(.semibold))
-                                    .textFieldStyle(.plain)
-                                    .foregroundStyle(.secondary)
-                                }
-                            }
-
-                            Spacer()
-
-                            Button {
-                                Task {
-                                    await refreshAniListInfo()
-                                }
-                            } label: {
-                                if isRefreshingAniList {
-                                    ProgressView()
-                                        .scaleEffect(0.75)
-                                } else {
-                                    Label(
-                                        "Odśwież z AniList",
-                                        systemImage: "arrow.clockwise"
-                                    )
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
-                            .disabled(
-                                isRefreshingAniList
-                                    || manga.title.trimmingCharacters(
-                                        in: .whitespacesAndNewlines
-                                    ).isEmpty
-                            )
-                        }
-                        TextField(
-                            "Notatka (opcjonalnie)",
-                            text: $manga.note,
-                            axis: .vertical
-                        )
-                        .textFieldStyle(.plain)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2...4)
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Opis")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-
-                            TextEditor(text: $manga.summary.orEmpty())
-                                .font(.body)
-                                .foregroundStyle(.primary)
-                                .scrollContentBackground(.hidden)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 10)
-                                .frame(minHeight: 140, maxHeight: summaryHeight)
-                                .background(
-                                    .white.opacity(0.05),
-                                    in: RoundedRectangle(
-                                        cornerRadius: 12,
-                                        style: .continuous
-                                    )
-                                )
-                                .overlay(
-                                    RoundedRectangle(
-                                        cornerRadius: 12,
-                                        style: .continuous
-                                    )
-                                    .stroke(.white.opacity(0.08), lineWidth: 1)
-                                )
-                                .background(
-                                    Text(manga.summary ?? "")
-                                        .font(.body)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 10)
-                                        .frame(
-                                            maxWidth: .infinity,
-                                            alignment: .leading
-                                        )
-                                        .opacity(0)
-                                        .background(
-                                            GeometryReader { geo in
-                                                Color.clear.preference(
-                                                    key: ViewHeightKey.self,
-                                                    value: geo.size.height
-                                                )
-                                            }
-                                        )
-                                )
-                                .onPreferenceChange(ViewHeightKey.self) {
-                                    newValue in
-                                    summaryHeight = max(140, newValue)
-                                }
-                        }
-                    }
-
-                    HStack(spacing: 12) {
-                        StatBadge(
-                            title: "Tomy",
-                            value: "\(totalCount)",
-                            systemImage: "books.vertical"
-                        )
-                        StatBadge(
-                            title: "Kupione",
-                            value: "\(ownedCount)",
-                            systemImage: "checkmark.circle"
-                        )
-                        StatBadge(
-                            title: "Przeczytane",
-                            value: "\(readCount)",
-                            systemImage: "book.closed"
-                        )
-                        aniListInfoSection
-                    }
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack(spacing: 12) {
-                            Text("Ocena")
-                                .font(.subheadline.weight(.semibold))
-
-                            StarRatingView(
-                                rating: Binding(
-                                    get: { manga.rating ?? 0 },
-                                    set: { manga.rating = $0 }
-                                ),
-                                maxRating: 5,
-                                starSize: 22,
-                                spacing: 6
-                            )
-
-                            Text(
-                                manga.rating == 0
-                                    ? "Brak"
-                                    : String(
-                                        format: "%.1f / 5",
-                                        manga.rating ?? 0
-                                    )
-                            )
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Postęp czytania")
-                                .font(.subheadline.weight(.semibold))
-                            Spacer()
-                            Text(
-                                totalCount == 0
-                                    ? "0%" : "\(Int(completionValue * 100))%"
-                            )
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        }
-
-                        ProgressView(value: completionValue)
-                            .tint(.green)
-                            .scaleEffect(y: 1.4)
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("URL okładki")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-
-                            Spacer()
-
-                            Button {
-                                Task {
-                                    await fetchCoverFromAniList()
-                                }
-                            } label: {
-                                if isFetchingCover {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                } else {
-                                    Label(
-                                        "Pobierz z AniList",
-                                        systemImage: "sparkles"
-                                    )
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
-                            .disabled(
-                                isFetchingCover
-                                    || manga.title.trimmingCharacters(
-                                        in: .whitespacesAndNewlines
-                                    ).isEmpty
-                            )
-                        }
-
-                        TextField(
-                            "https://...",
-                            text: Binding(
-                                get: { manga.coverURL ?? "" },
-                                set: { manga.coverURL = $0.isEmpty ? nil : $0 }
-                            )
-                        )
-                        .textFieldStyle(.plain)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
-                        .background(
-                            .white.opacity(0.05),
-                            in: RoundedRectangle(
-                                cornerRadius: 12,
-                                style: .continuous
-                            )
-                        )
-                        .overlay(
-                            RoundedRectangle(
-                                cornerRadius: 12,
-                                style: .continuous
-                            )
-                            .stroke(.white.opacity(0.08), lineWidth: 1)
-                        )
-
-                        if let coverFetchMessage {
-                            Text(coverFetchMessage)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Text(
-                                "Wklej link do obrazka jpg, png albo webp. Miniatura zostanie zcache’owana lokalnie."
-                            )
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        }
-                    }
+                VStack(alignment: .leading, spacing: 28) {
+                    heroHeader
+                    ratingStatsAndProgress
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+
+            HStack(alignment: .top, spacing: 20) {
+                noteCard
+                    .frame(maxWidth: .infinity)
+
+                summaryCard
+                    .frame(maxWidth: .infinity)
+            }
+
+            coverURLSection
+        }
+        .padding(34)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(minHeight: 620, alignment: .topLeading)
+        .background {
+            heroBackground
+                .clipped()
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            .green.opacity(0.28),
+                            .white.opacity(0.08),
+                            .clear,
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        }
+        .shadow(color: .black.opacity(0.45), radius: 30, x: 0, y: 18)
+    }
+
+    private var heroBackground: some View {
+        GeometryReader { proxy in
+            ZStack {
+                if let urlString = manga.bannerImage,
+                    let url = URL(string: urlString)
+                {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(
+                                    width: proxy.size.width,
+                                    height: proxy.size.height
+                                )
+                                .clipped()
+                                .opacity(0.55)
+
+                        default:
+                            Color.clear
+                        }
+                    }
+                }
+
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.92),
+                        Color.black.opacity(0.55),
+                        Color.black.opacity(0.25),
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.25),
+                        Color.black.opacity(0.65),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+
+                RadialGradient(
+                    colors: [
+                        .green.opacity(0.12),
+                        .clear,
+                    ],
+                    center: .topTrailing,
+                    startRadius: 80,
+                    endRadius: 700
+                )
+            }
+        }
+    }
+
+    private var heroHeader: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 16) {
+                VStack(alignment: .leading, spacing: 10) {
+                    TextField("Tytuł", text: $manga.title)
+                        .font(
+                            .system(size: 42, weight: .bold, design: .rounded)
+                        )
+                        .textFieldStyle(.plain)
+                        .lineLimit(1)
+                        .frame(
+                            minWidth: 420,
+                            maxWidth: .infinity,
+                            alignment: .leading
+                        )
+                        .layoutPriority(2)
+                        .focused($titleFocused)
+                        .onChange(of: titleFocused) { _, focused in
+                            if focused && manga.title == defaultTitle {
+                                manga.title = ""
+                            }
+                        }
+
+                    HStack(spacing: 10) {
+                        Image(systemName: "person.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        TextField(
+                            "Autor",
+                            text: Binding(
+                                get: { manga.aniListAuthor ?? "" },
+                                set: {
+                                    manga.aniListAuthor = $0.isEmpty ? nil : $0
+                                }
+                            )
+                        )
+                        .font(.title3.weight(.semibold))
+                        .textFieldStyle(.plain)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                .layoutPriority(1)
+
+                Spacer(minLength: 20)
+
+                Button {
+                    Task {
+                        await refreshAniListInfo()
+                    }
+                } label: {
+                    if isRefreshingAniList {
+                        ProgressView()
+                            .scaleEffect(0.75)
+                            .frame(width: 130)
+                    } else {
+                        Label(
+                            "Odśwież z AniList",
+                            systemImage: "arrow.clockwise"
+                        )
+                        .lineLimit(1)
+                    }
+                }
+                .buttonStyle(.plain)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.green)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .frame(width: 150)
+                .background(.black.opacity(0.28), in: Capsule())
+                .overlay {
+                    Capsule()
+                        .stroke(.green.opacity(0.18), lineWidth: 1)
+                }
+                .fixedSize(horizontal: true, vertical: false)
+                .layoutPriority(10)
+                .disabled(
+                    isRefreshingAniList
+                        || manga.title.trimmingCharacters(
+                            in: .whitespacesAndNewlines
+                        ).isEmpty
+                )
+            }
+            aniListInfoSection
+        }
+    }
+
+    private var ratingStatsAndProgress: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            HStack(alignment: .center, spacing: 30) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Twoja ocena")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 12) {
+                        StarRatingView(
+                            rating: Binding(
+                                get: { manga.rating ?? 0 },
+                                set: { manga.rating = $0 }
+                            ),
+                            maxRating: 5,
+                            starSize: 26,
+                            spacing: 6
+                        )
+
+                        Text(
+                            manga.rating == 0
+                                ? "Brak"
+                                : String(format: "%.1f / 5", manga.rating ?? 0)
+                        )
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                HStack(spacing: 14) {
+                    StatBadge(
+                        title: "Tomy",
+                        value: "\(totalCount)",
+                        systemImage: "books.vertical"
+                    )
+
+                    StatBadge(
+                        title: "Kupione",
+                        value: "\(ownedCount)",
+                        systemImage: "checkmark.circle"
+                    )
+
+                    StatBadge(
+                        title: "Przeczytane",
+                        value: "\(readCount)",
+                        systemImage: "book.closed"
+                    )
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Postęp czytania")
+                        .font(.subheadline.weight(.semibold))
+
+                    Spacer()
+
+                    Text(
+                        totalCount == 0
+                            ? "0%" : "\(Int(completionValue * 100))%"
+                    )
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.secondary)
+                }
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(.white.opacity(0.08))
+
+                        Capsule()
+                            .fill(
+                                Color.green
+                            )
+                            .frame(width: geo.size.width * completionValue)
+                            .shadow(color: .green.opacity(0.55), radius: 8)
+                    }
+                }
+                .frame(height: 10)
+            }
+        }
+    }
+
+    private var noteCard: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 8) {
+                Text("Notatka")
+                    .font(.title3.weight(.bold))
+
+                Image(systemName: "pencil")
+                    .foregroundStyle(.green)
+            }
+
+            TextField(
+                "Dodaj krótką notatkę",
+                text: $manga.note,
+                axis: .vertical
+            )
+            .textFieldStyle(.plain)
+            .font(.body)
+            .foregroundStyle(.secondary)
+            .lineLimit(4...8)
+
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+        .frame(minHeight: 170)
+        .background(
+            .white.opacity(0.045),
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.white.opacity(0.08), lineWidth: 1)
+        }
+    }
+
+    private var summaryCard: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 8) {
+                Image(systemName: "book")
+                    .foregroundStyle(.green)
+
+                Text("Opis")
+                    .font(.title3.weight(.bold))
+            }
+
+            TextEditor(text: $manga.summary.orEmpty())
+                .font(.body)
+                .foregroundStyle(.primary)
+                .scrollContentBackground(.hidden)
+                .frame(minHeight: 110, maxHeight: 160)
+                .overlay(alignment: .topLeading) {
+                    if (manga.summary ?? "").isEmpty {
+                        Text("Dodaj krótki opis mangi")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 8)
+                            .allowsHitTesting(false)
+                    }
+                }
+        }
+        .padding(20)
+        .frame(minHeight: 170)
+        .background(
+            .white.opacity(0.045),
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.white.opacity(0.08), lineWidth: 1)
+        }
+    }
+
+    private var coverURLSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label("URL okładki", systemImage: "link")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Button {
+                    Task {
+                        await fetchCoverFromAniList()
+                    }
+                } label: {
+                    if isFetchingCover {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                    } else {
+                        Label("Pobierz z AniList", systemImage: "arrow.down")
+                    }
+                }
+                .buttonStyle(.plain)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.green)
+                .disabled(
+                    isFetchingCover
+                        || manga.title.trimmingCharacters(
+                            in: .whitespacesAndNewlines
+                        ).isEmpty
+                )
+            }
+
+            TextField(
+                "https://...",
+                text: Binding(
+                    get: { manga.coverURL ?? "" },
+                    set: { manga.coverURL = $0.isEmpty ? nil : $0 }
+                )
+            )
+            .textFieldStyle(.plain)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 13)
+            .background(
+                .white.opacity(0.055),
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(.white.opacity(0.08), lineWidth: 1)
+            }
+
+            Text(
+                coverFetchMessage
+                    ?? "Wklej link do obrazka jpg, png albo webp. Miniatura zostanie zcache’owana lokalnie."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -1068,6 +1213,7 @@ extension MangaDetailView {
             manga.aniListStartDate = info.startDate
             manga.aniListEndDate = info.endDate
             manga.aniListAuthor = info.author
+            manga.bannerImage = info.bannerImage
             if let description = info.description {
                 manga.summary = description
             }
