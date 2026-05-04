@@ -721,50 +721,351 @@ extension MangaDetailView {
     fileprivate var volumesSection: some View {
         PremiumCard(padding: 0) {
             VStack(spacing: 0) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Tomy")
-                            .font(.title3.weight(.bold))
-                        Text("Zarządzaj stanem, ceną i datami w jednym miejscu")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                volumesToolbar
+
+                Divider()
+                    .overlay(.white.opacity(0.06))
+
+                ScrollView {
+                    LazyVGrid(
+                        columns: [
+                            GridItem(
+                                .adaptive(minimum: 260, maximum: 320),
+                                spacing: 16
+                            )
+                        ],
+                        spacing: 16
+                    ) {
+                        ForEach(displayedVolumes) { volume in
+                            volumeTile(volume)
+                        }
                     }
+                    .padding(18)
+                }
+                .frame(minHeight: 360)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
 
-                    Spacer()
+    private var volumesToolbar: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Tomy")
+                        .font(.title3.weight(.bold))
 
-                    Text("Widoczne: \(displayedVolumes.count)")
-                        .font(.subheadline.weight(.medium))
+                    Text("Szybkie zarządzanie kupionymi i przeczytanymi tomami")
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-                .padding(20)
 
-                Divider().overlay(.white.opacity(0.06))
+                Spacer()
 
-                VStack(spacing: 0) {
-                    volumesHeader
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
+                Text("Widoczne: \(displayedVolumes.count)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
 
-                    ScrollView {
-                        LazyVStack(spacing: 10) {
-                            ForEach(displayedVolumes) { volume in
-                                volumeRow(volume)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
+            HStack(spacing: 12) {
+                Picker("Filtr", selection: $filterMode) {
+                    ForEach(FilterMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
                     }
                 }
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity,
-                    alignment: .top
-                )
+                .pickerStyle(.segmented)
+                .tint(.green)
+                .frame(width: 360)
+
+                Spacer()
+
+                Button {
+                    markAllOwned()
+                } label: {
+                    Label("Kupione wszystkie", systemImage: "checkmark.circle")
+                }
+                .volumeActionButton()
+
+                Button {
+                    markAllRead()
+                } label: {
+                    Label("Przeczytane wszystkie", systemImage: "book.closed")
+                }
+                .volumeActionButton()
+
+                Button(role: .destructive) {
+                    clearReadProgress()
+                } label: {
+                    Label(
+                        "Wyczyść czytanie",
+                        systemImage: "arrow.counterclockwise"
+                    )
+                }
+                .volumeActionButton()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(20)
+    }
+
+    private func statusChip(
+        title: String,
+        isActive: Bool,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption.weight(.bold))
+
+                Text(title)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+            .font(.caption.weight(.bold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity)
+            .foregroundStyle(isActive ? .black : .secondary)
+            .background(
+                isActive ? Color.green : Color.white.opacity(0.06),
+                in: Capsule()
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func tileBackground(for volume: Volume) -> Color {
+        if volume.read ?? false {
+            return .green.opacity(0.13)
+        }
+
+        if volume.owned {
+            return .white.opacity(0.07)
+        }
+
+        return .white.opacity(0.035)
+    }
+
+    private func tileBorder(for volume: Volume) -> Color {
+        if volume.read ?? false {
+            return .green.opacity(0.35)
+        }
+
+        if volume.owned {
+            return .green.opacity(0.18)
+        }
+
+        return .white.opacity(0.07)
+    }
+
+    private func toggleOwned(_ volume: Volume) {
+        if volume.owned {
+            volume.owned = false
+            volume.purchaseDate = nil
+            volume.read = false
+            volume.readDate = nil
+        } else {
+            if shouldAskMarkPreviousOwned(upTo: volume) {
+                pendingBulkAction = .markOwnedUpTo(volume)
+                showBulkConfirm = true
+                return
+            }
+
+            volume.owned = true
+            if volume.purchaseDate == nil {
+                volume.purchaseDate = .now
+            }
+        }
+    }
+
+    private func toggleRead(_ volume: Volume) {
+        if volume.read ?? false {
+            volume.read = false
+            volume.readDate = nil
+        } else {
+            if shouldAskMarkPreviousRead(upTo: volume) {
+                pendingBulkAction = .markReadUpTo(volume)
+                showBulkConfirm = true
+                return
+            }
+
+            volume.owned = true
+            volume.read = true
+
+            if volume.purchaseDate == nil {
+                volume.purchaseDate = .now
+            }
+
+            if volume.readDate == nil {
+                volume.readDate = .now
+            }
+        }
+    }
+
+    private func markAllOwned() {
+        for volume in manga.volumes {
+            volume.owned = true
+            if volume.purchaseDate == nil {
+                volume.purchaseDate = .now
+            }
+        }
+    }
+
+    private func markAllRead() {
+        for volume in manga.volumes {
+            volume.owned = true
+            volume.read = true
+
+            if volume.purchaseDate == nil {
+                volume.purchaseDate = .now
+            }
+
+            if volume.readDate == nil {
+                volume.readDate = .now
+            }
+        }
+    }
+
+    private func clearReadProgress() {
+        for volume in manga.volumes {
+            volume.read = false
+            volume.readDate = nil
+        }
+    }
+
+    private func volumeTile(_ volume: Volume) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("#\(volume.number)")
+                    .font(.title3.weight(.bold))
+
+                Spacer()
+
+                Menu {
+                    Button("Ustaw datę zakupu") {
+                        editingDateTarget = .purchase(volume)
+                    }
+
+                    Button("Ustaw datę przeczytania") {
+                        editingDateTarget = .read(volume)
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive) {
+                        deleteVolume(volume)
+                    } label: {
+                        Text("Usuń tom")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(.white.opacity(0.05), in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 8) {
+                statusChip(
+                    title: "Kupiony",
+                    isActive: volume.owned,
+                    icon: "checkmark.circle.fill"
+                ) {
+                    toggleOwned(volume)
+                }
+
+                statusChip(
+                    title: "Przeczytany",
+                    isActive: volume.read ?? false,
+                    icon: "book.closed.fill"
+                ) {
+                    toggleRead(volume)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 7) {
+                dateLine(
+                    icon: "calendar",
+                    title: "Zakup",
+                    date: volume.purchaseDate,
+                    placeholder: "Brak daty zakupu"
+                ) {
+                    editingDateTarget = .purchase(volume)
+                }
+
+                dateLine(
+                    icon: "book.closed",
+                    title: "Czytanie",
+                    date: volume.readDate,
+                    placeholder: "Brak daty przeczytania"
+                ) {
+                    editingDateTarget = .read(volume)
+                }
+            }
+
+            HStack(spacing: 8) {
+                TextField(
+                    "0.00",
+                    value: Bindable(volume).price,
+                    format: .number.precision(.fractionLength(2))
+                )
+                .textFieldStyle(.plain)
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(
+                    .white.opacity(0.05),
+                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                )
+
+                Text("PLN")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .frame(minHeight: 190)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(tileBackground(for: volume))
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(tileBorder(for: volume), lineWidth: 1)
+        }
+    }
+
+    private func dateLine(
+        icon: String,
+        title: String,
+        date: Date?,
+        placeholder: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 16)
+
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Text(
+                    date?.formatted(.dateTime.day().month().year())
+                        ?? placeholder
+                )
+                .font(.caption)
+                .lineLimit(1)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     fileprivate var volumesHeader: some View {
@@ -1484,6 +1785,20 @@ extension View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(.white.opacity(0.08), lineWidth: 1)
             )
+    }
+
+    fileprivate func volumeActionButton() -> some View {
+        self
+            .buttonStyle(.plain)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(.white.opacity(0.06), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(.white.opacity(0.08), lineWidth: 1)
+            }
     }
 }
 
