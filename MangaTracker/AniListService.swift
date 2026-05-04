@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 struct AniListMangaInfo {
@@ -9,6 +10,7 @@ struct AniListMangaInfo {
     let endDate: Date?
     let coverURL: String?
     let author: String?
+    let description: String?
 }
 
 struct AniListService {
@@ -80,6 +82,7 @@ struct AniListService {
                 status
                 genres
                 averageScore
+                description
                 startDate {
                   year
                   month
@@ -161,8 +164,34 @@ struct AniListService {
             startDate: media.startDate?.date,
             endDate: media.endDate?.date,
             coverURL: coverURL,
-            author: mainAuthor
+            author: mainAuthor,
+            description: plainText(from: media.description)
         )
+    }
+
+    private static func plainText(from html: String?) -> String? {
+        guard let html, !html.isEmpty else { return nil }
+
+        let data = Data(html.utf8)
+        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
+            .documentType: NSAttributedString.DocumentType.html,
+            .characterEncoding: String.Encoding.utf8.rawValue,
+        ]
+
+        guard
+            let attributed = try? NSAttributedString(
+                data: data,
+                options: options,
+                documentAttributes: nil
+            )
+        else {
+            return html
+        }
+
+        let trimmed = attributed.string.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
 
@@ -182,6 +211,7 @@ private struct AniListInfoResponse: Decodable {
         let endDate: AniListDate?
         let coverImage: CoverImage?
         let staff: Staff?
+        let description: String?
     }
 
     struct CoverImage: Decodable {

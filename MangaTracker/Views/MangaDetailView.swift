@@ -17,6 +17,7 @@ struct MangaDetailView: View {
     @State private var coverFetchMessage: String?
     @State private var isRefreshingAniList = false
     @State private var aniListMessage: String?
+    @State private var summaryHeight: CGFloat = 140
     @FocusState private var titleFocused: Bool
 
     private let defaultTitle = "Nowa manga"
@@ -191,15 +192,39 @@ extension MangaDetailView {
                 VStack(alignment: .leading, spacing: 18) {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(alignment: .center) {
-                            TextField("Tytuł", text: $manga.title)
-                                .font(.system(size: 30, weight: .bold))
-                                .textFieldStyle(.plain)
-                                .focused($titleFocused)
-                                .onChange(of: titleFocused) { _, focused in
-                                    if focused && manga.title == defaultTitle {
-                                        manga.title = ""
+                            VStack(alignment: .leading, spacing: 6) {
+                                TextField("Tytuł", text: $manga.title)
+                                    .font(.system(size: 30, weight: .bold))
+                                    .textFieldStyle(.plain)
+                                    .focused($titleFocused)
+                                    .onChange(of: titleFocused) { _, focused in
+                                        if focused
+                                            && manga.title == defaultTitle
+                                        {
+                                            manga.title = ""
+                                        }
                                     }
+
+                                HStack(spacing: 8) {
+                                    Image(systemName: "person.fill")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(.secondary)
+
+                                    TextField(
+                                        "Autor",
+                                        text: Binding(
+                                            get: { manga.aniListAuthor ?? "" },
+                                            set: {
+                                                manga.aniListAuthor =
+                                                    $0.isEmpty ? nil : $0
+                                            }
+                                        )
+                                    )
+                                    .font(.title3.weight(.semibold))
+                                    .textFieldStyle(.plain)
+                                    .foregroundStyle(.secondary)
                                 }
+                            }
 
                             Spacer()
 
@@ -236,17 +261,57 @@ extension MangaDetailView {
                         .textFieldStyle(.plain)
                         .foregroundStyle(.secondary)
                         .lineLimit(2...4)
-                        TextField(
-                            "Autor",
-                            text: Binding(
-                                get: { manga.aniListAuthor ?? "" },
-                                set: {
-                                    manga.aniListAuthor = $0.isEmpty ? nil : $0
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Opis")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+
+                            TextEditor(text: $manga.summary.orEmpty())
+                                .font(.body)
+                                .foregroundStyle(.primary)
+                                .scrollContentBackground(.hidden)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 10)
+                                .frame(minHeight: 140, maxHeight: summaryHeight)
+                                .background(
+                                    .white.opacity(0.05),
+                                    in: RoundedRectangle(
+                                        cornerRadius: 12,
+                                        style: .continuous
+                                    )
+                                )
+                                .overlay(
+                                    RoundedRectangle(
+                                        cornerRadius: 12,
+                                        style: .continuous
+                                    )
+                                    .stroke(.white.opacity(0.08), lineWidth: 1)
+                                )
+                                .background(
+                                    Text(manga.summary ?? "")
+                                        .font(.body)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 10)
+                                        .frame(
+                                            maxWidth: .infinity,
+                                            alignment: .leading
+                                        )
+                                        .opacity(0)
+                                        .background(
+                                            GeometryReader { geo in
+                                                Color.clear.preference(
+                                                    key: ViewHeightKey.self,
+                                                    value: geo.size.height
+                                                )
+                                            }
+                                        )
+                                )
+                                .onPreferenceChange(ViewHeightKey.self) {
+                                    newValue in
+                                    summaryHeight = max(140, newValue)
                                 }
-                            )
-                        )
-                        .font(.system(size: 30, weight: .bold))
-                        .textFieldStyle(.plain)
+                        }
                     }
 
                     HStack(spacing: 12) {
@@ -826,6 +891,14 @@ private struct StarRatingView: View {
     }
 }
 
+private struct ViewHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 // MARK: - Components
 extension MangaDetailView {
     fileprivate func dateButton(
@@ -995,6 +1068,9 @@ extension MangaDetailView {
             manga.aniListStartDate = info.startDate
             manga.aniListEndDate = info.endDate
             manga.aniListAuthor = info.author
+            if let description = info.description {
+                manga.summary = description
+            }
 
             if manga.coverURL == nil || manga.coverURL?.isEmpty == true {
                 manga.coverURL = info.coverURL
@@ -1262,6 +1338,15 @@ extension View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(.white.opacity(0.08), lineWidth: 1)
             )
+    }
+}
+
+extension Binding where Value == String? {
+    func orEmpty() -> Binding<String> {
+        Binding<String>(
+            get: { self.wrappedValue ?? "" },
+            set: { self.wrappedValue = $0 }
+        )
     }
 }
 

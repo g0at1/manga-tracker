@@ -5,6 +5,7 @@ import SwiftData
 final class Manga {
     var title: String
     var note: String
+    var summary: String?
     var createdAt: Date
     var coverURL: String?
     var sortOrder: Int?
@@ -23,6 +24,7 @@ final class Manga {
     init(
         title: String,
         note: String = "",
+        summary: String? = "",
         createdAt: Date = .now,
         volumes: [Volume] = [],
         coverUrl: String? = "",
@@ -38,6 +40,7 @@ final class Manga {
     ) {
         self.title = title
         self.note = note
+        self.summary = summary
         self.createdAt = createdAt
         self.volumes = volumes
         self.coverURL = coverUrl
