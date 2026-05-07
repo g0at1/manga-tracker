@@ -11,6 +11,7 @@ struct ContentView: View {
     @State var selectedManga: Manga?
     @State var searchText = ""
     @State var showDashboard = false
+    @State var showUpcoming = false
     @State var draggedManga: Manga?
     @AppStorage("libraryViewMode") var viewModeRaw: String = LibraryViewMode
         .list.rawValue
@@ -69,6 +70,15 @@ struct ContentView: View {
                         }
 
                         Button {
+                            showUpcoming = true
+                        } label: {
+                            Label(
+                                "Nadchodzące",
+                                systemImage: "calendar.badge.clock"
+                            )
+                        }
+
+                        Button {
                             addManga()
                         } label: {
                             Label("Dodaj", systemImage: "plus")
@@ -99,6 +109,9 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showDashboard) {
                 DashboardView(mangas: mangas)
+            }
+            .sheet(isPresented: $showUpcoming) {
+                UpcomingView(mangas: mangas)
             }
             .frame(minWidth: 900, minHeight: 600)
 

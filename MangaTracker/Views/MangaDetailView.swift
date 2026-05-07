@@ -38,6 +38,7 @@ struct MangaDetailView: View {
     private enum EditingDateTarget: Identifiable {
         case purchase(Volume)
         case read(Volume)
+        case release(Volume)
 
         var id: String {
             switch self {
@@ -45,6 +46,8 @@ struct MangaDetailView: View {
                 return "purchase-\(volume.persistentModelID)"
             case .read(let volume):
                 return "read-\(volume.persistentModelID)"
+            case .release(let volume):
+                return "release-\(volume.persistentModelID)"
             }
         }
     }
@@ -951,6 +954,10 @@ extension MangaDetailView {
                         editingDateTarget = .read(volume)
                     }
 
+                    Button("Ustaw datę premiery") {
+                        editingDateTarget = .release(volume)
+                    }
+
                     Divider()
 
                     Button(role: .destructive) {
@@ -1002,6 +1009,15 @@ extension MangaDetailView {
                     placeholder: "Brak daty przeczytania"
                 ) {
                     editingDateTarget = .read(volume)
+                }
+
+                dateLine(
+                    icon: "sparkles",
+                    title: "Premiera",
+                    date: volume.releaseDate,
+                    placeholder: "Brak daty premiery"
+                ) {
+                    editingDateTarget = .release(volume)
                 }
             }
 
@@ -1083,6 +1099,9 @@ extension MangaDetailView {
                 .frame(minWidth: 150, maxWidth: .infinity, alignment: .leading)
 
             Text("Data przeczytania")
+                .frame(minWidth: 150, maxWidth: .infinity, alignment: .leading)
+
+            Text("Data premiery")
                 .frame(minWidth: 150, maxWidth: .infinity, alignment: .leading)
 
             Text("Cena")
@@ -1176,6 +1195,13 @@ extension MangaDetailView {
                 date: v.readDate,
                 placeholder: "Ustaw datę",
                 action: { editingDateTarget = .read(v) }
+            )
+            .frame(minWidth: 150, maxWidth: .infinity)
+
+            dateButton(
+                date: v.releaseDate,
+                placeholder: "Ustaw datę",
+                action: { editingDateTarget = .release(v) }
             )
             .frame(minWidth: 150, maxWidth: .infinity)
 
@@ -1437,6 +1463,38 @@ extension MangaDetailView {
 
                     Button("Usuń datę", role: .destructive) {
                         volume.readDate = nil
+                        editingDateTarget = nil
+                    }
+
+                    Spacer()
+
+                    Button("Gotowe") {
+                        editingDateTarget = nil
+                    }
+                    .keyboardShortcut(.defaultAction)
+                }
+
+            case .release(let volume):
+                Text("Wybierz datę premiery")
+                    .font(.headline)
+
+                DatePicker(
+                    "Data premiery",
+                    selection: Binding(
+                        get: { volume.releaseDate ?? .now },
+                        set: { volume.releaseDate = $0 }
+                    ),
+                    displayedComponents: [.date]
+                )
+                .datePickerStyle(.graphical)
+
+                HStack {
+                    Button("Anuluj", role: .cancel) {
+                        editingDateTarget = nil
+                    }
+
+                    Button("Usuń datę", role: .destructive) {
+                        volume.releaseDate = nil
                         editingDateTarget = nil
                     }
 
