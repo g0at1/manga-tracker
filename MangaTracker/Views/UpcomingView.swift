@@ -198,7 +198,7 @@ private struct UpcomingRow: View {
 
             VStack(alignment: .trailing, spacing: 6) {
                 Text(
-                    entry.releaseDate.formatted(.dateTime.day().month().year())
+                    entry.releaseDate.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year())
                 )
                 .font(.headline.weight(.bold))
 
