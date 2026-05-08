@@ -159,7 +159,7 @@ extension MangaDetailView {
                     MetadataPill(
                         icon: "calendar",
                         text:
-                            "\(formattedAniListDate(manga.aniListStartDate)) – \(formattedAniListDate(manga.aniListEndDate))",
+                            "\(formattedAniListDate(manga.aniListStartDate)) / \(formattedAniListDate(manga.aniListEndDate))",
                         tint: .secondary
                     )
                 }
@@ -1074,7 +1074,7 @@ extension MangaDetailView {
                 Spacer()
 
                 Text(
-                    date?.formatted(.dateTime.day().month().year())
+                    date?.yyyyMMdd()
                         ?? placeholder
                 )
                 .font(.caption)
@@ -1384,7 +1384,7 @@ extension MangaDetailView {
                     .foregroundStyle(.secondary)
 
                 if let date {
-                    Text(date, format: .dateTime.day().month().year())
+                    Text(date.yyyyMMdd())
                         .foregroundStyle(.primary)
                 } else {
                     Text(placeholder)
@@ -1414,15 +1414,13 @@ extension MangaDetailView {
                 Text("Wybierz datę zakupu")
                     .font(.headline)
 
-                DatePicker(
-                    "Data zakupu",
+                glassyDatePicker(
+                    title: "Data zakupu",
                     selection: Binding(
                         get: { volume.purchaseDate ?? .now },
                         set: { volume.purchaseDate = $0 }
-                    ),
-                    displayedComponents: [.date]
+                    )
                 )
-                .datePickerStyle(.graphical)
 
                 HStack {
                     Button("Anuluj", role: .cancel) {
@@ -1446,15 +1444,13 @@ extension MangaDetailView {
                 Text("Wybierz datę przeczytania")
                     .font(.headline)
 
-                DatePicker(
-                    "Data przeczytania",
+                glassyDatePicker(
+                    title: "Data przeczytania",
                     selection: Binding(
                         get: { volume.readDate ?? .now },
                         set: { volume.readDate = $0 }
-                    ),
-                    displayedComponents: [.date]
+                    )
                 )
-                .datePickerStyle(.graphical)
 
                 HStack {
                     Button("Anuluj", role: .cancel) {
@@ -1478,15 +1474,13 @@ extension MangaDetailView {
                 Text("Wybierz datę premiery")
                     .font(.headline)
 
-                DatePicker(
-                    "Data premiery",
+                glassyDatePicker(
+                    title: "Data premiery",
                     selection: Binding(
                         get: { volume.releaseDate ?? .now },
                         set: { volume.releaseDate = $0 }
-                    ),
-                    displayedComponents: [.date]
+                    )
                 )
-                .datePickerStyle(.graphical)
 
                 HStack {
                     Button("Anuluj", role: .cancel) {
@@ -1512,6 +1506,35 @@ extension MangaDetailView {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
+    private func glassyDatePicker(
+        title: String,
+        selection: Binding<Date>
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            DatePicker(
+                title,
+                selection: selection,
+                displayedComponents: [.date]
+            )
+            .labelsHidden()
+            .datePickerStyle(.graphical)
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(.white.opacity(0.18), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.25), radius: 14, x: 0, y: 8)
+        }
+    }
+
     fileprivate var backgroundGradient: some View {
         LinearGradient(
             colors: [
@@ -1531,12 +1554,7 @@ extension MangaDetailView {
     fileprivate func formattedAniListDate(_ date: Date?) -> String {
         guard let date else { return "Brak" }
 
-        return date.formatted(
-            .dateTime
-                .day()
-                .month()
-                .year()
-        )
+        return date.yyyyMMdd()
     }
 
     fileprivate func refreshAniListInfo() async {
