@@ -1644,7 +1644,11 @@ extension MangaDetailView {
         else { return }
 
         guard !manga.volumes.contains(where: { $0.number == n }) else {
-            volumeValidationMessage = "Tom \(n) już istnieje."
+            ToastService.shared.show(
+                "Błąd",
+                description: "Tom \(n) już istnieje.",
+                type: .error
+            )
             return
         }
 

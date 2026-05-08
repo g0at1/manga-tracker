@@ -9,13 +9,25 @@ struct ToastView: View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: message.type.icon)
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(message.type.color)
                     .padding(.top, 2)
 
-                Text(message.text)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(message.text)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+
+                    if let description = message.description,
+                        !description.isEmpty
+                    {
+                        Text(description)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                }
 
                 Spacer(minLength: 8)
 
@@ -23,15 +35,15 @@ struct ToastView: View {
                     dismissNow()
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.secondary)
-                        .frame(width: 20, height: 20)
+                        .frame(width: 24, height: 24)
                         .background(.white.opacity(0.1), in: Circle())
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
 
             GeometryReader { proxy in
                 Rectangle()
@@ -41,7 +53,7 @@ struct ToastView: View {
             }
             .frame(height: 3)
         }
-        .frame(width: 340)
+        .frame(width: 420)
         .background(
             .regularMaterial,
             in: RoundedRectangle(cornerRadius: 16, style: .continuous)

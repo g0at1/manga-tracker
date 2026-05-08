@@ -1,5 +1,5 @@
-import SwiftUI
 import Combine
+import SwiftUI
 
 @MainActor
 final class ToastService: ObservableObject {
@@ -13,10 +13,16 @@ final class ToastService: ObservableObject {
 
     func show(
         _ text: String,
+        description: String? = nil,
         type: ToastType = .info,
         duration: TimeInterval = 3
     ) {
-        let toast = ToastMessage(text: text, type: type, duration: duration)
+        let toast = ToastMessage(
+            text: text,
+            description: description,
+            type: type,
+            duration: duration
+        )
 
         if toasts.count >= maxToasts {
             toasts.removeLast()

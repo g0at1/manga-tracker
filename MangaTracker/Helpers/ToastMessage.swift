@@ -3,6 +3,7 @@ import SwiftUI
 struct ToastMessage: Identifiable, Equatable {
     let id = UUID()
     let text: String
+    let description: String?
     let type: ToastType
     let duration: TimeInterval
 }

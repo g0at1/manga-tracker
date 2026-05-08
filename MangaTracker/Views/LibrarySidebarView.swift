@@ -50,8 +50,6 @@ struct LibrarySidebarView: View {
                 }
             }
 
-            Divider()
-            BottomBarView(mangas: mangas)
         }
     }
 }

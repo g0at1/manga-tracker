@@ -41,6 +41,13 @@ struct SummaryHeaderView: View {
                     systemImage: "checkmark.circle.fill",
                     accentColor: .green
                 )
+
+                StatCardView(
+                    title: "Streak",
+                    value: "\(stats.currentReadStreak) dni",
+                    systemImage: stats.didReadToday ? "flame.fill" : "flame",
+                    accentColor: stats.didReadToday ? .orange : .gray
+                )
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
