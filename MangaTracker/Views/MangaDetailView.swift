@@ -1,3 +1,4 @@
+import AppKit
 import SwiftData
 import SwiftUI
 
@@ -18,6 +19,10 @@ struct MangaDetailView: View {
     @State private var isRefreshingAniList = false
     @State private var aniListMessage: String?
     @State private var summaryHeight: CGFloat = 140
+    @State private var isFetchingRecommendations = false
+    @State private var recommendationsMessage: String?
+    @State private var recommendations: [AniListRecommendation] = []
+    @State private var showRecommendationsSheet = false
     @FocusState private var titleFocused: Bool
 
     private let defaultTitle = "Nowa manga"
@@ -130,6 +135,9 @@ struct MangaDetailView: View {
             dateEditorSheet(target)
                 .presentationDetents([.medium])
         }
+        .sheet(isPresented: $showRecommendationsSheet) {
+            recommendationsSheet
+        }
     }
 }
 
@@ -215,7 +223,7 @@ extension MangaDetailView {
                     .frame(maxWidth: .infinity)
             }
 
-            coverURLSection
+            //            coverURLSection
         }
         .padding(34)
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -384,6 +392,54 @@ extension MangaDetailView {
                 )
             }
             aniListInfoSection
+            recommendationsActionRow
+        }
+    }
+
+    private var recommendationsActionRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                if !recommendations.isEmpty {
+                    showRecommendationsSheet = true
+                } else {
+                    Task {
+                        await fetchRecommendations()
+                    }
+                }
+            } label: {
+                if isFetchingRecommendations {
+                    ProgressView()
+                        .scaleEffect(0.75)
+                        .frame(width: 170)
+                } else {
+                    Label(
+                        "Rekomendacje",
+                        systemImage: "sparkles"
+                    )
+                    .lineLimit(1)
+                }
+            }
+            .buttonStyle(.plain)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.green)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .frame(width: 170)
+            .background(.black.opacity(0.28), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(.green.opacity(0.18), lineWidth: 1)
+            }
+            .fixedSize(horizontal: true, vertical: false)
+            .disabled(isFetchingRecommendations || manga.aniListId == nil)
+
+            if let recommendationsMessage {
+                Text(recommendationsMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
         }
     }
 
@@ -543,64 +599,202 @@ extension MangaDetailView {
         }
     }
 
-    private var coverURLSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+    //    private var coverURLSection: some View {
+    //        VStack(alignment: .leading, spacing: 8) {
+    //            HStack {
+    //                Label("URL okładki", systemImage: "link")
+    //                    .font(.caption.weight(.semibold))
+    //                    .foregroundStyle(.secondary)
+    //
+    //                Spacer()
+    //
+    //                Button {
+    //                    Task {
+    //                        await fetchCoverFromAniList()
+    //                    }
+    //                } label: {
+    //                    if isFetchingCover {
+    //                        ProgressView()
+    //                            .scaleEffect(0.7)
+    //                    } else {
+    //                        Label("Pobierz z AniList", systemImage: "arrow.down")
+    //                    }
+    //                }
+    //                .buttonStyle(.plain)
+    //                .font(.caption.weight(.bold))
+    //                .foregroundStyle(.green)
+    //                .disabled(
+    //                    isFetchingCover
+    //                        || manga.title.trimmingCharacters(
+    //                            in: .whitespacesAndNewlines
+    //                        ).isEmpty
+    //                )
+    //            }
+    //
+    //            TextField(
+    //                "https://...",
+    //                text: Binding(
+    //                    get: { manga.coverURL ?? "" },
+    //                    set: { manga.coverURL = $0.isEmpty ? nil : $0 }
+    //                )
+    //            )
+    //            .textFieldStyle(.plain)
+    //            .padding(.horizontal, 16)
+    //            .padding(.vertical, 13)
+    //            .background(
+    //                .white.opacity(0.055),
+    //                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+    //            )
+    //            .overlay {
+    //                RoundedRectangle(cornerRadius: 12, style: .continuous)
+    //                    .stroke(.white.opacity(0.08), lineWidth: 1)
+    //            }
+    //
+    //            Text(
+    //                coverFetchMessage
+    //                    ?? "Wklej link do obrazka jpg, png albo webp. Miniatura zostanie zcache’owana lokalnie."
+    //            )
+    //            .font(.caption)
+    //            .foregroundStyle(.secondary)
+    //        }
+    //    }
+
+    private var recommendationsSheet: some View {
+        VStack(alignment: .leading, spacing: 18) {
             HStack {
-                Label("URL okładki", systemImage: "link")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Rekomendacje")
+                        .font(.title2.weight(.bold))
+
+                    Text("Znalezione: \(recommendations.count)")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
 
                 Spacer()
 
-                Button {
-                    Task {
-                        await fetchCoverFromAniList()
-                    }
-                } label: {
-                    if isFetchingCover {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                    } else {
-                        Label("Pobierz z AniList", systemImage: "arrow.down")
+                Button("Zamknij") {
+                    showRecommendationsSheet = false
+                }
+                .buttonStyle(.bordered)
+            }
+
+            ScrollView {
+                LazyVGrid(
+                    columns: [
+                        GridItem(
+                            .adaptive(minimum: 180, maximum: 220),
+                            spacing: 16
+                        )
+                    ],
+                    spacing: 16
+                ) {
+                    ForEach(recommendations) { recommendation in
+                        recommendationCard(recommendation)
                     }
                 }
-                .buttonStyle(.plain)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.green)
-                .disabled(
-                    isFetchingCover
-                        || manga.title.trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ).isEmpty
-                )
+                .padding(.bottom, 12)
             }
+        }
+        .padding(24)
+        .frame(minWidth: 1500, minHeight: 460)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
 
-            TextField(
-                "https://...",
-                text: Binding(
-                    get: { manga.coverURL ?? "" },
-                    set: { manga.coverURL = $0.isEmpty ? nil : $0 }
+    private func recommendationCard(_ recommendation: AniListRecommendation)
+        -> some View
+    {
+        let title =
+            recommendation.title.userPreferred
+            ?? recommendation.title.english
+            ?? recommendation.title.romaji
+            ?? recommendation.title.native
+            ?? ""
+        let imageURL =
+            recommendation.coverImageLarge
+            ?? recommendation.coverImageMedium
+        let scoreText =
+            recommendation.averageScore
+            .map { "\($0)%" } ?? "—"
+        let ratingText =
+            recommendation.rating
+            .map { "\($0)" } ?? "—"
+        let typeText = recommendation.type ?? "MANGA"
+
+        return Button {
+            if let urlString = recommendation.siteUrl,
+                let url = URL(string: urlString)
+            {
+                NSWorkspace.shared.open(url)
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(.white.opacity(0.05))
+
+                    if let imageURL,
+                        let url = URL(string: imageURL)
+                    {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+
+                            default:
+                                Color.clear
+                            }
+                        }
+                        .clipped()
+                    }
+                }
+                .frame(width: 150, height: 215)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(.white.opacity(0.08), lineWidth: 1)
                 )
-            )
-            .textFieldStyle(.plain)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 13)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+
+                    HStack(spacing: 10) {
+                        Label(scoreText, systemImage: "star.fill")
+                            .labelStyle(.titleAndIcon)
+
+                        Label(ratingText, systemImage: "heart.fill")
+                            .labelStyle(.titleAndIcon)
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                    Text(typeText)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.green)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            .green.opacity(0.12),
+                            in: Capsule()
+                        )
+                }
+                .frame(width: 150, alignment: .leading)
+            }
+            .padding(12)
             .background(
-                .white.opacity(0.055),
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .white.opacity(0.04),
+                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .stroke(.white.opacity(0.08), lineWidth: 1)
             }
-
-            Text(
-                coverFetchMessage
-                    ?? "Wklej link do obrazka jpg, png albo webp. Miniatura zostanie zcache’owana lokalnie."
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
         }
+        .buttonStyle(.plain)
     }
 
     fileprivate var coverSection: some View {
@@ -1652,6 +1846,47 @@ extension MangaDetailView {
         }
 
         isFetchingCover = false
+    }
+
+    fileprivate func fetchRecommendations() async {
+        guard let mangaId = manga.aniListId else {
+            ToastService.shared.show(
+                "Najpierw odśwież dane z AniList.",
+                type: .error
+            )
+            return
+        }
+
+        isFetchingRecommendations = true
+        recommendationsMessage = nil
+
+        do {
+            if recommendations.isEmpty {
+                let results =
+                    try await AniListService.fetchMangaRecommendations(
+                        mangaId: mangaId
+                    )
+                recommendations = results
+                if results.isEmpty {
+                    recommendationsMessage = "Brak rekomendacji do pokazania."
+                }
+                ToastService.shared.show(
+                    "Rekomendacje z AniList pobrane.",
+                    type: .success
+                )
+            }
+            showRecommendationsSheet = true
+        } catch {
+            recommendationsMessage =
+                "Nie udało się pobrać rekomendacji."
+            ToastService.shared.show(
+                "Nie udało się pobrać rekomendacji.",
+                type: .error
+            )
+            print("AniList recommendations error:", error)
+        }
+
+        isFetchingRecommendations = false
     }
 
     fileprivate func addSingleVolume() {

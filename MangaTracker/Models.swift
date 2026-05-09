@@ -68,6 +68,7 @@ final class Volume {
     var read: Bool?
     var readDate: Date?
     var releaseDate: Date?
+    var buyURL: String?
 
     var manga: Manga?
 
@@ -79,7 +80,8 @@ final class Volume {
         read: Bool? = false,
         manga: Manga? = nil,
         readDate: Date? = nil,
-        releaseDate: Date? = nil
+        releaseDate: Date? = nil,
+        buyURL: String? = nil
     ) {
         self.number = number
         self.owned = owned
@@ -89,5 +91,6 @@ final class Volume {
         self.manga = manga
         self.readDate = readDate
         self.releaseDate = releaseDate
+        self.buyURL = buyURL
     }
 }

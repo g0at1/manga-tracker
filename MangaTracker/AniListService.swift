@@ -14,6 +14,24 @@ struct AniListMangaInfo {
     let bannerImage: String?
 }
 
+struct AniListRecommendation: Identifiable {
+    let id: Int
+    let rating: Int?
+    let type: String?
+    let title: AniListRecommendationTitle
+    let coverImageLarge: String?
+    let coverImageMedium: String?
+    let averageScore: Int?
+    let siteUrl: String?
+}
+
+struct AniListRecommendationTitle {
+    let romaji: String?
+    let english: String?
+    let native: String?
+    let userPreferred: String?
+}
+
 struct AniListService {
     struct Response: Decodable {
         let data: DataContainer?
@@ -195,6 +213,90 @@ struct AniListService {
         )
     }
 
+    static func fetchMangaRecommendations(mangaId: Int) async throws
+        -> [AniListRecommendation]
+    {
+        let query = """
+            query ($id: Int) {
+              Media(id: $id, type: MANGA) {
+                recommendations(sort: RATING_DESC) {
+                  nodes {
+                    rating
+                    mediaRecommendation {
+                      id
+                      type
+                      title {
+                        romaji
+                        english
+                        native
+                        userPreferred
+                      }
+                      coverImage {
+                        large
+                        medium
+                      }
+                      averageScore
+                      siteUrl
+                    }
+                  }
+                }
+              }
+            }
+            """
+
+        let body: [String: Any] = [
+            "query": query,
+            "variables": [
+                "id": mangaId
+            ],
+        ]
+
+        let url = URL(string: "https://graphql.anilist.co")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let http = response as? HTTPURLResponse,
+            (200..<300).contains(http.statusCode)
+        else {
+            throw URLError(.badServerResponse)
+        }
+
+        let decoded = try JSONDecoder().decode(
+            AniListRecommendationResponse.self,
+            from: data
+        )
+
+        let nodes =
+            decoded.data?.Media?.recommendations?.nodes
+            ?? []
+
+        return nodes.compactMap { node in
+            guard let media = node.mediaRecommendation else { return nil }
+
+            let title = AniListRecommendationTitle(
+                romaji: media.title?.romaji,
+                english: media.title?.english,
+                native: media.title?.native,
+                userPreferred: media.title?.userPreferred
+            )
+
+            return AniListRecommendation(
+                id: media.id,
+                rating: node.rating,
+                type: media.type,
+                title: title,
+                coverImageLarge: media.coverImage?.large,
+                coverImageMedium: media.coverImage?.medium,
+                averageScore: media.averageScore,
+                siteUrl: media.siteUrl
+            )
+        }
+    }
+
     private static func plainText(from html: String?) -> String? {
         guard let html, !html.isEmpty else { return nil }
 
@@ -302,5 +404,47 @@ private struct AniListInfoResponse: Decodable {
 
             return Calendar.current.date(from: components)
         }
+    }
+}
+
+private struct AniListRecommendationResponse: Decodable {
+    let data: DataContainer?
+
+    struct DataContainer: Decodable {
+        let Media: Media?
+    }
+
+    struct Media: Decodable {
+        let recommendations: Recommendations?
+    }
+
+    struct Recommendations: Decodable {
+        let nodes: [Node]?
+    }
+
+    struct Node: Decodable {
+        let rating: Int?
+        let mediaRecommendation: MediaRecommendation?
+    }
+
+    struct MediaRecommendation: Decodable {
+        let id: Int
+        let type: String?
+        let title: MediaTitle?
+        let coverImage: CoverImage?
+        let averageScore: Int?
+        let siteUrl: String?
+    }
+
+    struct MediaTitle: Decodable {
+        let romaji: String?
+        let english: String?
+        let native: String?
+        let userPreferred: String?
+    }
+
+    struct CoverImage: Decodable {
+        let large: String?
+        let medium: String?
     }
 }

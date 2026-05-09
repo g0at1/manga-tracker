@@ -1,8 +1,10 @@
+import AppKit
 import SwiftUI
 
 struct UpcomingView: View {
     let mangas: [Manga]
     @Environment(\.dismiss) private var dismiss
+    @State private var editingBuyTarget: Volume?
 
     private var upcomingVolumes: [UpcomingVolume] {
         let now = Calendar.current.startOfDay(for: Date())
@@ -86,6 +88,10 @@ struct UpcomingView: View {
             }
         }
         .frame(minWidth: 980, minHeight: 720)
+        .sheet(item: $editingBuyTarget) { target in
+            buyLinkEditorSheet(target)
+                .presentationDetents([.medium])
+        }
     }
 
     private var upcomingHeader: some View {
@@ -149,7 +155,9 @@ struct UpcomingView: View {
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(volumes) { entry in
-                        UpcomingRow(entry: entry)
+                        UpcomingRow(entry: entry) {
+                            editingBuyTarget = entry.volume
+                        }
                     }
                 }
             }
@@ -164,6 +172,53 @@ struct UpcomingView: View {
                 .stroke(.quaternary, lineWidth: 1)
         )
     }
+
+    private func buyLinkEditorSheet(_ volume: Volume) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Link do zakupu")
+                .font(.headline)
+
+            TextField(
+                "https://...",
+                text: Binding(
+                    get: { volume.buyURL ?? "" },
+                    set: { volume.buyURL = $0.isEmpty ? nil : $0 }
+                )
+            )
+            .textFieldStyle(.plain)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                .white.opacity(0.05),
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(.white.opacity(0.08), lineWidth: 1)
+            )
+
+            HStack {
+                Button("Anuluj", role: .cancel) {
+                    editingBuyTarget = nil
+                }
+
+                Button("Usuń link", role: .destructive) {
+                    volume.buyURL = nil
+                    editingBuyTarget = nil
+                }
+
+                Spacer()
+
+                Button("Gotowe") {
+                    editingBuyTarget = nil
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(minWidth: 360, minHeight: 220)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
 }
 
 private struct UpcomingVolume: Identifiable {
@@ -175,6 +230,7 @@ private struct UpcomingVolume: Identifiable {
 
 private struct UpcomingRow: View {
     let entry: UpcomingVolume
+    let onEditBuyURL: () -> Void
 
     var body: some View {
         HStack(spacing: 14) {
@@ -198,11 +254,43 @@ private struct UpcomingRow: View {
 
             VStack(alignment: .trailing, spacing: 6) {
                 Text(entry.releaseDate.yyyyMMdd())
-                .font(.headline.weight(.bold))
+                    .font(.headline.weight(.bold))
 
                 Text(entry.releaseDate.relativeFormatted())
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                if let url = buyURL {
+                    Button {
+                        NSWorkspace.shared.open(url)
+                    } label: {
+                        Label("Kup", systemImage: "cart")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.green)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(
+                                .green.opacity(0.12),
+                                in: Capsule()
+                            )
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Button {
+                        onEditBuyURL()
+                    } label: {
+                        Label("Dodaj link", systemImage: "link.badge.plus")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(
+                                .white.opacity(0.08),
+                                in: Capsule()
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
         .padding(14)
@@ -214,6 +302,34 @@ private struct UpcomingRow: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(.quaternary, lineWidth: 1)
         )
+        .contextMenu {
+            if let url = buyURL {
+                Button("Otwórz link zakupu") {
+                    NSWorkspace.shared.open(url)
+                }
+                Divider()
+            }
+
+            Button("Edytuj link zakupu") {
+                onEditBuyURL()
+            }
+
+            Button("Skopiuj tytuł") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(
+                    "\(entry.manga.title) — tom \(entry.volume.number)",
+                    forType: .string
+                )
+            }
+        }
+    }
+
+    private var buyURL: URL? {
+        guard let raw = entry.volume.buyURL,
+            !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            let url = URL(string: raw)
+        else { return nil }
+        return url
     }
 }
 
