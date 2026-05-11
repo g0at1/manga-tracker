@@ -5,6 +5,7 @@ import SwiftUI
 struct DashboardView: View {
     let mangas: [Manga]
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedReadDay: ReadDayData?
 
     private var totalSeries: Int {
         mangas.count
@@ -97,11 +98,109 @@ struct DashboardView: View {
             .sorted { $0.month < $1.month }
     }
 
+    private var readDayData: [ReadDayData] {
+        let calendar = Calendar.current
+        let entries =
+            mangas
+            .flatMap { $0.volumes }
+            .compactMap { volume -> (Date, Volume)? in
+                guard let readDate = volume.readDate else { return nil }
+                return (calendar.startOfDay(for: readDate), volume)
+            }
+
+        let grouped = Dictionary(grouping: entries, by: { $0.0 })
+
+        return
+            grouped
+            .map { day, values in
+                let items =
+                    values
+                    .map { value in
+                        let title = value.1.manga?.title ?? "Nieznany tytul"
+                        return "\(title) #\(value.1.number)"
+                    }
+                    .sorted()
+
+                return ReadDayData(
+                    date: day,
+                    count: values.count,
+                    items: items
+                )
+            }
+            .sorted { $0.date < $1.date }
+    }
+
+    private var readDayLookup: [Date: ReadDayData] {
+        Dictionary(uniqueKeysWithValues: readDayData.map { ($0.date, $0) })
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     summaryCards
+
+                    if !readDayData.isEmpty {
+                        DashboardCard("Aktywnosc czytania") {
+                            VStack(alignment: .leading, spacing: 16) {
+                                ReadHeatmapView(
+                                    readDayLookup: readDayLookup,
+                                    selectedDay: $selectedReadDay
+                                )
+
+                                if let selectedReadDay {
+                                    VStack(
+                                        alignment: .leading,
+                                        spacing: 8
+                                    ) {
+                                        Text(
+                                            selectedReadDay.date.yyyyMMdd()
+                                        )
+                                        .font(.headline)
+
+                                        ForEach(
+                                            selectedReadDay.items,
+                                            id: \.self
+                                        ) { item in
+                                            Text(item)
+                                                .font(.subheadline)
+                                                .foregroundStyle(
+                                                    .secondary
+                                                )
+                                        }
+                                    }
+                                    .frame(
+                                        maxWidth: .infinity,
+                                        alignment: .leading
+                                    )
+                                    .padding(12)
+                                    .background(
+                                        RoundedRectangle(
+                                            cornerRadius: 12,
+                                            style: .continuous
+                                        )
+                                        .fill(.white.opacity(0.04))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(
+                                            cornerRadius: 12,
+                                            style: .continuous
+                                        )
+                                        .stroke(
+                                            .white.opacity(0.08),
+                                            lineWidth: 1
+                                        )
+                                    )
+                                } else {
+                                    Text(
+                                        "Wybierz dzien, aby zobaczyc co przeczytales."
+                                    )
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
 
                     if !mangaSpendData.isEmpty {
                         DashboardCard("Wydatki na serie") {
@@ -208,6 +307,11 @@ struct DashboardView: View {
                     }
                 }
             }
+            .onAppear {
+                if selectedReadDay == nil {
+                    selectedReadDay = readDayData.last
+                }
+            }
         }
         .frame(minWidth: 1000, minHeight: 720)
     }
@@ -276,6 +380,14 @@ private struct MonthlyPurchaseData: Identifiable {
     let amount: Double
 }
 
+private struct ReadDayData: Identifiable {
+    let date: Date
+    let count: Int
+    let items: [String]
+
+    var id: Date { date }
+}
+
 // MARK: - Reusable UI
 
 private struct DashboardCard<Content: View>: View {
@@ -334,5 +446,151 @@ private struct SummaryCard: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(.quaternary, lineWidth: 1)
         )
+    }
+}
+
+private struct ReadHeatmapView: View {
+    let readDayLookup: [Date: ReadDayData]
+    @Binding var selectedDay: ReadDayData?
+
+    private let cellSize: CGFloat = 14
+    private let cellSpacing: CGFloat = 6
+
+    private var calendar: Calendar {
+        Calendar.current
+    }
+
+    private var weekdaySymbols: [String] {
+        calendar.shortWeekdaySymbols
+    }
+
+    private var dateRange: (start: Date, end: Date) {
+        let today = calendar.startOfDay(for: Date())
+        let start =
+            calendar.date(byAdding: .weekOfYear, value: -41, to: today)
+            ?? today
+
+        _ =
+            calendar.dateInterval(of: .weekOfYear, for: start)?.start
+            ?? start
+        let endWeek =
+            calendar.dateInterval(of: .weekOfYear, for: today)?.end
+            ?? today
+        let end = calendar.date(byAdding: .day, value: -1, to: endWeek) ?? today
+        return (start: start, end: end)
+    }
+
+    private var weeks: [[Date]] {
+        let start = dateRange.start
+        let end = dateRange.end
+        let startWeek =
+            calendar.dateInterval(of: .weekOfYear, for: start)?.start
+            ?? start
+
+        var days: [Date] = []
+        var current = startWeek
+        while current <= end {
+            days.append(current)
+            current =
+                calendar.date(byAdding: .day, value: 1, to: current)
+                ?? current
+        }
+
+        return stride(from: 0, to: days.count, by: 7).map {
+            Array(days[$0..<min($0 + 7, days.count)])
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: cellSpacing) {
+                VStack(alignment: .leading, spacing: cellSpacing) {
+                    ForEach([1, 3, 5], id: \.self) { index in
+                        Text(weekdaySymbols[index - 1])
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .frame(height: cellSize)
+                    }
+                }
+                .frame(width: 22, alignment: .leading)
+
+                HStack(alignment: .top, spacing: cellSpacing) {
+                    ForEach(weeks, id: \.first) { week in
+                        VStack(spacing: cellSpacing) {
+                            ForEach(week, id: \.self) { day in
+                                dayCell(day)
+                            }
+                        }
+                    }
+                }
+            }
+
+            HStack(spacing: 8) {
+                Text("Mniej")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 4) {
+                    ForEach([0, 1, 2, 3, 4], id: \.self) { level in
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .fill(color(for: level))
+                            .frame(width: cellSize, height: cellSize)
+                    }
+                }
+
+                Text("Wiecej")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func dayCell(_ day: Date) -> some View {
+        let start = dateRange.start
+        let end = calendar.startOfDay(for: Date())
+        let isOutsideRange = day < start || day > end
+        let readDay = readDayLookup[calendar.startOfDay(for: day)]
+        let count = readDay?.count ?? 0
+
+        Button {
+            if !isOutsideRange, let readDay {
+                selectedDay = readDay
+            }
+        } label: {
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(isOutsideRange ? .clear : color(for: count))
+                .frame(width: cellSize, height: cellSize)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .stroke(
+                            isSelected(day) ? .white.opacity(0.7) : .clear,
+                            lineWidth: 1
+                        )
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isOutsideRange || readDay == nil)
+    }
+
+    private func isSelected(_ day: Date) -> Bool {
+        guard let selectedDay else { return false }
+        return calendar.isDate(selectedDay.date, inSameDayAs: day)
+    }
+
+    private func color(for count: Int) -> Color {
+        switch count {
+        case 0:
+            return .white.opacity(0.06)
+        case 1:
+            return .green.opacity(0.28)
+        case 2:
+            return .green.opacity(0.45)
+        case 3:
+            return .green.opacity(0.62)
+        default:
+            return .green.opacity(0.82)
+        }
     }
 }
