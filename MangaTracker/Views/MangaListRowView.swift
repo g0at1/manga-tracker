@@ -11,7 +11,7 @@ struct MangaListRowView: View {
     }
 
     private var totalPaid: Double {
-        manga.volumes
+        return manga.volumes
             .filter { $0.owned }
             .compactMap { $0.price }
             .reduce(0, +)
@@ -30,9 +30,18 @@ struct MangaListRowView: View {
             .frame(width: 40, height: 56)
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(manga.title)
                         .font(.headline)
+
+                    if manga.isSold ?? false {
+                        Text("Sprzedane")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.orange.opacity(0.12), in: Capsule())
+                    }
 
                     Spacer()
 

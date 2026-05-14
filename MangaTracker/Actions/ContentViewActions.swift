@@ -103,13 +103,14 @@ extension ContentView {
             print("Error while saving grid reorder: \(error)")
         }
     }
-    
+
     func markNextAsRead(_ manga: Manga) {
         let sortedVolumes = manga.volumes.sorted { $0.number < $1.number }
 
         guard !sortedVolumes.isEmpty else { return }
 
-        let lastReadIndex = sortedVolumes.lastIndex(where: { $0.read == true }) ?? -1
+        let lastReadIndex =
+            sortedVolumes.lastIndex(where: { $0.read == true }) ?? -1
         let nextIndex = lastReadIndex + 1
 
         guard sortedVolumes.indices.contains(nextIndex) else { return }
@@ -125,6 +126,16 @@ extension ContentView {
             try modelContext.save()
         } catch {
             print("Error while marking next volume as read: \(error)")
+        }
+    }
+
+    func toggleSold(_ manga: Manga) {
+        manga.isSold = !(manga.isSold ?? false)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error while toggling sold state: \(error)")
         }
     }
 }
