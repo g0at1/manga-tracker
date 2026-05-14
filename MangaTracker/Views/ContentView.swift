@@ -47,7 +47,8 @@ struct ContentView: View {
                     onMoveMangaDown: moveMangaDown,
                     onMoveMangas: moveMangas,
                     onMoveMangaInGrid: moveMangaInGrid,
-                    onMarkNextAsRead: markNextAsRead
+                    onMarkNextAsRead: markNextAsRead,
+                    onToggleSold: toggleSold
                 )
                 .navigationTitle("Mangi")
                 .searchable(text: $searchText, prompt: "Szukaj tytułu…")

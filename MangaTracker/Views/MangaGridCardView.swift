@@ -12,7 +12,7 @@ struct MangaGridCardView: View {
     }
 
     private var totalPaid: Double {
-        manga.volumes
+        return manga.volumes
             .filter { $0.owned }
             .compactMap { $0.price }
             .reduce(0, +)
@@ -24,7 +24,7 @@ struct MangaGridCardView: View {
         let read = manga.volumes.filter { $0.read == true }.count
 
         VStack(alignment: .leading, spacing: 10) {
-            ZStack {
+            ZStack(alignment: .topTrailing) {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color.white.opacity(0.04))
 
@@ -35,6 +35,21 @@ struct MangaGridCardView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 240)
                 .clipped()
+
+                if manga.isSold ?? false {
+                    Text("Sprzedane")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.orange.opacity(0.95), in: Capsule())
+                        .overlay {
+                            Capsule()
+                                .stroke(.white.opacity(0.85), lineWidth: 1)
+                        }
+                        .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                        .padding(10)
+                }
             }
 
             VStack(alignment: .leading, spacing: 6) {

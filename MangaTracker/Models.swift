@@ -10,6 +10,7 @@ final class Manga {
     var coverURL: String?
     var sortOrder: Int?
     var rating: Double?
+    var isSold: Bool?
     var bannerImage: String?
     var aniListId: Int?
     var aniListStatus: String?
@@ -31,6 +32,7 @@ final class Manga {
         coverUrl: String? = "",
         sortOrder: Int? = 0,
         rating: Double? = 0,
+        isSold: Bool? = false,
         aniListId: Int? = nil,
         aniListStatus: String? = nil,
         aniListAverageScore: Int? = nil,
@@ -48,6 +50,7 @@ final class Manga {
         self.coverURL = coverUrl
         self.sortOrder = sortOrder
         self.rating = rating
+        self.isSold = isSold
         self.aniListId = aniListId
         self.aniListStatus = aniListStatus
         self.aniListAverageScore = aniListAverageScore

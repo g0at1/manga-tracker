@@ -4,15 +4,20 @@ struct MangaLibraryStats {
     let mangas: [Manga]
 
     var mangaCount: Int {
-        mangas.count
+        mangas.filter { !($0.isSold ?? false) }.count
     }
 
     var ownedVolumesCount: Int {
-        mangas.flatMap { $0.volumes }.filter { $0.owned }.count
+        mangas
+            .filter { !($0.isSold ?? false) }
+            .flatMap { $0.volumes }
+            .filter { $0.owned }
+            .count
     }
 
     var totalPaid: Double {
         mangas
+            .filter { !($0.isSold ?? false) }
             .flatMap { $0.volumes }
             .filter { $0.owned }
             .compactMap { $0.price }
@@ -22,6 +27,7 @@ struct MangaLibraryStats {
     var totalReadPercent: Double {
         let ownedVolumes =
             mangas
+            .filter { !($0.isSold ?? false) }
             .flatMap { $0.volumes }
             .filter { $0.owned }
 
