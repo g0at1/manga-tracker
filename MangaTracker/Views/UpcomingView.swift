@@ -326,15 +326,15 @@ private struct UpcomingRow: View {
 
     private var buyURL: URL? {
         guard let raw = entry.volume.buyURL,
-            !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-            let url = URL(string: raw)
+              !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let url = URL(string: raw)
         else { return nil }
         return url
     }
 }
 
-extension Date {
-    fileprivate func relativeFormatted() -> String {
+private extension Date {
+    func relativeFormatted() -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = Locale.current
         formatter.unitsStyle = .full

@@ -8,7 +8,7 @@ struct MangaDropDelegate: DropDelegate {
     @Binding var draggedManga: Manga?
     let moveAction: (Manga, Manga) -> Void
 
-    func dropEntered(info: DropInfo) {
+    func dropEntered(info _: DropInfo) {
         guard
             let draggedManga,
             draggedManga.persistentModelID != targetManga.persistentModelID
@@ -17,12 +17,12 @@ struct MangaDropDelegate: DropDelegate {
         moveAction(draggedManga, targetManga)
     }
 
-    func performDrop(info: DropInfo) -> Bool {
+    func performDrop(info _: DropInfo) -> Bool {
         draggedManga = nil
         return true
     }
 
-    func dropUpdated(info: DropInfo) -> DropProposal? {
+    func dropUpdated(info _: DropInfo) -> DropProposal? {
         DropProposal(operation: .move)
     }
 }

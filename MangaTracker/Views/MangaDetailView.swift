@@ -32,7 +32,9 @@ struct MangaDetailView: View {
         case missing = "Brakujące"
         case unread = "Nieprzeczytane"
 
-        var id: String { rawValue }
+        var id: String {
+            rawValue
+        }
     }
 
     private enum BulkAction {
@@ -47,11 +49,11 @@ struct MangaDetailView: View {
 
         var id: String {
             switch self {
-            case .purchase(let volume):
+            case let .purchase(volume):
                 return "purchase-\(volume.persistentModelID)"
-            case .read(let volume):
+            case let .read(volume):
                 return "read-\(volume.persistentModelID)"
-            case .release(let volume):
+            case let .release(volume):
                 return "release-\(volume.persistentModelID)"
             }
         }
@@ -142,6 +144,7 @@ struct MangaDetailView: View {
 }
 
 // MARK: - Sections
+
 extension MangaDetailView {
     fileprivate var aniListInfoSection: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -162,12 +165,11 @@ extension MangaDetailView {
                     )
                 }
 
-                if manga.aniListStartDate != nil || manga.aniListEndDate != nil
-                {
+                if manga.aniListStartDate != nil || manga.aniListEndDate != nil {
                     MetadataPill(
                         icon: "calendar",
                         text:
-                            "\(formattedAniListDate(manga.aniListStartDate)) / \(formattedAniListDate(manga.aniListEndDate))",
+                        "\(formattedAniListDate(manga.aniListStartDate)) / \(formattedAniListDate(manga.aniListEndDate))",
                         tint: .secondary
                     )
                 }
@@ -255,11 +257,11 @@ extension MangaDetailView {
         GeometryReader { proxy in
             ZStack {
                 if let urlString = manga.bannerImage,
-                    let url = URL(string: urlString)
+                   let url = URL(string: urlString)
                 {
                     AsyncImage(url: url) { phase in
                         switch phase {
-                        case .success(let image):
+                        case let .success(image):
                             image
                                 .resizable()
                                 .scaledToFill()
@@ -546,7 +548,7 @@ extension MangaDetailView {
             .textFieldStyle(.plain)
             .font(.body)
             .foregroundStyle(.secondary)
-            .lineLimit(4...8)
+            .lineLimit(4 ... 8)
 
             Spacer(minLength: 0)
         }
@@ -685,7 +687,7 @@ extension MangaDetailView {
                         GridItem(
                             .adaptive(minimum: 180, maximum: 220),
                             spacing: 16
-                        )
+                        ),
                     ],
                     spacing: 16
                 ) {
@@ -706,24 +708,24 @@ extension MangaDetailView {
     {
         let title =
             recommendation.title.userPreferred
-            ?? recommendation.title.english
-            ?? recommendation.title.romaji
-            ?? recommendation.title.native
-            ?? ""
+                ?? recommendation.title.english
+                ?? recommendation.title.romaji
+                ?? recommendation.title.native
+                ?? ""
         let imageURL =
             recommendation.coverImageLarge
-            ?? recommendation.coverImageMedium
+                ?? recommendation.coverImageMedium
         let scoreText =
             recommendation.averageScore
-            .map { "\($0)%" } ?? "—"
+                .map { "\($0)%" } ?? "—"
         let ratingText =
             recommendation.rating
-            .map { "\($0)" } ?? "—"
+                .map { "\($0)" } ?? "—"
         let typeText = recommendation.type ?? "MANGA"
 
         return Button {
             if let urlString = recommendation.siteUrl,
-                let url = URL(string: urlString)
+               let url = URL(string: urlString)
             {
                 NSWorkspace.shared.open(url)
             }
@@ -734,11 +736,11 @@ extension MangaDetailView {
                         .fill(.white.opacity(0.05))
 
                     if let imageURL,
-                        let url = URL(string: imageURL)
+                       let url = URL(string: imageURL)
                     {
                         AsyncImage(url: url) { phase in
                             switch phase {
-                            case .success(let image):
+                            case let .success(image):
                                 image
                                     .resizable()
                                     .scaledToFill()
@@ -929,7 +931,7 @@ extension MangaDetailView {
                             GridItem(
                                 .adaptive(minimum: 260, maximum: 320),
                                 spacing: 16
-                            )
+                            ),
                         ],
                         spacing: 16
                     ) {
@@ -1326,8 +1328,8 @@ extension MangaDetailView {
                             return
                         }
 
-                        if v.owned == false
-                            && shouldAskMarkPreviousOwned(upTo: v)
+                        if v.owned == false,
+                           shouldAskMarkPreviousOwned(upTo: v)
                         {
                             pendingBulkAction = .markOwnedUpTo(v)
                             showBulkConfirm = true
@@ -1358,8 +1360,8 @@ extension MangaDetailView {
                         }
 
                         let current = v.read ?? false
-                        if current == false
-                            && shouldAskMarkPreviousRead(upTo: v)
+                        if current == false,
+                           shouldAskMarkPreviousRead(upTo: v)
                         {
                             pendingBulkAction = .markReadUpTo(v)
                             showBulkConfirm = true
@@ -1459,7 +1461,7 @@ private struct StarRatingView: View {
         starSize: CGFloat = 24,
         spacing: CGFloat = 8
     ) {
-        self._rating = rating
+        _rating = rating
         self.maxRating = maxRating
         self.starSize = starSize
         self.spacing = spacing
@@ -1475,7 +1477,7 @@ private struct StarRatingView: View {
 
     var body: some View {
         HStack(spacing: spacing) {
-            ForEach(1...maxRating, id: \.self) { index in
+            ForEach(1 ... maxRating, id: \.self) { index in
                 Image(
                     systemName: imageName(for: index, rating: displayedRating)
                 )
@@ -1489,7 +1491,7 @@ private struct StarRatingView: View {
         .contentShape(Rectangle())
         .onContinuousHover { phase in
             switch phase {
-            case .active(let location):
+            case let .active(location):
                 hoverRating = ratingValue(at: location.x)
             case .ended:
                 hoverRating = nil
@@ -1510,7 +1512,7 @@ private struct StarRatingView: View {
     private func ratingValue(at x: CGFloat) -> Double {
         let clampedX = min(max(0, x), totalWidth)
 
-        for index in 1...maxRating {
+        for index in 1 ... maxRating {
             let starStart = CGFloat(index - 1) * (starSize + spacing)
             let starEnd = starStart + starSize
 
@@ -1566,6 +1568,7 @@ private struct ViewHeightKey: PreferenceKey {
 }
 
 // MARK: - Components
+
 extension MangaDetailView {
     fileprivate func dateButton(
         date: Date?,
@@ -1600,11 +1603,10 @@ extension MangaDetailView {
         .buttonStyle(.plain)
     }
 
-    @ViewBuilder
     private func dateEditorSheet(_ target: EditingDateTarget) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             switch target {
-            case .purchase(let volume):
+            case let .purchase(volume):
                 Text("Wybierz datę zakupu")
                     .font(.headline)
 
@@ -1634,7 +1636,7 @@ extension MangaDetailView {
                     .keyboardShortcut(.defaultAction)
                 }
 
-            case .read(let volume):
+            case let .read(volume):
                 Text("Wybierz datę przeczytania")
                     .font(.headline)
 
@@ -1664,7 +1666,7 @@ extension MangaDetailView {
                     .keyboardShortcut(.defaultAction)
                 }
 
-            case .release(let volume):
+            case let .release(volume):
                 Text("Wybierz datę premiery")
                     .font(.headline)
 
@@ -1744,14 +1746,15 @@ extension MangaDetailView {
 }
 
 // MARK: - Actions
-extension MangaDetailView {
-    fileprivate func formattedAniListDate(_ date: Date?) -> String {
+
+private extension MangaDetailView {
+    func formattedAniListDate(_ date: Date?) -> String {
         guard let date else { return "Brak" }
 
         return date.yyyyMMdd()
     }
 
-    fileprivate func refreshAniListInfo() async {
+    func refreshAniListInfo() async {
         let title = manga.title.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !title.isEmpty else {
@@ -1810,7 +1813,7 @@ extension MangaDetailView {
         isRefreshingAniList = false
     }
 
-    fileprivate func fetchCoverFromAniList() async {
+    func fetchCoverFromAniList() async {
         let title = manga.title.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !title.isEmpty else {
@@ -1850,7 +1853,7 @@ extension MangaDetailView {
         isFetchingCover = false
     }
 
-    fileprivate func fetchRecommendations() async {
+    func fetchRecommendations() async {
         guard let mangaId = manga.aniListId else {
             ToastService.shared.show(
                 "Najpierw odśwież dane z AniList.",
@@ -1891,11 +1894,11 @@ extension MangaDetailView {
         isFetchingRecommendations = false
     }
 
-    fileprivate func addSingleVolume() {
+    func addSingleVolume() {
         volumeValidationMessage = nil
 
         guard let n = Int(newVolumeNumber.trimmingCharacters(in: .whitespaces)),
-            n > 0
+              n > 0
         else { return }
 
         guard !manga.volumes.contains(where: { $0.number == n }) else {
@@ -1912,17 +1915,17 @@ extension MangaDetailView {
         newVolumeNumber = ""
     }
 
-    fileprivate func addBulkVolumes() {
+    func addBulkVolumes() {
         guard let from = Int(bulkFrom.trimmingCharacters(in: .whitespaces)),
-            let to = Int(bulkTo.trimmingCharacters(in: .whitespaces)),
-            from >= 0, to >= 0
+              let to = Int(bulkTo.trimmingCharacters(in: .whitespaces)),
+              from >= 0, to >= 0
         else { return }
 
         let lower = min(from, to)
         let upper = max(from, to)
         let existing = Set(manga.volumes.map { $0.number })
 
-        for number in lower...upper where !existing.contains(number) {
+        for number in lower ... upper where !existing.contains(number) {
             manga.volumes.append(
                 Volume(number: number, owned: false, manga: manga)
             )
@@ -1932,19 +1935,19 @@ extension MangaDetailView {
         bulkTo = ""
     }
 
-    fileprivate func deleteVolume(_ volume: Volume) {
+    func deleteVolume(_ volume: Volume) {
         manga.volumes.removeAll {
             $0.persistentModelID == volume.persistentModelID
         }
         modelContext.delete(volume)
     }
 
-    fileprivate func applyPendingAction(markPrevious: Bool) {
+    func applyPendingAction(markPrevious: Bool) {
         guard let action = pendingBulkAction else { return }
         defer { pendingBulkAction = nil }
 
         switch action {
-        case .markOwnedUpTo(let target):
+        case let .markOwnedUpTo(target):
             let maxNumber = target.number
             for volume in manga.volumes {
                 if markPrevious {
@@ -1960,19 +1963,19 @@ extension MangaDetailView {
                 }
             }
 
-        case .markReadUpTo(let target):
+        case let .markReadUpTo(target):
             let targetNumber = target.number
 
             if markPrevious {
                 let lastPreviouslyReadNumber =
                     manga.volumes
-                    .filter { $0.number < targetNumber && ($0.read ?? false) }
-                    .map(\.number)
-                    .max() ?? 0
+                        .filter { $0.number < targetNumber && ($0.read ?? false) }
+                        .map(\.number)
+                        .max() ?? 0
 
                 for volume in manga.volumes {
                     guard volume.number > lastPreviouslyReadNumber,
-                        volume.number <= targetNumber
+                          volume.number <= targetNumber
                     else { continue }
 
                     if !(volume.read ?? false) {
@@ -1994,7 +1997,7 @@ extension MangaDetailView {
         }
     }
 
-    fileprivate func shouldAskMarkPreviousOwned(upTo target: Volume) -> Bool {
+    func shouldAskMarkPreviousOwned(upTo target: Volume) -> Bool {
         guard
             let previous = manga.volumes.first(where: {
                 $0.number == target.number - 1
@@ -2005,7 +2008,7 @@ extension MangaDetailView {
         return !previous.owned
     }
 
-    fileprivate func shouldAskMarkPreviousRead(upTo target: Volume) -> Bool {
+    func shouldAskMarkPreviousRead(upTo target: Volume) -> Bool {
         guard
             let previous = manga.volumes.first(where: {
                 $0.number == target.number - 1
@@ -2016,7 +2019,7 @@ extension MangaDetailView {
         return previous.owned && !(previous.read ?? false)
     }
 
-    fileprivate func formatAniListStatus(_ status: String) -> String {
+    func formatAniListStatus(_ status: String) -> String {
         switch status {
         case "FINISHED":
             return "Zakończona"
@@ -2035,6 +2038,7 @@ extension MangaDetailView {
 }
 
 // MARK: - Reusable Views
+
 private struct PremiumCard<Content: View>: View {
     let padding: CGFloat
     @ViewBuilder var content: Content
@@ -2087,10 +2091,9 @@ private struct StatBadge: View {
     }
 }
 
-extension View {
-    fileprivate func premiumInput(width: CGFloat) -> some View {
-        self
-            .textFieldStyle(.plain)
+private extension View {
+    func premiumInput(width: CGFloat) -> some View {
+        textFieldStyle(.plain)
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .frame(width: width)
@@ -2104,9 +2107,8 @@ extension View {
             )
     }
 
-    fileprivate func volumeActionButton() -> some View {
-        self
-            .buttonStyle(.plain)
+    func volumeActionButton() -> some View {
+        buttonStyle(.plain)
             .font(.caption.weight(.bold))
             .foregroundStyle(.primary)
             .padding(.horizontal, 12)

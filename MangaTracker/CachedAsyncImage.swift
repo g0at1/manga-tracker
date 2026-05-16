@@ -8,14 +8,14 @@ final class ImageLoader: ObservableObject {
 
     func load(from url: URL?) async {
         guard let url else {
-            self.image = nil
+            image = nil
             return
         }
 
         if let data = ImageCache.shared.data(for: url),
-            let img = NSImage(data: data)
+           let img = NSImage(data: data)
         {
-            self.image = img
+            image = img
             return
         }
 
@@ -28,9 +28,8 @@ final class ImageLoader: ObservableObject {
                 return
             }
             ImageCache.shared.store(data, for: url)
-            self.image = NSImage(data: data)
-        } catch {
-        }
+            image = NSImage(data: data)
+        } catch {}
     }
 }
 

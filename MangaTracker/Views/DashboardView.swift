@@ -88,46 +88,46 @@ struct DashboardView: View {
 
         return
             grouped
-            .map { date, volumes in
-                MonthlyPurchaseData(
-                    month: date,
-                    count: volumes.count,
-                    amount: volumes.compactMap { $0.price }.reduce(0, +)
-                )
-            }
-            .sorted { $0.month < $1.month }
+                .map { date, volumes in
+                    MonthlyPurchaseData(
+                        month: date,
+                        count: volumes.count,
+                        amount: volumes.compactMap { $0.price }.reduce(0, +)
+                    )
+                }
+                .sorted { $0.month < $1.month }
     }
 
     private var readDayData: [ReadDayData] {
         let calendar = Calendar.current
         let entries =
             mangas
-            .flatMap { $0.volumes }
-            .compactMap { volume -> (Date, Volume)? in
-                guard let readDate = volume.readDate else { return nil }
-                return (calendar.startOfDay(for: readDate), volume)
-            }
+                .flatMap { $0.volumes }
+                .compactMap { volume -> (Date, Volume)? in
+                    guard let readDate = volume.readDate else { return nil }
+                    return (calendar.startOfDay(for: readDate), volume)
+                }
 
         let grouped = Dictionary(grouping: entries, by: { $0.0 })
 
         return
             grouped
-            .map { day, values in
-                let items =
-                    values
-                    .map { value in
-                        let title = value.1.manga?.title ?? "Nieznany tytul"
-                        return "\(title) #\(value.1.number)"
-                    }
-                    .sorted()
+                .map { day, values in
+                    let items =
+                        values
+                            .map { value in
+                                let title = value.1.manga?.title ?? "Nieznany tytul"
+                                return "\(title) #\(value.1.number)"
+                            }
+                            .sorted()
 
-                return ReadDayData(
-                    date: day,
-                    count: values.count,
-                    items: items
-                )
-            }
-            .sorted { $0.date < $1.date }
+                    return ReadDayData(
+                        date: day,
+                        count: values.count,
+                        items: items
+                    )
+                }
+                .sorted { $0.date < $1.date }
     }
 
     private var readDayLookup: [Date: ReadDayData] {
@@ -319,7 +319,7 @@ struct DashboardView: View {
     private var summaryCards: some View {
         LazyVGrid(
             columns: [
-                GridItem(.adaptive(minimum: 180), spacing: 16)
+                GridItem(.adaptive(minimum: 180), spacing: 16),
             ],
             spacing: 16
         ) {
@@ -385,7 +385,9 @@ private struct ReadDayData: Identifiable {
     let count: Int
     let items: [String]
 
-    var id: Date { date }
+    var id: Date {
+        date
+    }
 }
 
 // MARK: - Reusable UI
@@ -468,14 +470,14 @@ private struct ReadHeatmapView: View {
         let today = calendar.startOfDay(for: Date())
         let start =
             calendar.date(byAdding: .weekOfYear, value: -41, to: today)
-            ?? today
+                ?? today
 
         _ =
             calendar.dateInterval(of: .weekOfYear, for: start)?.start
-            ?? start
+                ?? start
         let endWeek =
             calendar.dateInterval(of: .weekOfYear, for: today)?.end
-            ?? today
+                ?? today
         let end = calendar.date(byAdding: .day, value: -1, to: endWeek) ?? today
         return (start: start, end: end)
     }
@@ -485,7 +487,7 @@ private struct ReadHeatmapView: View {
         let end = dateRange.end
         let startWeek =
             calendar.dateInterval(of: .weekOfYear, for: start)?.start
-            ?? start
+                ?? start
 
         var days: [Date] = []
         var current = startWeek
@@ -493,11 +495,11 @@ private struct ReadHeatmapView: View {
             days.append(current)
             current =
                 calendar.date(byAdding: .day, value: 1, to: current)
-                ?? current
+                    ?? current
         }
 
         return stride(from: 0, to: days.count, by: 7).map {
-            Array(days[$0..<min($0 + 7, days.count)])
+            Array(days[$0 ..< min($0 + 7, days.count)])
         }
     }
 

@@ -20,7 +20,7 @@ struct ToastView: View {
                         .lineLimit(2)
 
                     if let description = message.description,
-                        !description.isEmpty
+                       !description.isEmpty
                     {
                         Text(description)
                             .font(.subheadline)

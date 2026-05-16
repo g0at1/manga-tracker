@@ -29,9 +29,9 @@ struct MangaLibraryStats {
     var totalReadPercent: Double {
         let ownedVolumes =
             mangas
-            .filter { !($0.isSold ?? false) }
-            .flatMap { $0.volumes }
-            .filter { $0.owned }
+                .filter { !($0.isSold ?? false) }
+                .flatMap { $0.volumes }
+                .filter { $0.owned }
 
         guard !ownedVolumes.isEmpty else { return 0 }
 
@@ -44,9 +44,9 @@ struct MangaLibraryStats {
 
         return
             mangas
-            .flatMap { $0.volumes }
-            .compactMap { $0.readDate }
-            .contains { calendar.isDateInToday($0) }
+                .flatMap { $0.volumes }
+                .compactMap { $0.readDate }
+                .contains { calendar.isDateInToday($0) }
     }
 
     var currentReadStreak: Int {
@@ -72,7 +72,7 @@ struct MangaLibraryStats {
 
         guard
             calendar.isDate(firstDay, inSameDayAs: today)
-                || calendar.isDate(firstDay, inSameDayAs: yesterday)
+            || calendar.isDate(firstDay, inSameDayAs: yesterday)
         else {
             return 0
         }

@@ -1,6 +1,6 @@
+internal import UniformTypeIdentifiers
 import SwiftData
 import SwiftUI
-internal import UniformTypeIdentifiers
 
 struct MangaGridView: View {
     let mangas: [Manga]
@@ -19,7 +19,7 @@ struct MangaGridView: View {
         ScrollView {
             LazyVGrid(
                 columns: [
-                    GridItem(.adaptive(minimum: 180, maximum: 220), spacing: 16)
+                    GridItem(.adaptive(minimum: 180, maximum: 220), spacing: 16),
                 ],
                 spacing: 20
             ) {
