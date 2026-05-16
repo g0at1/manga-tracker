@@ -1,3 +1,5 @@
+name: Lint
+
 on:
   push:
     branches: [master]
@@ -5,13 +7,9 @@ on:
     branches: [master]
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
+  Lint:
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: mtgto/swift-format-action@v1.0.0
-        with:
-          all_files: false
-          max_warnings: -1
+      - uses: actions/checkout@v4
+      - name: SwiftFormat
+        run: swiftformat --lint . --reporter github-actions-log
