@@ -43,6 +43,15 @@ struct MangaListRowView: View {
                             .background(.orange.opacity(0.12), in: Capsule())
                     }
 
+                    if manga.isSpinOff ?? false {
+                        Text("Spin-off")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.orange.opacity(0.12), in: Capsule())
+                    }
+
                     Spacer()
 
                     if percent >= 100 {
