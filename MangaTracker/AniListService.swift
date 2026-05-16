@@ -33,7 +33,7 @@ struct AniListRecommendationTitle {
     let userPreferred: String?
 }
 
-struct AniListService {
+enum AniListService {
     struct Response: Decodable {
         let data: DataContainer?
 
@@ -54,21 +54,21 @@ struct AniListService {
 
     static func fetchMangaCoverURL(title: String) async throws -> String? {
         let query = """
-            query ($search: String) {
-              Media(search: $search, type: MANGA) {
-                coverImage {
-                  extraLarge
-                  large
-                  medium
-                }
-              }
+        query ($search: String) {
+          Media(search: $search, type: MANGA) {
+            coverImage {
+              extraLarge
+              large
+              medium
             }
-            """
+          }
+        }
+        """
 
         let body: [String: Any] = [
             "query": query,
             "variables": [
-                "search": title
+                "search": title,
             ],
         ]
 
@@ -81,7 +81,7 @@ struct AniListService {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let http = response as? HTTPURLResponse,
-            (200..<300).contains(http.statusCode)
+              (200 ..< 300).contains(http.statusCode)
         else {
             throw URLError(.badServerResponse)
         }
@@ -93,67 +93,66 @@ struct AniListService {
             ?? decoded.data?.Media?.coverImage?.medium
     }
 
-    static func fetchMangaInfo(title: String) async throws -> AniListMangaInfo?
-    {
+    static func fetchMangaInfo(title: String) async throws -> AniListMangaInfo? {
         let query = """
-            query ($search: String) {
-              Page(page: 1, perPage: 10) {
-                media(search: $search, type: MANGA, sort: SEARCH_MATCH) {
-                  id
-                  status
-                  genres
-                  averageScore
-                  description
-                  bannerImage
-                  format
-                  title {
-                    romaji
-                    english
-                    native
+        query ($search: String) {
+          Page(page: 1, perPage: 10) {
+            media(search: $search, type: MANGA, sort: SEARCH_MATCH) {
+              id
+              status
+              genres
+              averageScore
+              description
+              bannerImage
+              format
+              title {
+                romaji
+                english
+                native
+              }
+              startDate {
+                year
+                month
+                day
+              }
+              endDate {
+                year
+                month
+                day
+              }
+              coverImage {
+                extraLarge
+                large
+                medium
+              }
+              relations {
+                edges {
+                  relationType
+                  node {
+                    id
                   }
-                  startDate {
-                    year
-                    month
-                    day
-                  }
-                  endDate {
-                    year
-                    month
-                    day
-                  }
-                  coverImage {
-                    extraLarge
-                    large
-                    medium
-                  }
-                  relations {
-                    edges {
-                      relationType
-                      node {
-                        id
-                      }
-                    }
-                  }
-                  staff {
-                    edges {
-                      role
-                      node {
-                        id
-                        name {
-                          full
-                        }
-                      }
+                }
+              }
+              staff {
+                edges {
+                  role
+                  node {
+                    id
+                    name {
+                      full
                     }
                   }
                 }
               }
             }
-            """
+          }
+        }
+        """
 
         let body: [String: Any] = [
             "query": query,
             "variables": [
-                "search": title
+                "search": title,
             ],
         ]
 
@@ -166,7 +165,7 @@ struct AniListService {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let http = response as? HTTPURLResponse,
-            (200..<300).contains(http.statusCode)
+              (200 ..< 300).contains(http.statusCode)
         else {
             throw URLError(.badServerResponse)
         }
@@ -197,8 +196,8 @@ struct AniListService {
             ?? results[0]
         let coverURL =
             media.coverImage?.extraLarge
-            ?? media.coverImage?.large
-            ?? media.coverImage?.medium
+                ?? media.coverImage?.large
+                ?? media.coverImage?.medium
 
         let mainAuthor = media.staff?.edges?
             .first(where: {
@@ -230,37 +229,37 @@ struct AniListService {
         -> [AniListRecommendation]
     {
         let query = """
-            query ($id: Int) {
-              Media(id: $id, type: MANGA) {
-                recommendations(sort: RATING_DESC) {
-                  nodes {
-                    rating
-                    mediaRecommendation {
-                      id
-                      type
-                      title {
-                        romaji
-                        english
-                        native
-                        userPreferred
-                      }
-                      coverImage {
-                        large
-                        medium
-                      }
-                      averageScore
-                      siteUrl
-                    }
+        query ($id: Int) {
+          Media(id: $id, type: MANGA) {
+            recommendations(sort: RATING_DESC) {
+              nodes {
+                rating
+                mediaRecommendation {
+                  id
+                  type
+                  title {
+                    romaji
+                    english
+                    native
+                    userPreferred
                   }
+                  coverImage {
+                    large
+                    medium
+                  }
+                  averageScore
+                  siteUrl
                 }
               }
             }
-            """
+          }
+        }
+        """
 
         let body: [String: Any] = [
             "query": query,
             "variables": [
-                "id": mangaId
+                "id": mangaId,
             ],
         ]
 
@@ -273,7 +272,7 @@ struct AniListService {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let http = response as? HTTPURLResponse,
-            (200..<300).contains(http.statusCode)
+              (200 ..< 300).contains(http.statusCode)
         else {
             throw URLError(.badServerResponse)
         }
@@ -285,7 +284,7 @@ struct AniListService {
 
         let nodes =
             decoded.data?.Media?.recommendations?.nodes
-            ?? []
+                ?? []
 
         return nodes.compactMap { node in
             guard let media = node.mediaRecommendation else { return nil }
@@ -462,6 +461,7 @@ private struct AniListRecommendationResponse: Decodable {
         let medium: String?
     }
 }
+
 struct Relations: Decodable {
     let edges: [RelationEdge]?
 }

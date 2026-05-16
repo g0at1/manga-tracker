@@ -1,6 +1,6 @@
+internal import UniformTypeIdentifiers
 import SwiftData
 import SwiftUI
-internal import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Environment(\.modelContext) var modelContext

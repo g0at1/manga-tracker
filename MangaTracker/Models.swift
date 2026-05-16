@@ -51,7 +51,7 @@ final class Manga {
         self.summary = summary
         self.createdAt = createdAt
         self.volumes = volumes
-        self.coverURL = coverUrl
+        coverURL = coverUrl
         self.sortOrder = sortOrder
         self.rating = rating
         self.isSold = isSold

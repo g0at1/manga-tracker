@@ -5,7 +5,7 @@ extension ContentView {
     func toggleViewMode() {
         viewModeRaw =
             (viewMode == .list ? LibraryViewMode.grid : LibraryViewMode.list)
-            .rawValue
+                .rawValue
     }
 
     func addManga() {
