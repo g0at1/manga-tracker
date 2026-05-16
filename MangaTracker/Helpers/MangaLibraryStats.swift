@@ -4,7 +4,9 @@ struct MangaLibraryStats {
     let mangas: [Manga]
 
     var mangaCount: Int {
-        mangas.filter { !($0.isSold ?? false) }.count
+        mangas.filter {
+            !($0.isSold ?? false) && !($0.isSpinOff ?? false)
+        }.count
     }
 
     var ownedVolumesCount: Int {

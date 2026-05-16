@@ -50,6 +50,21 @@ struct MangaGridCardView: View {
                         .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
                         .padding(10)
                 }
+
+                if manga.isSpinOff ?? false {
+                    Text("Spin-off")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.orange.opacity(0.95), in: Capsule())
+                        .overlay {
+                            Capsule()
+                                .stroke(.white.opacity(0.85), lineWidth: 1)
+                        }
+                        .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                        .padding(10)
+                }
             }
 
             VStack(alignment: .leading, spacing: 6) {

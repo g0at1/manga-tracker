@@ -1785,6 +1785,8 @@ extension MangaDetailView {
             manga.aniListEndDate = info.endDate
             manga.aniListAuthor = info.author
             manga.bannerImage = info.bannerImage
+            manga.aniListParentId = info.parentId
+            manga.isSpinOff = info.parentId != nil
             if let description = info.description {
                 manga.summary = description
             }

@@ -12,6 +12,7 @@ struct AniListMangaInfo {
     let author: String?
     let description: String?
     let bannerImage: String?
+    let parentId: Int?
 }
 
 struct AniListRecommendation: Identifiable {
@@ -125,6 +126,14 @@ struct AniListService {
                     large
                     medium
                   }
+                  relations {
+                    edges {
+                      relationType
+                      node {
+                        id
+                      }
+                    }
+                  }
                   staff {
                     edges {
                       role
@@ -209,7 +218,11 @@ struct AniListService {
             coverURL: coverURL,
             author: mainAuthor,
             description: plainText(from: media.description),
-            bannerImage: media.bannerImage
+            bannerImage: media.bannerImage,
+            parentId: media.relations?.edges?
+                .first(where: { $0.relationType == "PARENT" })?
+                .node
+                .id
         )
     }
 
@@ -357,6 +370,7 @@ private struct AniListInfoResponse: Decodable {
         let bannerImage: String?
         let format: String?
         let title: MediaTitle?
+        let relations: Relations?
     }
 
     struct MediaTitle: Decodable {
@@ -447,4 +461,16 @@ private struct AniListRecommendationResponse: Decodable {
         let large: String?
         let medium: String?
     }
+}
+struct Relations: Decodable {
+    let edges: [RelationEdge]?
+}
+
+struct RelationEdge: Decodable {
+    let relationType: String
+    let node: RelationNode
+}
+
+struct RelationNode: Decodable {
+    let id: Int
 }

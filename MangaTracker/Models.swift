@@ -19,6 +19,8 @@ final class Manga {
     var aniListEndDate: Date?
     var aniListGenresRaw: String?
     var aniListAuthor: String?
+    var aniListParentId: Int?
+    var isSpinOff: Bool?
 
     @Relationship(deleteRule: .cascade, inverse: \Volume.manga)
     var volumes: [Volume]
@@ -40,7 +42,9 @@ final class Manga {
         aniListEndDate: Date? = nil,
         aniListGenresRaw: String? = nil,
         aniListAuthor: String? = nil,
-        bannerImage: String? = ""
+        bannerImage: String? = "",
+        aniListParentId: Int? = nil,
+        isSpinOff: Bool? = false
     ) {
         self.title = title
         self.note = note
@@ -59,6 +63,8 @@ final class Manga {
         self.aniListGenresRaw = aniListGenresRaw
         self.aniListAuthor = aniListAuthor
         self.bannerImage = bannerImage
+        self.aniListParentId = aniListParentId
+        self.isSpinOff = isSpinOff
     }
 }
 
