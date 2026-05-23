@@ -37,19 +37,19 @@ struct MangaListRowView: View {
                     if manga.isSold ?? false {
                         Text("Sprzedane")
                             .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(.orange.opacity(0.12), in: Capsule())
+                            .background(.red.opacity(0.95), in: Capsule())
                     }
 
                     if manga.isSpinOff ?? false {
                         Text("Spin-off")
                             .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(.orange.opacity(0.12), in: Capsule())
+                            .background(.gray.opacity(0.95), in: Capsule())
                     }
 
                     Spacer()

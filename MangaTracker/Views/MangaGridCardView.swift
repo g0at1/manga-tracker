@@ -42,7 +42,7 @@ struct MangaGridCardView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(.orange.opacity(0.95), in: Capsule())
+                        .background(.red.opacity(0.95), in: Capsule())
                         .overlay {
                             Capsule()
                                 .stroke(.white.opacity(0.85), lineWidth: 1)
@@ -57,7 +57,7 @@ struct MangaGridCardView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(.orange.opacity(0.95), in: Capsule())
+                        .background(.gray.opacity(0.95), in: Capsule())
                         .overlay {
                             Capsule()
                                 .stroke(.white.opacity(0.85), lineWidth: 1)
