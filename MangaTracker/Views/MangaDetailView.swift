@@ -1794,6 +1794,10 @@ private extension MangaDetailView {
                 manga.summary = description
             }
 
+            if let totalVolumes = info.volumes, totalVolumes > 0 {
+                addAniListVolumes(total: totalVolumes)
+            }
+
             if manga.coverURL == nil || manga.coverURL?.isEmpty == true {
                 manga.coverURL = info.coverURL
             }
@@ -1811,6 +1815,16 @@ private extension MangaDetailView {
         }
 
         isRefreshingAniList = false
+    }
+
+    func addAniListVolumes(total: Int) {
+        let existing = Set(manga.volumes.map { $0.number })
+
+        for number in 1 ... total where !existing.contains(number) {
+            manga.volumes.append(
+                Volume(number: number, owned: false, manga: manga)
+            )
+        }
     }
 
     func fetchCoverFromAniList() async {

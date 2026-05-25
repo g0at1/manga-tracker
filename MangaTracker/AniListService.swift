@@ -13,6 +13,7 @@ struct AniListMangaInfo {
     let description: String?
     let bannerImage: String?
     let parentId: Int?
+    let volumes: Int?
 }
 
 struct AniListRecommendation: Identifiable {
@@ -103,6 +104,7 @@ enum AniListService {
               genres
               averageScore
               description
+              volumes
               bannerImage
               format
               title {
@@ -221,7 +223,8 @@ enum AniListService {
             parentId: media.relations?.edges?
                 .first(where: { $0.relationType == "PARENT" })?
                 .node
-                .id
+                .id,
+            volumes: media.volumes
         )
     }
 
@@ -370,6 +373,7 @@ private struct AniListInfoResponse: Decodable {
         let format: String?
         let title: MediaTitle?
         let relations: Relations?
+        let volumes: Int?
     }
 
     struct MediaTitle: Decodable {
