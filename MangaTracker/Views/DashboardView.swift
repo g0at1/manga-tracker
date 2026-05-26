@@ -8,23 +8,26 @@ struct DashboardView: View {
     @State private var selectedReadDay: ReadDayData?
 
     private var totalSeries: Int {
-        mangas.count
+        mangas.filter {
+            !($0.isSold ?? false) && !($0.isSpinOff ?? false)
+        }.count
     }
 
     private var totalVolumes: Int {
-        mangas.flatMap { $0.volumes }.count
+        mangas.filter { !($0.isSold ?? false) }.flatMap { $0.volumes }.count
     }
 
     private var ownedVolumes: Int {
-        mangas.flatMap { $0.volumes }.filter { $0.owned }.count
+        mangas.filter { !($0.isSold ?? false) }.flatMap { $0.volumes }.filter { $0.owned }.count
     }
 
     private var readVolumes: Int {
-        mangas.flatMap { $0.volumes }.filter { $0.read == true }.count
+        mangas.filter { !($0.isSold ?? false) }.flatMap { $0.volumes }.filter { $0.read == true }.count
     }
 
     private var totalSpent: Double {
         mangas
+            .filter { !($0.isSold ?? false) }
             .flatMap { $0.volumes }
             .filter { $0.owned }
             .compactMap { $0.price }
