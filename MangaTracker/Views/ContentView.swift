@@ -4,6 +4,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.modelContext) var modelContext
+    @Environment(\.openWindow) private var openWindow
 
     @Query(sort: \Manga.sortOrder, order: .forward)
     var mangas: [Manga]
@@ -11,10 +12,9 @@ struct ContentView: View {
     @State var selectedManga: Manga?
     @State var searchText = ""
     @State var showDashboard = false
-    @State var showUpcoming = false
     @State var draggedManga: Manga?
-    @AppStorage("libraryViewMode") var viewModeRaw: String = LibraryViewMode
-        .list.rawValue
+
+    @AppStorage("libraryViewMode") var viewModeRaw: String = LibraryViewMode.list.rawValue
     @StateObject private var toastService = ToastService.shared
 
     var viewMode: LibraryViewMode {
@@ -24,6 +24,7 @@ struct ContentView: View {
     var filteredMangas: [Manga] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return mangas }
+
         return mangas.filter {
             $0.title.localizedCaseInsensitiveContains(query)
         }
@@ -59,8 +60,7 @@ struct ContentView: View {
                         } label: {
                             Label(
                                 viewMode == .list ? "Grid view" : "List view",
-                                systemImage: viewMode == .list
-                                    ? "square.grid.2x2" : "list.bullet"
+                                systemImage: viewMode == .list ? "square.grid.2x2" : "list.bullet"
                             )
                         }
 
@@ -71,12 +71,9 @@ struct ContentView: View {
                         }
 
                         Button {
-                            showUpcoming = true
+                            openWindow(id: "upcoming")
                         } label: {
-                            Label(
-                                "Nadchodzące",
-                                systemImage: "calendar.badge.clock"
-                            )
+                            Label("Nadchodzące", systemImage: "calendar.badge.clock")
                         }
 
                         Button {
@@ -111,18 +108,13 @@ struct ContentView: View {
             .sheet(isPresented: $showDashboard) {
                 DashboardView(mangas: mangas)
             }
-            .sheet(isPresented: $showUpcoming) {
-                UpcomingView(mangas: mangas)
-            }
             .frame(minWidth: 900, minHeight: 600)
 
             if !toastService.toasts.isEmpty {
                 VStack(alignment: .trailing, spacing: 10) {
                     ForEach(toastService.toasts) { toast in
                         ToastView(message: toast)
-                            .transition(
-                                .move(edge: .top).combined(with: .opacity)
-                            )
+                            .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
                 .padding(.top, 20)
