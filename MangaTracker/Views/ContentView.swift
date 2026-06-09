@@ -11,7 +11,6 @@ struct ContentView: View {
 
     @State var selectedManga: Manga?
     @State var searchText = ""
-    @State var showDashboard = false
     @State var draggedManga: Manga?
 
     @AppStorage("libraryViewMode") var viewModeRaw: String = LibraryViewMode.list.rawValue
@@ -38,7 +37,6 @@ struct ContentView: View {
                     filteredMangas: filteredMangas,
                     selectedManga: $selectedManga,
                     searchText: $searchText,
-                    showDashboard: $showDashboard,
                     draggedManga: $draggedManga,
                     viewMode: viewMode,
                     onToggleViewMode: toggleViewMode,
@@ -65,7 +63,7 @@ struct ContentView: View {
                         }
 
                         Button {
-                            showDashboard = true
+                            openWindow(id: "dashboard")
                         } label: {
                             Label("Dashboard", systemImage: "chart.xyaxis.line")
                         }
@@ -104,9 +102,6 @@ struct ContentView: View {
                         description: Text("Albo dodaj nową po lewej.")
                     )
                 }
-            }
-            .sheet(isPresented: $showDashboard) {
-                DashboardView(mangas: mangas)
             }
             .frame(minWidth: 900, minHeight: 600)
 

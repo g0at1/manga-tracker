@@ -6,7 +6,6 @@ struct LibrarySidebarView: View {
 
     @Binding var selectedManga: Manga?
     @Binding var searchText: String
-    @Binding var showDashboard: Bool
     @Binding var draggedManga: Manga?
 
     let viewMode: LibraryViewMode

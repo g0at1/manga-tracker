@@ -17,5 +17,11 @@ struct MangaTrackerApp: App {
         }
         .defaultSize(width: 1280, height: 920)
         .modelContainer(for: [Manga.self, Volume.self])
+
+        WindowGroup("Dashboard", id: "dashboard") {
+            DashboardWindowView()
+        }
+        .defaultSize(width: 1920, height: 1080)
+        .modelContainer(for: [Manga.self, Volume.self])
     }
 }
