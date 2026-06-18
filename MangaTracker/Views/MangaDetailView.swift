@@ -23,6 +23,7 @@ struct MangaDetailView: View {
     @State private var recommendationsMessage: String?
     @State private var recommendations: [AniListRecommendation] = []
     @State private var showRecommendationsSheet = false
+    @State private var hoveredRating: Double? = nil
     @FocusState private var titleFocused: Bool
 
     private let defaultTitle = "Nowa manga"
@@ -459,15 +460,18 @@ extension MangaDetailView {
                                 get: { manga.rating ?? 0 },
                                 set: { manga.rating = $0 }
                             ),
+                            hoverRating: $hoveredRating,
                             maxRating: 5,
                             starSize: 26,
                             spacing: 6
                         )
 
+                        let displayRating = hoveredRating ?? (manga.rating ?? 0)
+
                         Text(
-                            manga.rating == 0
+                            displayRating == 0
                                 ? "Brak"
-                                : String(format: "%.1f / 5", manga.rating ?? 0)
+                                : String(format: "%.1f / 5", displayRating)
                         )
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(.secondary)
@@ -1453,15 +1457,17 @@ private struct StarRatingView: View {
     let starSize: CGFloat
     let spacing: CGFloat
 
-    @State private var hoverRating: Double?
+    @Binding var hoverRating: Double?
 
     init(
         rating: Binding<Double>,
+        hoverRating: Binding<Double?>,
         maxRating: Int = 5,
         starSize: CGFloat = 24,
         spacing: CGFloat = 8
     ) {
         _rating = rating
+        _hoverRating = hoverRating
         self.maxRating = maxRating
         self.starSize = starSize
         self.spacing = spacing
