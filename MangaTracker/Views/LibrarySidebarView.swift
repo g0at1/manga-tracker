@@ -19,6 +19,7 @@ struct LibrarySidebarView: View {
     let onMoveMangaInGrid: (Manga, Manga) -> Void
     let onMarkNextAsRead: (Manga) -> Void
     let onToggleSold: (Manga) -> Void
+    let onToggleSpinOff: (Manga) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,7 +48,8 @@ struct LibrarySidebarView: View {
                         onMoveMangaDown: onMoveMangaDown,
                         onMoveMangaInGrid: onMoveMangaInGrid,
                         onMarkNextAsRead: onMarkNextAsRead,
-                        onToggleSold: onToggleSold
+                        onToggleSold: onToggleSold,
+                        onToggleSpinOff: onToggleSpinOff
                     )
                 }
             }

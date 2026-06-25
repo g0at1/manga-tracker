@@ -138,4 +138,14 @@ extension ContentView {
             print("Error while toggling sold state: \(error)")
         }
     }
+
+    func toggleSpinOff(_ manga: Manga) {
+        manga.isSpinOff = !(manga.isSpinOff ?? false)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error while toggling spin-off state: \(error)")
+        }
+    }
 }

@@ -14,6 +14,7 @@ struct MangaGridView: View {
     let onMoveMangaInGrid: (Manga, Manga) -> Void
     let onMarkNextAsRead: (Manga) -> Void
     let onToggleSold: (Manga) -> Void
+    let onToggleSpinOff: (Manga) -> Void
 
     var body: some View {
         ScrollView {
@@ -54,6 +55,12 @@ struct MangaGridView: View {
                                 ? "Cofnij sprzedane" : "Sprzedane"
                         ) {
                             onToggleSold(manga)
+                        }
+                        Button(
+                            manga.isSpinOff ?? false
+                                ? "Cofnij spin-off" : "Oznacz jako spin-off"
+                        ) {
+                            onToggleSpinOff(manga)
                         }
                         Divider()
                         Button("Przesuń wyżej") { onMoveMangaUp(manga) }
