@@ -1235,6 +1235,7 @@ extension MangaDetailView {
                     .white.opacity(0.05),
                     in: RoundedRectangle(cornerRadius: 10, style: .continuous)
                 )
+                .disabled(!volume.owned)
 
                 Text("PLN")
                     .font(.caption.weight(.bold))
@@ -1620,7 +1621,10 @@ extension MangaDetailView {
                     title: "Data zakupu",
                     selection: Binding(
                         get: { volume.purchaseDate ?? .now },
-                        set: { volume.purchaseDate = $0 }
+                        set: {
+                            volume.purchaseDate = $0
+                            volume.owned = true
+                        }
                     )
                 )
 
@@ -1650,7 +1654,10 @@ extension MangaDetailView {
                     title: "Data przeczytania",
                     selection: Binding(
                         get: { volume.readDate ?? .now },
-                        set: { volume.readDate = $0 }
+                        set: {
+                            volume.readDate = $0
+                            volume.read = true
+                        }
                     )
                 )
 
