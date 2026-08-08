@@ -12,6 +12,7 @@ struct ContentView: View {
     @State var selectedManga: Manga?
     @State var searchText = ""
     @State var draggedManga: Manga?
+    @State private var showUnreadOnly = false
 
     @AppStorage("libraryViewMode") var viewModeRaw: String = LibraryViewMode.list.rawValue
     @StateObject private var toastService = ToastService.shared
@@ -22,9 +23,18 @@ struct ContentView: View {
 
     var filteredMangas: [Manga] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return mangas }
-
-        return mangas.filter {
+        var mangasToFilter = mangas
+        if showUnreadOnly {
+            mangasToFilter = mangasToFilter.filter { manga in
+                manga.isSold != true &&
+                    manga.volumes.contains { volume in
+                        volume.owned &&
+                            volume.read != true
+                    }
+            }
+        }
+        guard !query.isEmpty else { return mangasToFilter }
+        return mangasToFilter.filter {
             $0.title.localizedCaseInsensitiveContains(query)
         }
     }
@@ -73,6 +83,15 @@ struct ContentView: View {
                             openWindow(id: "upcoming")
                         } label: {
                             Label("Nadchodzące", systemImage: "calendar.badge.clock")
+                        }
+
+                        Button {
+                            showUnreadOnly.toggle()
+                        } label: {
+                            Label(
+                                showUnreadOnly ? "Pokaż wszystkie" : "Pokaż nieprzeczytane",
+                                systemImage: showUnreadOnly ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle"
+                            )
                         }
 
                         Button {
