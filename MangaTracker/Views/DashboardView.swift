@@ -6,6 +6,7 @@ struct DashboardView: View {
     let mangas: [Manga]
     @Environment(\.dismiss) private var dismiss
     @State private var selectedReadDay: ReadDayData?
+    @State private var hoveredPurchase: MonthlyPurchaseData?
 
     private var totalSeries: Int {
         mangas.filter {
@@ -32,6 +33,63 @@ struct DashboardView: View {
             .filter { $0.owned }
             .compactMap { $0.price }
             .reduce(0, +)
+    }
+
+    private var averageVolumePrice: Double {
+        let prices = mangas
+            .filter { !($0.isSold ?? false) }
+            .flatMap { $0.volumes }
+            .filter { $0.owned }
+            .compactMap { $0.price }
+
+        guard !prices.isEmpty else { return 0 }
+
+        return prices.reduce(0, +) / Double(prices.count)
+    }
+
+    private var currentMonthSpending: Double {
+        let calendar = Calendar.current
+        let now = Date()
+
+        return monthlyPurchaseData.first {
+            calendar.isDate(
+                $0.month,
+                equalTo: now,
+                toGranularity: .month
+            )
+        }?.amount ?? 0
+    }
+
+    private var previousMonthSpending: Double {
+        let calendar = Calendar.current
+
+        guard let previousMonth = calendar.date(
+            byAdding: .month,
+            value: -1,
+            to: Date()
+        ) else {
+            return 0
+        }
+
+        return monthlyPurchaseData.first {
+            calendar.isDate(
+                $0.month,
+                equalTo: previousMonth,
+                toGranularity: .month
+            )
+        }?.amount ?? 0
+    }
+
+    private var monthlySpendingDifference: Double {
+        currentMonthSpending - previousMonthSpending
+    }
+
+    private var monthlySpendingPercentChange: Double? {
+        guard previousMonthSpending > 0 else {
+            return nil
+        }
+
+        return (monthlySpendingDifference / previousMonthSpending) * 100
     }
 
     private var readPercent: Double {
@@ -69,7 +127,7 @@ struct DashboardView: View {
                     percent: percent
                 )
             }
-            .filter { $0.totalVolumes > 0 }
+            .filter { $0.totalVolumes > 0 && $0.percent < 100 }
             .sorted { $0.percent > $1.percent }
     }
 
@@ -255,15 +313,99 @@ struct DashboardView: View {
                         }
 
                         DashboardCard("Wydatki miesięczne") {
-                            Chart(monthlyPurchaseData) { item in
-                                BarMark(
-                                    x: .value(
-                                        "Miesiąc",
-                                        item.month,
-                                        unit: .month
-                                    ),
-                                    y: .value("Kwota", item.amount)
-                                )
+                            Chart {
+                                ForEach(monthlyPurchaseData) { item in
+                                    BarMark(
+                                        x: .value(
+                                            "Miesiąc",
+                                            item.month,
+                                            unit: .month
+                                        ),
+                                        y: .value("Kwota", item.amount)
+                                    )
+                                    .opacity(
+                                        hoveredPurchase == nil ||
+                                            hoveredPurchase?.id == item.id ? 1 : 0.5
+                                    )
+                                }
+
+                                if let hoveredPurchase {
+                                    RuleMark(
+                                        x: .value("Miesiąc", hoveredPurchase.month)
+                                    )
+                                    .foregroundStyle(.secondary.opacity(0.4))
+                                    .annotation(
+                                        position: .top,
+                                        spacing: 8
+                                    ) {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(
+                                                hoveredPurchase.month.formatted(
+                                                    .dateTime.month(.wide).year()
+                                                )
+                                            )
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+
+                                            Text(
+                                                hoveredPurchase.amount,
+                                                format: .currency(code: "PLN")
+                                            )
+                                            .font(.headline)
+                                            .monospacedDigit()
+                                        }
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 8)
+                                        .background(.regularMaterial)
+                                        .clipShape(
+                                            RoundedRectangle(
+                                                cornerRadius: 8,
+                                                style: .continuous
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                            .chartOverlay { proxy in
+                                GeometryReader { geometry in
+                                    Rectangle()
+                                        .fill(.clear)
+                                        .contentShape(Rectangle())
+                                        .onContinuousHover { phase in
+                                            switch phase {
+                                            case let .active(location):
+                                                let plotFrame = geometry[proxy.plotFrame!]
+
+                                                let xPosition =
+                                                    location.x - plotFrame.origin.x
+
+                                                guard
+                                                    xPosition >= 0,
+                                                    xPosition <= plotFrame.width,
+                                                    let date: Date = proxy.value(
+                                                        atX: xPosition
+                                                    )
+                                                else {
+                                                    hoveredPurchase = nil
+                                                    return
+                                                }
+
+                                                hoveredPurchase =
+                                                    monthlyPurchaseData.min {
+                                                        abs(
+                                                            $0.month.timeIntervalSince(date)
+                                                        )
+                                                            <
+                                                            abs(
+                                                                $1.month.timeIntervalSince(date)
+                                                            )
+                                                    }
+
+                                            case .ended:
+                                                hoveredPurchase = nil
+                                            }
+                                        }
+                                }
                             }
                             .frame(height: 260)
                         }
@@ -296,6 +438,82 @@ struct DashboardView: View {
                                 if index < min(mangaSpendData.count, 5) - 1 {
                                     Divider()
                                 }
+                            }
+                        }
+                    }
+                    DashboardCard("Ten miesiąc vs poprzedni") {
+                        HStack(spacing: 32) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Ten miesiąc")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+
+                                Text(
+                                    currentMonthSpending,
+                                    format: .currency(code: "PLN")
+                                )
+                                .font(.title2.weight(.bold))
+                                .monospacedDigit()
+                            }
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Poprzedni miesiąc")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+
+                                Text(
+                                    previousMonthSpending,
+                                    format: .currency(code: "PLN")
+                                )
+                                .font(.title2.weight(.bold))
+                                .monospacedDigit()
+                            }
+
+                            Spacer()
+
+                            VStack(alignment: .trailing, spacing: 6) {
+                                Text("Zmiana")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+
+                                HStack(spacing: 6) {
+                                    Image(
+                                        systemName:
+                                        monthlySpendingDifference > 0
+                                            ? "arrow.up.right"
+                                            : monthlySpendingDifference < 0
+                                            ? "arrow.down.right"
+                                            : "minus"
+                                    )
+
+                                    if let percent = monthlySpendingPercentChange {
+                                        Text(
+                                            percent,
+                                            format: .number
+                                                .precision(.fractionLength(1))
+                                        )
+
+                                        Text("%")
+                                    } else {
+                                        Text("—")
+                                    }
+                                }
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(
+                                    monthlySpendingDifference > 0
+                                        ? .red
+                                        : monthlySpendingDifference < 0
+                                        ? .green
+                                        : .secondary
+                                )
+
+                                Text(
+                                    monthlySpendingDifference,
+                                    format: .currency(code: "PLN")
+                                )
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
                             }
                         }
                     }
@@ -350,6 +568,11 @@ struct DashboardView: View {
                 title: "Wydano",
                 value: totalSpent.formatted(.currency(code: "PLN")),
                 systemImage: "creditcard"
+            )
+            SummaryCard(
+                title: "Średnia cena tomu",
+                value: averageVolumePrice.formatted(.currency(code: "PLN")),
+                systemImage: "tag"
             )
             SummaryCard(
                 title: "Postęp",
