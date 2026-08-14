@@ -1,9 +1,11 @@
-import Foundation
 internal import UniformTypeIdentifiers
+import Foundation
 import SwiftUI
 
 struct JSONDocument: FileDocument {
-    static var readableContentTypes: [UTType] { [.json] }
+    static var readableContentTypes: [UTType] {
+        [.json]
+    }
 
     var data: Data
 
@@ -12,10 +14,10 @@ struct JSONDocument: FileDocument {
     }
 
     init(configuration: ReadConfiguration) throws {
-        self.data = configuration.file.regularFileContents ?? Data()
+        data = configuration.file.regularFileContents ?? Data()
     }
 
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+    func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {
         return FileWrapper(regularFileWithContents: data)
     }
 }

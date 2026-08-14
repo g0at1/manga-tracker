@@ -17,7 +17,7 @@ struct ContentView: View {
     @AppStorage("libraryViewMode") var viewModeRaw: String = LibraryViewMode.list.rawValue
     @StateObject private var toastService = ToastService.shared
 
-    // Import state
+    /// Import state
     @State private var isImporting: Bool = false
 
     var viewMode: LibraryViewMode {
@@ -167,7 +167,7 @@ struct ContentView: View {
             allowedContentTypes: [.json]
         ) { result in
             switch result {
-            case .success(let url):
+            case let .success(url):
                 do {
                     let data = try Data(contentsOf: url)
                     let exported = try decodeMangasFromJSON(data)
@@ -230,7 +230,7 @@ struct ContentView: View {
                 } catch {
                     toastService.show("Import nieudany: \(error.localizedDescription)")
                 }
-            case .failure(let error):
+            case let .failure(error):
                 toastService.show("Import nieudany: \(error.localizedDescription)")
             }
         }
@@ -252,4 +252,3 @@ struct ContentView: View {
         }
     }
 }
-
