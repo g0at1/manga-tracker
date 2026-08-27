@@ -15,6 +15,8 @@ struct ContentView: View {
     @State private var showUnreadOnly = false
 
     @AppStorage("libraryViewMode") var viewModeRaw: String = LibraryViewMode.list.rawValue
+    @AppStorage("lastBackupAt") var lastBackupAtTimestamp: Double = 0
+    @AppStorage("backupReminderIntervalDays") var backupReminderIntervalDays: Int = 7
     @StateObject private var toastService = ToastService.shared
 
     /// Import state
@@ -103,6 +105,7 @@ struct ContentView: View {
                         } label: {
                             Label("Eksportuj", systemImage: "square.and.arrow.up")
                         }
+                        .help(backupStatusText())
 
                         Button {
                             // show import dialog (open panel) to pick JSON file
@@ -122,6 +125,7 @@ struct ContentView: View {
                     if selectedManga == nil {
                         selectedManga = filteredMangas.first
                     }
+                    showBackupReminderIfNeeded()
                 }
                 .onChange(of: mangas) { _, newValue in
                     if selectedManga == nil {
@@ -246,9 +250,28 @@ struct ContentView: View {
             }
             let url = downloads.appendingPathComponent(filename)
             try data.write(to: url, options: .atomic)
+            lastBackupAtTimestamp = Date().timeIntervalSince1970
             toastService.show("Eksport zapisano: \(url.path)")
         } catch {
             toastService.show("Eksport nieudany: \(error.localizedDescription)")
+        }
+    }
+
+    private func backupStatusText() -> String {
+        guard lastBackupAtTimestamp > 0 else {
+            return "Ostatni backup: nigdy"
+        }
+        let date = Date(timeIntervalSince1970: lastBackupAtTimestamp)
+        let formatted = DateFormatters.yyyyMMdd.string(from: date)
+        return "Ostatni backup: \(formatted)"
+    }
+
+    private func showBackupReminderIfNeeded() {
+        guard lastBackupAtTimestamp > 0 else { return }
+        let lastBackupDate = Date(timeIntervalSince1970: lastBackupAtTimestamp)
+        let daysSinceBackup = Calendar.current.dateComponents([.day], from: lastBackupDate, to: Date()).day ?? 0
+        if daysSinceBackup >= backupReminderIntervalDays {
+            toastService.show("Minęło \(daysSinceBackup) dni od ostatniego backupu. Warto wykonać eksport.")
         }
     }
 }
