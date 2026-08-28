@@ -99,6 +99,8 @@ struct ContentView: View {
                             )
                         }
 
+                        NotificationsMenuView(toastService: toastService)
+
                         Button {
                             // Export to Downloads folder (avoids save panel entitlement issues)
                             exportToDownloads()

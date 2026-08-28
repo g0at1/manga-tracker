@@ -1816,7 +1816,7 @@ private extension MangaDetailView {
             }
 
             ToastService.shared.show(
-                "Dane z AniList odświeżone.",
+                "Dane z AniList odświeżone dla \(title).",
                 type: .success
             )
         } catch {

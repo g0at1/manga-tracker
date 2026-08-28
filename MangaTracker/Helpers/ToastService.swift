@@ -6,6 +6,7 @@ final class ToastService: ObservableObject {
     static let shared = ToastService()
 
     @Published private(set) var toasts: [ToastMessage] = []
+    @Published private(set) var inbox: [ToastInboxEntry] = []
 
     private let maxToasts = 4
 
@@ -29,6 +30,7 @@ final class ToastService: ObservableObject {
         }
 
         toasts.insert(toast, at: 0)
+        inbox.insert(ToastInboxEntry(message: toast), at: 0)
 
         Task {
             try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
@@ -39,4 +41,31 @@ final class ToastService: ObservableObject {
     func dismiss(_ toast: ToastMessage) {
         toasts.removeAll { $0.id == toast.id }
     }
+
+    var unreadInboxCount: Int {
+        inbox.filter { !$0.isRead }.count
+    }
+
+    func markAllInboxAsRead() {
+        inbox = inbox.map { entry in
+            var updated = entry
+            updated.isRead = true
+            return updated
+        }
+    }
+
+    func deleteAllInbox() {
+        inbox.removeAll()
+    }
+
+    func markInboxEntryAsRead(_ id: UUID) {
+        guard let index = inbox.firstIndex(where: { $0.id == id }) else { return }
+        inbox[index].isRead = true
+    }
+}
+
+struct ToastInboxEntry: Identifiable, Equatable {
+    let id = UUID()
+    let message: ToastMessage
+    var isRead: Bool = false
 }

@@ -6,6 +6,7 @@ struct ToastMessage: Identifiable, Equatable {
     let description: String?
     let type: ToastType
     let duration: TimeInterval
+    let createdAt: Date = .now
 }
 
 enum ToastType {
