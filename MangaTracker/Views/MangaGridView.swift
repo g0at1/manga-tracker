@@ -15,6 +15,7 @@ struct MangaGridView: View {
     let onMarkNextAsRead: (Manga) -> Void
     let onToggleSold: (Manga) -> Void
     let onToggleSpinOff: (Manga) -> Void
+    let isReorderable: Bool
 
     var body: some View {
         ScrollView {
@@ -25,27 +26,7 @@ struct MangaGridView: View {
                 spacing: 20
             ) {
                 ForEach(mangas) { manga in
-                    MangaGridCardView(
-                        manga: manga,
-                        isSelected: selectedManga?.persistentModelID
-                            == manga.persistentModelID
-                    )
-                    .onTapGesture {
-                        selectedManga = manga
-                    }
-                    .onDrag {
-                        draggedManga = manga
-                        return NSItemProvider(object: manga.title as NSString)
-                    }
-                    .onDrop(
-                        of: [.text],
-                        delegate: MangaDropDelegate(
-                            targetManga: manga,
-                            mangas: mangas,
-                            draggedManga: $draggedManga,
-                            moveAction: onMoveMangaInGrid
-                        )
-                    )
+                    card(for: manga)
                     .contextMenu {
                         Button("Oznacz kolejny tom jako przeczytany") {
                             onMarkNextAsRead(manga)
@@ -62,9 +43,11 @@ struct MangaGridView: View {
                         ) {
                             onToggleSpinOff(manga)
                         }
-                        Divider()
-                        Button("Przesuń wyżej") { onMoveMangaUp(manga) }
-                        Button("Przesuń niżej") { onMoveMangaDown(manga) }
+                        if isReorderable {
+                            Divider()
+                            Button("Przesuń wyżej") { onMoveMangaUp(manga) }
+                            Button("Przesuń niżej") { onMoveMangaDown(manga) }
+                        }
                         Divider()
                         Button("Usuń", role: .destructive) {
                             onDeleteManga(manga)
@@ -73,6 +56,37 @@ struct MangaGridView: View {
                 }
             }
             .padding(12)
+        }
+    }
+
+    @ViewBuilder
+    private func card(for manga: Manga) -> some View {
+        let card = MangaGridCardView(
+            manga: manga,
+            isSelected: selectedManga?.persistentModelID
+                == manga.persistentModelID
+        )
+        .onTapGesture {
+            selectedManga = manga
+        }
+
+        if isReorderable {
+            card
+                .onDrag {
+                    draggedManga = manga
+                    return NSItemProvider(object: manga.title as NSString)
+                }
+                .onDrop(
+                    of: [.text],
+                    delegate: MangaDropDelegate(
+                        targetManga: manga,
+                        mangas: mangas,
+                        draggedManga: $draggedManga,
+                        moveAction: onMoveMangaInGrid
+                    )
+                )
+        } else {
+            card
         }
     }
 }

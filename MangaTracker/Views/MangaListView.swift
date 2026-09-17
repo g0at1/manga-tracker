@@ -10,6 +10,7 @@ struct MangaListView: View {
     let onMoveMangas: (IndexSet, Int) -> Void
     let onMarkNextAsRead: (Manga) -> Void
     let onToggleSold: (Manga) -> Void
+    let isReorderable: Bool
 
     var body: some View {
         List(selection: $selectedManga) {
@@ -26,16 +27,19 @@ struct MangaListView: View {
                         ) {
                             onToggleSold(manga)
                         }
-                        Divider()
-                        Button("Przesuń wyżej") { onMoveMangaUp(manga) }
-                        Button("Przesuń niżej") { onMoveMangaDown(manga) }
+                        if isReorderable {
+                            Divider()
+                            Button("Przesuń wyżej") { onMoveMangaUp(manga) }
+                            Button("Przesuń niżej") { onMoveMangaDown(manga) }
+                        }
                         Divider()
                         Button("Usuń", role: .destructive) {
                             onDeleteManga(manga)
                         }
                     }
             }
-            .onMove(perform: onMoveMangas)
+            .onMove(perform: isReorderable ? onMoveMangas : nil)
         }
+        .scrollContentBackground(.hidden)
     }
 }

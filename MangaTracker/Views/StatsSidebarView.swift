@@ -1,13 +1,25 @@
 import SwiftUI
 
-struct SummaryHeaderView: View {
+struct StatsSidebarView: View {
     let mangas: [Manga]
 
     var body: some View {
         let stats = MangaLibraryStats(mangas: mangas)
 
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 12) {
+                HStack(spacing: 10) {
+                    Image(systemName: "books.vertical.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.green)
+                    Text("MangaTracker")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 4)
+                .padding(.bottom, 8)
+
                 StatCardView(
                     title: "Serie",
                     value: "\(stats.mangaCount)",
@@ -50,7 +62,9 @@ struct SummaryHeaderView: View {
                 )
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.vertical, 14)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AppBackgroundView())
     }
 }

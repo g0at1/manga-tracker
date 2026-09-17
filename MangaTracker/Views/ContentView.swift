@@ -12,9 +12,13 @@ struct ContentView: View {
     @State var selectedManga: Manga?
     @State var searchText = ""
     @State var draggedManga: Manga?
-    @State private var showUnreadOnly = false
 
     @AppStorage("libraryViewMode") var viewModeRaw: String = LibraryViewMode.list.rawValue
+    @AppStorage("librarySortOption") private var sortOptionRaw: String = LibrarySortOption.manual.rawValue
+    @AppStorage("librarySortAscending") private var sortAscending: Bool = true
+    @AppStorage("libraryShowUnreadOnly") private var showUnreadOnly = false
+    @AppStorage("libraryHideSold") private var hideSold = false
+    @AppStorage("libraryHideSpinOffs") private var hideSpinOffs = false
     @AppStorage("lastBackupAt") var lastBackupAtTimestamp: Double = 0
     @AppStorage("backupReminderIntervalDays") var backupReminderIntervalDays: Int = 7
     @StateObject private var toastService = ToastService.shared
@@ -22,15 +26,27 @@ struct ContentView: View {
     /// Import state
     @State private var isImporting: Bool = false
 
+    /// Slightly larger than the default toolbar glyph size.
+    static let toolbarIconFont: Font = .system(size: 16, weight: .medium)
+
     var viewMode: LibraryViewMode {
         LibraryViewMode(rawValue: viewModeRaw) ?? .list
     }
 
+    var sortOption: LibrarySortOption {
+        LibrarySortOption(rawValue: sortOptionRaw) ?? .manual
+    }
+
+    /// Drag-reordering only makes sense when the list shows the user's own order.
+    var isReorderable: Bool {
+        sortOption == .manual
+    }
+
     var filteredMangas: [Manga] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        var mangasToFilter = mangas
+        var result = mangas
         if showUnreadOnly {
-            mangasToFilter = mangasToFilter.filter { manga in
+            result = result.filter { manga in
                 manga.isSold != true &&
                     manga.volumes.contains { volume in
                         volume.owned &&
@@ -38,22 +54,39 @@ struct ContentView: View {
                     }
             }
         }
-        guard !query.isEmpty else { return mangasToFilter }
-        return mangasToFilter.filter {
-            $0.title.localizedCaseInsensitiveContains(query)
+        if hideSold {
+            result = result.filter { $0.isSold != true }
         }
+        if hideSpinOffs {
+            result = result.filter { $0.isSpinOff != true }
+        }
+        if !query.isEmpty {
+            result = result.filter {
+                $0.title.localizedCaseInsensitiveContains(query)
+            }
+        }
+        result.sort(by: sortOption.areInIncreasingOrder)
+        return sortAscending ? result : result.reversed()
     }
 
     var body: some View {
         ZStack {
             NavigationSplitView {
+                StatsSidebarView(mangas: mangas)
+                    .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
+            } content: {
                 LibrarySidebarView(
-                    mangas: mangas,
                     filteredMangas: filteredMangas,
                     selectedManga: $selectedManga,
                     searchText: $searchText,
                     draggedManga: $draggedManga,
+                    sortOptionRaw: $sortOptionRaw,
+                    sortAscending: $sortAscending,
+                    showUnreadOnly: $showUnreadOnly,
+                    hideSold: $hideSold,
+                    hideSpinOffs: $hideSpinOffs,
                     viewMode: viewMode,
+                    isReorderable: isReorderable,
                     onToggleViewMode: toggleViewMode,
                     onAddManga: addManga,
                     onDeleteManga: deleteManga,
@@ -65,8 +98,7 @@ struct ContentView: View {
                     onToggleSold: toggleSold,
                     onToggleSpinOff: toggleSpinOff
                 )
-                .navigationTitle("Mangi")
-                .searchable(text: $searchText, prompt: "Szukaj tytułu…")
+                .navigationSplitViewColumnWidth(min: 320, ideal: 380)
                 .toolbar {
                     ToolbarItemGroup(placement: .primaryAction) {
                         Button {
@@ -76,27 +108,21 @@ struct ContentView: View {
                                 viewMode == .list ? "Grid view" : "List view",
                                 systemImage: viewMode == .list ? "square.grid.2x2" : "list.bullet"
                             )
+                            .font(Self.toolbarIconFont)
                         }
 
                         Button {
                             openWindow(id: "dashboard")
                         } label: {
                             Label("Dashboard", systemImage: "chart.xyaxis.line")
+                                .font(Self.toolbarIconFont)
                         }
 
                         Button {
                             openWindow(id: "upcoming")
                         } label: {
                             Label("Nadchodzące", systemImage: "calendar.badge.clock")
-                        }
-
-                        Button {
-                            showUnreadOnly.toggle()
-                        } label: {
-                            Label(
-                                showUnreadOnly ? "Pokaż wszystkie" : "Pokaż nieprzeczytane",
-                                systemImage: showUnreadOnly ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle"
-                            )
+                                .font(Self.toolbarIconFont)
                         }
 
                         NotificationsMenuView(toastService: toastService)
@@ -106,6 +132,7 @@ struct ContentView: View {
                             exportToDownloads()
                         } label: {
                             Label("Eksportuj", systemImage: "square.and.arrow.up")
+                                .font(Self.toolbarIconFont)
                         }
                         .help(backupStatusText())
 
@@ -114,12 +141,14 @@ struct ContentView: View {
                             isImporting = true
                         } label: {
                             Label("Importuj", systemImage: "square.and.arrow.down")
+                                .font(Self.toolbarIconFont)
                         }
 
                         Button {
                             addManga()
                         } label: {
                             Label("Dodaj", systemImage: "plus")
+                                .font(Self.toolbarIconFont)
                         }
                     }
                 }
@@ -146,7 +175,8 @@ struct ContentView: View {
                     )
                 }
             }
-            .frame(minWidth: 900, minHeight: 600)
+            .frame(minWidth: 1100, minHeight: 600)
+            .toolbarBackground(.hidden, for: .windowToolbar)
 
             if !toastService.toasts.isEmpty {
                 VStack(alignment: .trailing, spacing: 10) {

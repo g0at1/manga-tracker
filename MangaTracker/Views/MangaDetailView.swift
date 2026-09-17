@@ -1745,16 +1745,7 @@ extension MangaDetailView {
     }
 
     fileprivate var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color.black.opacity(0.96),
-                Color(red: 0.08, green: 0.09, blue: 0.11),
-                Color.black.opacity(0.98),
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
+        AppBackgroundView()
     }
 }
 

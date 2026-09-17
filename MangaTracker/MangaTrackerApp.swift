@@ -10,6 +10,7 @@ struct MangaTrackerApp: App {
                     WindowManager.maximizeMainWindow()
                 }
         }
+        .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .modelContainer(for: [Manga.self, Volume.self])
 
         WindowGroup("Nadchodzące", id: "upcoming") {

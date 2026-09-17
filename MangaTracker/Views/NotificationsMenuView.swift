@@ -43,6 +43,7 @@ struct NotificationsMenuView: View {
                 "Powiadomienia",
                 systemImage: toastService.unreadInboxCount > 0 ? "bell.badge.fill" : "bell"
             )
+            .font(ContentView.toolbarIconFont)
         }
     }
 }
