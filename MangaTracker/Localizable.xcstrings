@@ -782,22 +782,6 @@
         }
       }
     },
-    "Eksport do folderu Pobrane" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Export to the Downloads folder"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eksport do folderu Pobrane"
-          }
-        }
-      }
-    },
     "Eksport nieudany: %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3771,6 +3755,161 @@
           }
         }
       }
+    },
+    "Folder eksportu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export folder"
+          }
+        }
+      }
+    },
+    "Pobrane (domyślny)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloads (default)"
+          }
+        }
+      }
+    },
+    "Zmień…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change…"
+          }
+        }
+      }
+    },
+    "Domyślny" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default"
+          }
+        }
+      }
+    },
+    "Wybierz inny folder" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a different folder"
+          }
+        }
+      }
+    },
+    "Wróć do folderu Pobrane" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go back to the Downloads folder"
+          }
+        }
+      }
+    },
+    "Eksport do pliku JSON" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export to a JSON file"
+          }
+        }
+      }
+    },
+    "Wybierz folder, do którego będą zapisywane eksporty." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose the folder where exports will be saved."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz folder, do którego będą zapisywane eksporty."
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "Wybierz" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "Folder eksportu: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export folder: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folder eksportu: %@"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "Nie udało się zapamiętać folderu: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't remember the folder: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się zapamiętać folderu: %@"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "Folder eksportu jest niedostępny. Wybierz go ponownie w Ustawieniach." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The export folder is unavailable. Pick it again in Settings."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folder eksportu jest niedostępny. Wybierz go ponownie w Ustawieniach."
+          }
+        }
+      },
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"

@@ -5,6 +5,7 @@ struct SettingsSheetView: View {
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage(AppLanguage.storageKey) private var languageRaw = AppLanguage.polish.rawValue
+    @AppStorage(ExportFolder.pathKey) private var exportFolderPath = ""
 
     @Binding var backupReminderIntervalDays: Int
     let lastBackupAt: Double
@@ -65,7 +66,28 @@ struct SettingsSheetView: View {
 
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Eksport do folderu Pobrane")
+                            Text("Folder eksportu")
+                                .font(.subheadline)
+                            exportFolderText
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        Spacer()
+                        if !exportFolderPath.isEmpty {
+                            SubtleButton(title: "Domyślny", systemImage: "arrow.uturn.backward", action: ExportFolder.reset)
+                                .help("Wróć do folderu Pobrane")
+                        }
+                        SubtleButton(title: "Zmień…", systemImage: "folder", action: chooseExportFolder)
+                            .help("Wybierz inny folder")
+                    }
+
+                    Divider().overlay(Color.white.opacity(0.06))
+
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Eksport do pliku JSON")
                                 .font(.subheadline)
                             lastBackupText
                                 .font(.caption)
@@ -96,5 +118,20 @@ struct SettingsSheetView: View {
         guard lastBackupAt > 0 else { return Text("Ostatni backup: nigdy") }
         let date = DateFormatters.yyyyMMdd.string(from: Date(timeIntervalSince1970: lastBackupAt))
         return Text("Ostatni backup: \(date)")
+    }
+
+    private var exportFolderText: Text {
+        guard !exportFolderPath.isEmpty else { return Text("Pobrane (domyślny)") }
+        return Text(verbatim: (exportFolderPath as NSString).abbreviatingWithTildeInPath)
+    }
+
+    private func chooseExportFolder() {
+        do {
+            if let url = try ExportFolder.choose() {
+                ToastService.shared.show(L("Folder eksportu: %@", url.path), type: .success)
+            }
+        } catch {
+            ToastService.shared.show(L("Nie udało się zapamiętać folderu: %@", error.localizedDescription), type: .error)
+        }
     }
 }

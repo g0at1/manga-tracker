@@ -8,7 +8,9 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    # The app targets macOS 26 and uses its SwiftUI APIs, so it needs an
+    # image whose Xcode ships a macOS 26 SDK.
+    runs-on: macos-26
 
     steps:
       - name: Checkout repository

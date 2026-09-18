@@ -38,22 +38,34 @@ enum LibrarySortOption: String, CaseIterable, Identifiable {
     }
 
     /// Sorts in ascending order for this option; the caller reverses for descending.
-    func areInIncreasingOrder(_ lhs: Manga, _ rhs: Manga) -> Bool {
+    func sorted(_ mangas: [Manga]) -> [Manga] {
         switch self {
         case .manual:
-            (lhs.sortOrder ?? 0) < (rhs.sortOrder ?? 0)
+            mangas.sorted { ($0.sortOrder ?? 0) < ($1.sortOrder ?? 0) }
         case .title:
-            lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
-        case .totalPrice:
-            lhs.totalPaid < rhs.totalPaid
-        case .ownedVolumes:
-            lhs.ownedVolumesCount < rhs.ownedVolumesCount
-        case .readPercent:
-            lhs.readPercent < rhs.readPercent
+            mangas.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
         case .rating:
-            (lhs.rating ?? 0) < (rhs.rating ?? 0)
+            mangas.sorted { ($0.rating ?? 0) < ($1.rating ?? 0) }
         case .dateAdded:
-            lhs.createdAt < rhs.createdAt
+            mangas.sorted { $0.createdAt < $1.createdAt }
+        case .totalPrice:
+            Self.sorted(mangas) { $0.totalPaid }
+        case .ownedVolumes:
+            Self.sorted(mangas) { $0.owned }
+        case .readPercent:
+            Self.sorted(mangas) { $0.readPercent }
         }
+    }
+
+    /// Sorts by a volume-derived key, computing it once per series rather
+    /// than once per comparison.
+    private static func sorted<Key: Comparable>(
+        _ mangas: [Manga],
+        by key: (MangaVolumeStats) -> Key
+    ) -> [Manga] {
+        mangas
+            .map { (manga: $0, key: key($0.volumeStats)) }
+            .sorted { $0.key < $1.key }
+            .map(\.manga)
     }
 }

@@ -7,25 +7,15 @@ struct ContinueReadingCardView: View {
 
     @State private var isHovered = false
 
-    private var percent: Double {
-        manga.readPercent
-    }
-
-    @ViewBuilder
-    private var nextLabel: some View {
-        if let next = manga.nextUnreadVolume {
-            Text("Tom \(next.number) z \(manga.volumes.count)")
-        } else {
-            Text(verbatim: "")
-        }
-    }
-
     var body: some View {
+        let stats = manga.volumeStats
+        let percent = stats.readPercent
+
         HStack(alignment: .top, spacing: 14) {
             Color.clear
                 .frame(width: 96, height: 136)
                 .overlay(
-                    CachedAsyncImage(
+                    CoverImageView(
                         url: URL(string: manga.coverURL ?? ""),
                         cornerRadius: 8
                     )
@@ -37,9 +27,15 @@ struct ContinueReadingCardView: View {
                     .font(.headline)
                     .lineLimit(1)
 
-                nextLabel
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Group {
+                    if let next = stats.nextUnread {
+                        Text("Tom \(next.number) z \(stats.total)")
+                    } else {
+                        Text(verbatim: "")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
                 HStack(spacing: 8) {
                     ProgressView(value: percent, total: 100)

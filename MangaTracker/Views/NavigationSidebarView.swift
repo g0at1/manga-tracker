@@ -3,8 +3,7 @@ import SwiftUI
 /// Left column: library sections with counts, plus shortcuts to the
 /// dashboard window and settings.
 struct NavigationSidebarView: View {
-    let mangas: [Manga]
-    let hideSpinOffs: Bool
+    let categoryCounts: [LibraryCategory: Int]
 
     @Binding var category: LibraryCategory
     @ObservedObject var toastService: ToastService
@@ -34,7 +33,7 @@ struct NavigationSidebarView: View {
                     row(
                         section.label,
                         systemImage: section.systemImage,
-                        count: count(for: section),
+                        count: categoryCounts[section, default: 0],
                         isSelected: category == section
                     ) {
                         category = section
@@ -67,13 +66,6 @@ struct NavigationSidebarView: View {
         .padding(.horizontal, 8)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(AppBackgroundView())
-    }
-
-    private func count(for section: LibraryCategory) -> Int {
-        mangas
-            .filter { !hideSpinOffs || $0.isSpinOff != true }
-            .filter(section.contains)
-            .count
     }
 
     private func row(

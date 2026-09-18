@@ -63,16 +63,7 @@ struct DetailHeroView: View {
         GeometryReader { proxy in
             ZStack {
                 if let url = URL(string: manga.bannerImage ?? ""), !(manga.bannerImage ?? "").isEmpty {
-                    AsyncImage(url: url) { phase in
-                        if case let .success(image) = phase {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: proxy.size.width, height: proxy.size.height)
-                                .clipped()
-                                .opacity(0.6)
-                        }
-                    }
+                    BannerImageView(url: url, size: proxy.size)
                 } else {
                     RadialGradient(
                         colors: [Color.green.opacity(0.22), .clear],
@@ -105,7 +96,7 @@ struct DetailHeroView: View {
         Color.clear
             .frame(width: coverWidth, height: coverHeight)
             .overlay(
-                CachedAsyncImage(url: URL(string: manga.coverURL ?? ""), cornerRadius: 14)
+                CoverImageView(url: URL(string: manga.coverURL ?? ""), cornerRadius: 14)
             )
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
@@ -471,7 +462,7 @@ private struct RecommendationCard: View {
                 Color.clear
                     .aspectRatio(2 / 3, contentMode: .fit)
                     .overlay(
-                        CachedAsyncImage(
+                        CoverImageView(
                             url: URL(string: recommendation.coverImageLarge ?? recommendation.coverImageMedium ?? ""),
                             cornerRadius: 10
                         )

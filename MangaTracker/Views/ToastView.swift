@@ -81,3 +81,34 @@ struct ToastView: View {
         ToastService.shared.dismiss(message)
     }
 }
+
+/// Stack of active toasts in the window's top-right corner. Owns the
+/// observation of `ToastService` so only this overlay re-renders when a
+/// toast comes or goes.
+struct ToastOverlayView: View {
+    @ObservedObject var toastService: ToastService
+
+    var body: some View {
+        ZStack {
+            if !toastService.toasts.isEmpty {
+                VStack(alignment: .trailing, spacing: 10) {
+                    ForEach(toastService.toasts) { toast in
+                        ToastView(message: toast)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
+                .padding(.top, 20)
+                .padding(.trailing, 20)
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity,
+                    alignment: .topTrailing
+                )
+            }
+        }
+        .animation(
+            .spring(response: 0.35, dampingFraction: 0.85),
+            value: toastService.toasts
+        )
+    }
+}

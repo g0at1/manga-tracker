@@ -8,23 +8,6 @@ struct DetailStatsView: View {
     @State private var hoveredRating: Double?
     @Environment(\.locale) private var locale
 
-    private var totalCount: Int {
-        manga.volumes.count
-    }
-
-    private var ownedCount: Int {
-        manga.ownedVolumesCount
-    }
-
-    private var readCount: Int {
-        manga.readVolumesCount
-    }
-
-    private var completion: Double {
-        guard totalCount > 0 else { return 0 }
-        return Double(readCount) / Double(totalCount)
-    }
-
     private enum NextStep {
         case read(Volume)
         case buy(Volume)
@@ -32,25 +15,27 @@ struct DetailStatsView: View {
         case noVolumes
     }
 
-    private var nextStep: NextStep {
-        if let next = manga.nextUnreadVolume {
+    private func nextStep(_ stats: MangaVolumeStats) -> NextStep {
+        if let next = stats.nextUnread {
             return .read(next)
         }
-        if let missing = manga.volumes.filter({ !$0.owned }).min(by: { $0.number < $1.number }) {
+        if let missing = stats.firstMissing {
             return .buy(missing)
         }
-        return manga.volumes.isEmpty ? .noVolumes : .allRead
+        return stats.total == 0 ? .noVolumes : .allRead
     }
 
     var body: some View {
+        let stats = manga.volumeStats
+
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
-                StatCardView(title: "tomów", value: "\(totalCount)", systemImage: "books.vertical.fill", accentColor: .blue)
-                StatCardView(title: "kupionych", value: "\(ownedCount)", systemImage: "cart.fill", accentColor: .green)
-                StatCardView(title: "przeczytanych", value: "\(readCount)", systemImage: "checkmark.circle.fill", accentColor: .green)
+                StatCardView(title: "tomów", value: "\(stats.total)", systemImage: "books.vertical.fill", accentColor: .blue)
+                StatCardView(title: "kupionych", value: "\(stats.owned)", systemImage: "cart.fill", accentColor: .green)
+                StatCardView(title: "przeczytanych", value: "\(stats.read)", systemImage: "checkmark.circle.fill", accentColor: .green)
                 StatCardView(
                     title: "wydano",
-                    value: manga.totalPaid.formatted(.number.precision(.fractionLength(2)).locale(locale)),
+                    value: stats.totalPaid.formatted(.number.precision(.fractionLength(2)).locale(locale)),
                     systemImage: "wallet.pass.fill",
                     accentColor: .yellow,
                     unit: "PLN"
@@ -59,7 +44,7 @@ struct DetailStatsView: View {
                 Spacer(minLength: 0)
             }
 
-            progressCard
+            progressCard(stats)
         }
     }
 
@@ -109,15 +94,17 @@ struct DetailStatsView: View {
         )
     }
 
-    private var progressCard: some View {
-        DetailCard(padding: 16) {
+    private func progressCard(_ stats: MangaVolumeStats) -> some View {
+        let completion = stats.readPercent / 100
+
+        return DetailCard(padding: 16) {
             HStack(alignment: .center, spacing: 20) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("Postęp czytania")
                             .font(.subheadline.weight(.semibold))
                         Spacer()
-                        Text("\(readCount) / \(totalCount) · \(Int((completion * 100).rounded()))%")
+                        Text("\(stats.read) / \(stats.total) · \(Int(stats.readPercent.rounded()))%")
                             .font(.subheadline.weight(.bold))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
@@ -140,15 +127,15 @@ struct DetailStatsView: View {
                     .frame(height: 36)
                     .overlay(Color.white.opacity(0.08))
 
-                nextStepView
+                nextStepView(nextStep(stats))
                     .frame(minWidth: 300, alignment: .trailing)
             }
         }
     }
 
     @ViewBuilder
-    private var nextStepView: some View {
-        switch nextStep {
+    private func nextStepView(_ step: NextStep) -> some View {
+        switch step {
         case let .read(volume):
             HStack(spacing: 12) {
                 VStack(alignment: .trailing, spacing: 2) {

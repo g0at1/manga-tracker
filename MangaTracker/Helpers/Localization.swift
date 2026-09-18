@@ -26,11 +26,20 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         }
     }
 
-    /// The `.lproj` bundle holding this language's strings.
+    /// The `.lproj` bundle holding this language's strings. Opened once per
+    /// language: `L()` runs inside view bodies, and creating a `Bundle` hits
+    /// the file system.
     var bundle: Bundle {
-        Bundle.main.path(forResource: rawValue, ofType: "lproj")
-            .flatMap(Bundle.init(path:)) ?? .main
+        Self.bundles[self] ?? .main
     }
+
+    private static let bundles: [AppLanguage: Bundle] = Dictionary(
+        uniqueKeysWithValues: allCases.compactMap { language in
+            Bundle.main.path(forResource: language.rawValue, ofType: "lproj")
+                .flatMap(Bundle.init(path:))
+                .map { (language, $0) }
+        }
+    )
 
     static var current: AppLanguage {
         let stored = UserDefaults.standard.string(forKey: storageKey) ?? ""

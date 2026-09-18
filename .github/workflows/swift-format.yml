@@ -8,7 +8,8 @@ on:
 
 jobs:
   Lint:
-    runs-on: macos-latest
+    # Pinned so a new image's SwiftFormat can't start failing the lint unannounced.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: SwiftFormat

@@ -92,14 +92,19 @@ struct VolumesTableView: View {
         sortedVolumes.filter { selectedVolumeIDs.contains($0.persistentModelID) }
     }
 
-    private var allDisplayedSelected: Bool {
-        !displayedVolumes.isEmpty
-            && displayedVolumes.allSatisfy { selectedVolumeIDs.contains($0.persistentModelID) }
+    private func allSelected(in volumes: [Volume]) -> Bool {
+        !volumes.isEmpty
+            && volumes.allSatisfy { selectedVolumeIDs.contains($0.persistentModelID) }
     }
 
     // MARK: - Body
 
     var body: some View {
+        // Sorted and filtered once per render; the header, empty state and
+        // rows all read this instead of re-sorting.
+        let displayedVolumes = displayedVolumes
+        let allDisplayedSelected = allSelected(in: displayedVolumes)
+
         DetailCard(padding: 0) {
             VStack(spacing: 0) {
                 toolbar
@@ -144,7 +149,7 @@ struct VolumesTableView: View {
                                 )
                             }
                         } header: {
-                            columnHeader
+                            columnHeader(allDisplayedSelected: allDisplayedSelected)
                         }
                     }
                     .padding(.bottom, 6)
@@ -208,7 +213,7 @@ struct VolumesTableView: View {
         }
     }
 
-    private var columnHeader: some View {
+    private func columnHeader(allDisplayedSelected: Bool) -> some View {
         VStack(spacing: 0) {
             Divider().overlay(Color.white.opacity(0.06))
             HStack(spacing: Column.spacing) {
@@ -455,12 +460,12 @@ struct VolumesTableView: View {
     }
 
     private func toggleSelectAllDisplayed() {
-        for volume in displayedVolumes {
-            if allDisplayedSelected {
-                selectedVolumeIDs.remove(volume.persistentModelID)
-            } else {
-                selectedVolumeIDs.insert(volume.persistentModelID)
-            }
+        let displayed = displayedVolumes
+        let ids = displayed.map(\.persistentModelID)
+        if allSelected(in: displayed) {
+            selectedVolumeIDs.subtract(ids)
+        } else {
+            selectedVolumeIDs.formUnion(ids)
         }
     }
 

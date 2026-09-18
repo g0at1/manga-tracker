@@ -40,25 +40,31 @@ enum LibraryCategory: String, CaseIterable, Identifiable {
         }
     }
 
-    func contains(_ manga: Manga) -> Bool {
+    /// Whether `manga` belongs in this section. Pass `stats` when the caller
+    /// already has them so the volumes aren't walked again; sections that
+    /// don't look at volumes never compute them.
+    func contains(_ manga: Manga, stats: MangaVolumeStats? = nil) -> Bool {
         let isSold = manga.isSold ?? false
-        let ownsAnything = manga.volumes.contains { $0.owned }
 
         switch self {
         case .all:
             return !isSold
+        case .sold:
+            return isSold
+        case .favorites:
+            return !isSold && (manga.rating ?? 0) >= 4.5
         case .inProgress:
             // Everything you own that isn't wrapped up yet — including fully
             // read series that are still being published.
-            return !isSold && ownsAnything && !manga.isCompleted
+            guard !isSold else { return false }
+            let stats = stats ?? manga.volumeStats
+            return stats.ownsAnything && !manga.isCompleted(stats)
         case .completed:
-            return !isSold && manga.isCompleted
-        case .favorites:
-            return !isSold && (manga.rating ?? 0) >= 4.5
+            guard !isSold else { return false }
+            return manga.isCompleted(stats ?? manga.volumeStats)
         case .planned:
-            return !isSold && manga.volumes.contains { !$0.owned }
-        case .sold:
-            return isSold
+            guard !isSold else { return false }
+            return (stats ?? manga.volumeStats).hasMissing
         }
     }
 }

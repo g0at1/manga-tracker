@@ -1,104 +1,74 @@
 import Foundation
 
+/// Library-wide numbers for the header tiles, computed in a single pass
+/// over every series and volume.
 struct MangaLibraryStats {
-    let mangas: [Manga]
+    /// Series that aren't sold or spin-offs.
+    let mangaCount: Int
+    /// Owned volumes across unsold series.
+    let ownedVolumesCount: Int
+    /// Spent on owned volumes across unsold series.
+    let totalPaid: Double
+    /// Share of owned volumes (unsold series) that have been read.
+    let totalReadPercent: Double
+    let didReadToday: Bool
+    let currentReadStreak: Int
 
-    var mangaCount: Int {
-        mangas.filter {
-            !($0.isSold ?? false) && !($0.isSpinOff ?? false)
-        }.count
-    }
-
-    var ownedVolumesCount: Int {
-        mangas
-            .filter { !($0.isSold ?? false) }
-            .flatMap { $0.volumes }
-            .filter { $0.owned }
-            .count
-    }
-
-    var totalPaid: Double {
-        mangas
-            .filter { !($0.isSold ?? false) }
-            .flatMap { $0.volumes }
-            .filter { $0.owned }
-            .compactMap { $0.price }
-            .reduce(0, +)
-    }
-
-    var totalReadPercent: Double {
-        let ownedVolumes =
-            mangas
-                .filter { !($0.isSold ?? false) }
-                .flatMap { $0.volumes }
-                .filter { $0.owned }
-
-        guard !ownedVolumes.isEmpty else { return 0 }
-
-        let readCount = ownedVolumes.filter { $0.read == true }.count
-        return (Double(readCount) / Double(ownedVolumes.count)) * 100
-    }
-
-    var didReadToday: Bool {
+    init(mangas: [Manga]) {
         let calendar = Calendar.current
+        var mangaCount = 0
+        var ownedCount = 0
+        var ownedReadCount = 0
+        var totalPaid: Double = 0
+        var readDays = Set<Date>()
 
-        return
-            mangas
-                .flatMap { $0.volumes }
-                .compactMap { $0.readDate }
-                .contains { calendar.isDateInToday($0) }
-    }
+        for manga in mangas {
+            let isSold = manga.isSold ?? false
+            if !isSold, !(manga.isSpinOff ?? false) {
+                mangaCount += 1
+            }
+            for volume in manga.volumes {
+                if let readDate = volume.readDate {
+                    readDays.insert(calendar.startOfDay(for: readDate))
+                }
+                guard !isSold, volume.owned else { continue }
+                ownedCount += 1
+                totalPaid += volume.price ?? 0
+                if volume.read == true {
+                    ownedReadCount += 1
+                }
+            }
+        }
 
-    var currentReadStreak: Int {
-        let calendar = Calendar.current
+        self.mangaCount = mangaCount
+        ownedVolumesCount = ownedCount
+        self.totalPaid = totalPaid
+        totalReadPercent = ownedCount > 0 ? Double(ownedReadCount) / Double(ownedCount) * 100 : 0
+
         let today = calendar.startOfDay(for: Date())
+        didReadToday = readDays.contains(today)
+        currentReadStreak = Self.streak(readDays: readDays, today: today, calendar: calendar)
+    }
 
-        guard
-            let yesterday = calendar.date(byAdding: .day, value: -1, to: today)
-        else {
+    /// Consecutive days with a read volume, ending today or yesterday.
+    private static func streak(readDays: Set<Date>, today: Date, calendar: Calendar) -> Int {
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else { return 0 }
+
+        var day: Date
+        if readDays.contains(today) {
+            day = today
+        } else if readDays.contains(yesterday) {
+            day = yesterday
+        } else {
             return 0
         }
 
-        let readDays = Array(
-            Set(
-                mangas
-                    .flatMap { $0.volumes }
-                    .compactMap { $0.readDate }
-                    .map { calendar.startOfDay(for: $0) }
-            )
-        ).sorted(by: >)
-
-        guard let firstDay = readDays.first else { return 0 }
-
-        guard
-            calendar.isDate(firstDay, inSameDayAs: today)
-            || calendar.isDate(firstDay, inSameDayAs: yesterday)
-        else {
-            return 0
+        var streak = 0
+        while readDays.contains(day) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
+            day = previous
         }
-
-        var streak = 1
-        var expectedDay = firstDay
-
-        for day in readDays.dropFirst() {
-            guard
-                let previousDay = calendar.date(
-                    byAdding: .day,
-                    value: -1,
-                    to: expectedDay
-                )
-            else {
-                break
-            }
-
-            if calendar.isDate(day, inSameDayAs: previousDay) {
-                streak += 1
-                expectedDay = previousDay
-            } else if day < previousDay {
-                break
-            }
-        }
-
         return streak
     }
 }

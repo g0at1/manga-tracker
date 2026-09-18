@@ -8,6 +8,8 @@ struct LibraryView: View {
     let allMangas: [Manga]
     /// What the grid shows after category, spin-off and search filtering.
     let filteredMangas: [Manga]
+    /// Series per section, for the filter chips.
+    let categoryCounts: [LibraryCategory: Int]
 
     @Binding var selectedManga: Manga?
     @Binding var category: LibraryCategory
@@ -86,11 +88,15 @@ struct LibraryView: View {
     /// Series with an owned volume still unread, most recently read first.
     private var continueReading: [Manga] {
         allMangas
-            .filter { $0.isSold != true && $0.nextUnreadVolume != nil }
-            .filter { !hideSpinOffs || $0.isSpinOff != true }
-            .sorted { ($0.lastReadDate ?? .distantPast) > ($1.lastReadDate ?? .distantPast) }
+            .compactMap { manga -> (manga: Manga, lastRead: Date)? in
+                guard manga.isSold != true, !hideSpinOffs || manga.isSpinOff != true else { return nil }
+                let stats = manga.volumeStats
+                guard stats.nextUnread != nil else { return nil }
+                return (manga, stats.lastReadDate ?? .distantPast)
+            }
+            .sorted { $0.lastRead > $1.lastRead }
             .prefix(8)
-            .map { $0 }
+            .map(\.manga)
     }
 
     private var showsContinueReading: Bool {
@@ -108,13 +114,6 @@ struct LibraryView: View {
 
     private var sortOption: LibrarySortOption {
         LibrarySortOption(rawValue: sortOptionRaw) ?? .manual
-    }
-
-    private func count(for section: LibraryCategory) -> Int {
-        allMangas
-            .filter { !hideSpinOffs || $0.isSpinOff != true }
-            .filter(section.contains)
-            .count
     }
 
     // MARK: - Header
@@ -189,16 +188,7 @@ struct LibraryView: View {
                 if let featured = featuredManga,
                    let url = URL(string: featured.bannerImage ?? "")
                 {
-                    AsyncImage(url: url) { phase in
-                        if case let .success(image) = phase {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: proxy.size.width, height: proxy.size.height)
-                                .clipped()
-                                .opacity(0.6)
-                        }
-                    }
+                    BannerImageView(url: url, size: proxy.size)
 
                     // Fade into the page on the left and at the bottom.
                     LinearGradient(
@@ -415,7 +405,7 @@ struct LibraryView: View {
                 FilterChip(
                     title: section.chipLabel,
                     systemImage: section.systemImage,
-                    count: count(for: section),
+                    count: categoryCounts[section, default: 0],
                     isSelected: category == section
                 ) {
                     category = section

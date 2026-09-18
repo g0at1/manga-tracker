@@ -23,7 +23,9 @@ struct ContentView: View {
     @AppStorage("libraryHideSpinOffs") private var hideSpinOffs = false
     @AppStorage("lastBackupAt") var lastBackupAtTimestamp: Double = 0
     @AppStorage("backupReminderIntervalDays") var backupReminderIntervalDays: Int = 7
-    @StateObject private var toastService = ToastService.shared
+    /// Not observed here on purpose: toasts render in `ToastOverlayView`, so
+    /// showing one doesn't re-evaluate the whole library.
+    private let toastService = ToastService.shared
 
     /// Import state
     @State private var isImporting: Bool = false
@@ -52,25 +54,34 @@ struct ContentView: View {
 
     var filteredMangas: [Manga] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        var result = mangas.filter(category.wrappedValue.contains)
-        if hideSpinOffs {
-            result = result.filter { $0.isSpinOff != true }
+        let section = category.wrappedValue
+        let matching = mangas.filter { manga in
+            (!hideSpinOffs || manga.isSpinOff != true)
+                && (query.isEmpty || manga.title.localizedCaseInsensitiveContains(query))
+                && section.contains(manga)
         }
-        if !query.isEmpty {
-            result = result.filter {
-                $0.title.localizedCaseInsensitiveContains(query)
+        let sorted = sortOption.sorted(matching)
+        return sortAscending ? sorted : sorted.reversed()
+    }
+
+    /// Series per section for the sidebar and filter chips, from one pass
+    /// over the library.
+    var categoryCounts: [LibraryCategory: Int] {
+        var counts: [LibraryCategory: Int] = [:]
+        for manga in mangas where !hideSpinOffs || manga.isSpinOff != true {
+            let stats = manga.volumeStats
+            for section in LibraryCategory.allCases where section.contains(manga, stats: stats) {
+                counts[section, default: 0] += 1
             }
         }
-        result.sort(by: sortOption.areInIncreasingOrder)
-        return sortAscending ? result : result.reversed()
+        return counts
     }
 
     var body: some View {
         ZStack {
             NavigationSplitView {
                 NavigationSidebarView(
-                    mangas: mangas,
-                    hideSpinOffs: hideSpinOffs,
+                    categoryCounts: categoryCounts,
                     category: category,
                     toastService: toastService,
                     onOpenStatistics: {
@@ -99,6 +110,7 @@ struct ContentView: View {
                         LibraryView(
                             allMangas: mangas,
                             filteredMangas: filteredMangas,
+                            categoryCounts: categoryCounts,
                             selectedManga: $selectedManga,
                             category: category,
                             searchText: $searchText,
@@ -152,31 +164,13 @@ struct ContentView: View {
             .frame(minWidth: 1100, minHeight: 600)
             .toolbarBackground(.hidden, for: .windowToolbar)
 
-            if !toastService.toasts.isEmpty {
-                VStack(alignment: .trailing, spacing: 10) {
-                    ForEach(toastService.toasts) { toast in
-                        ToastView(message: toast)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-                }
-                .padding(.top, 20)
-                .padding(.trailing, 20)
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity,
-                    alignment: .topTrailing
-                )
-            }
+            ToastOverlayView(toastService: toastService)
         }
-        .animation(
-            .spring(response: 0.35, dampingFraction: 0.85),
-            value: toastService.toasts
-        )
         .sheet(isPresented: $isShowingSettings) {
             SettingsSheetView(
                 backupReminderIntervalDays: $backupReminderIntervalDays,
                 lastBackupAt: lastBackupAtTimestamp,
-                onExport: exportToDownloads,
+                onExport: exportBackup,
                 onImport: { isImporting = true }
             )
         }
@@ -267,16 +261,16 @@ struct ContentView: View {
         selectedManga = lastClosedManga
     }
 
-    private func exportToDownloads() {
+    /// Writes the whole library as JSON into the export folder from Ustawienia.
+    private func exportBackup() {
         do {
             let data = try encodeMangasToJSON(mangas)
             let filename = "manga-export-\(Date().yyyyMMdd()).json"
-            guard let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first else {
-                toastService.show(L("Nie można znaleźć folderu Pobrane"))
-                return
+            let url = try ExportFolder.withWriteAccess { folder in
+                let url = folder.appendingPathComponent(filename)
+                try data.write(to: url, options: .atomic)
+                return url
             }
-            let url = downloads.appendingPathComponent(filename)
-            try data.write(to: url, options: .atomic)
             lastBackupAtTimestamp = Date().timeIntervalSince1970
             toastService.show(L("Eksport zapisano: %@", url.path))
         } catch {

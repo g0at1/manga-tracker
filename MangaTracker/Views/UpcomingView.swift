@@ -1,4 +1,5 @@
 import AppKit
+import SwiftData
 import SwiftUI
 
 /// Upcoming volume releases as a timeline grouped by month.
@@ -8,53 +9,16 @@ struct UpcomingView: View {
     @Environment(\.locale) private var locale
     @State private var editingBuyTarget: Volume?
 
-    private var upcomingVolumes: [UpcomingVolume] {
-        let now = Calendar.current.startOfDay(for: Date())
-
-        return mangas.flatMap { manga in
-            manga.volumes.compactMap { volume -> UpcomingVolume? in
-                guard let releaseDate = volume.releaseDate, releaseDate >= now else { return nil }
-                return UpcomingVolume(manga: manga, volume: volume, releaseDate: releaseDate)
-            }
-        }
-        .sorted { lhs, rhs in
-            if lhs.releaseDate != rhs.releaseDate {
-                return lhs.releaseDate < rhs.releaseDate
-            }
-            if lhs.manga.title != rhs.manga.title {
-                return lhs.manga.title.localizedCaseInsensitiveCompare(rhs.manga.title) == .orderedAscending
-            }
-            return lhs.volume.number < rhs.volume.number
-        }
-    }
-
-    private var next30Days: [UpcomingVolume] {
-        guard let end = Calendar.current.date(byAdding: .day, value: 30, to: Date()) else {
-            return upcomingVolumes
-        }
-        return upcomingVolumes.filter { $0.releaseDate <= end }
-    }
-
-    private var withBuyLink: Int {
-        upcomingVolumes.filter { $0.buyURL != nil }.count
-    }
-
-    /// Releases bucketed by month, in chronological order.
-    private var months: [(month: Date, entries: [UpcomingVolume])] {
-        let calendar = Calendar.current
-        let grouped = Dictionary(grouping: upcomingVolumes) { entry in
-            calendar.date(from: calendar.dateComponents([.year, .month], from: entry.releaseDate)) ?? entry.releaseDate
-        }
-        return grouped.keys.sorted().map { (month: $0, entries: grouped[$0] ?? []) }
-    }
-
     var body: some View {
+        // Built once per render; every section below reads from it.
+        let schedule = UpcomingSchedule(mangas: mangas)
+
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 22) {
                 header
-                tiles
+                tiles(schedule)
 
-                if upcomingVolumes.isEmpty {
+                if schedule.entries.isEmpty {
                     DetailCard {
                         ContentUnavailableView(
                             "Brak nadchodzących tomów",
@@ -64,7 +28,7 @@ struct UpcomingView: View {
                         .frame(maxWidth: .infinity, minHeight: 260)
                     }
                 } else {
-                    ForEach(months, id: \.month) { group in
+                    ForEach(schedule.months, id: \.month) { group in
                         monthCard(group.month, entries: group.entries)
                     }
                 }
@@ -94,29 +58,29 @@ struct UpcomingView: View {
         }
     }
 
-    private var tiles: some View {
+    private func tiles(_ schedule: UpcomingSchedule) -> some View {
         HStack(spacing: 12) {
             StatCardView(
                 title: "najbliższa premiera",
-                value: upcomingVolumes.first.map { $0.releaseDate.yyyyMMdd() } ?? "—",
+                value: schedule.entries.first.map { $0.releaseDate.yyyyMMdd() } ?? "—",
                 systemImage: "calendar.badge.clock",
                 accentColor: .green
             )
             StatCardView(
                 title: "w ciągu 30 dni",
-                value: "\(next30Days.count)",
+                value: "\(schedule.within30Days)",
                 systemImage: "clock.fill",
                 accentColor: .orange
             )
             StatCardView(
                 title: "wszystkich premier",
-                value: "\(upcomingVolumes.count)",
+                value: "\(schedule.entries.count)",
                 systemImage: "square.stack.3d.up.fill",
                 accentColor: .blue
             )
             StatCardView(
                 title: "z linkiem do zakupu",
-                value: "\(withBuyLink)",
+                value: "\(schedule.withBuyLink)",
                 systemImage: "cart.fill",
                 accentColor: .teal
             )
@@ -155,29 +119,93 @@ struct UpcomingView: View {
     }
 }
 
+// MARK: - Schedule
+
+/// Every volume with a release date from today on, sorted by date, then
+/// title, then number, plus the numbers for the header tiles. Built in one
+/// pass over the library.
+private struct UpcomingSchedule {
+    let entries: [UpcomingVolume]
+    /// Releases bucketed by month, in chronological order.
+    let months: [(month: Date, entries: [UpcomingVolume])]
+    let within30Days: Int
+    let withBuyLink: Int
+
+    init(mangas: [Manga]) {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let in30Days = calendar.date(byAdding: .day, value: 30, to: Date())
+
+        var entries: [UpcomingVolume] = []
+        for manga in mangas {
+            for volume in manga.volumes {
+                guard let releaseDate = volume.releaseDate, releaseDate >= today else { continue }
+                entries.append(UpcomingVolume(manga: manga, volume: volume, releaseDate: releaseDate, today: today, calendar: calendar))
+            }
+        }
+        entries.sort { lhs, rhs in
+            if lhs.releaseDate != rhs.releaseDate {
+                return lhs.releaseDate < rhs.releaseDate
+            }
+            if lhs.manga.title != rhs.manga.title {
+                return lhs.manga.title.localizedCaseInsensitiveCompare(rhs.manga.title) == .orderedAscending
+            }
+            return lhs.volume.number < rhs.volume.number
+        }
+
+        self.entries = entries
+        within30Days = in30Days.map { end in entries.filter { $0.releaseDate <= end }.count } ?? entries.count
+        withBuyLink = entries.filter { $0.buyURL != nil }.count
+
+        let grouped = Dictionary(grouping: entries) { entry in
+            calendar.date(from: calendar.dateComponents([.year, .month], from: entry.releaseDate)) ?? entry.releaseDate
+        }
+        months = grouped.keys.sorted().map { (month: $0, entries: grouped[$0] ?? []) }
+    }
+}
+
 // MARK: - Row
 
 private struct UpcomingVolume: Identifiable {
-    let id = UUID()
     let manga: Manga
     let volume: Volume
     let releaseDate: Date
+    let buyURL: URL?
+    let daysUntil: Int
 
-    var buyURL: URL? {
-        guard let raw = volume.buyURL,
-              !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              let url = URL(string: raw)
-        else { return nil }
-        return url
+    var id: PersistentIdentifier {
+        volume.persistentModelID
     }
 
-    var daysUntil: Int {
-        let calendar = Calendar.current
-        return calendar.dateComponents(
+    init(manga: Manga, volume: Volume, releaseDate: Date, today: Date, calendar: Calendar) {
+        self.manga = manga
+        self.volume = volume
+        self.releaseDate = releaseDate
+        buyURL = volume.buyURL
+            .flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : URL(string: $0) }
+        daysUntil = calendar.dateComponents(
             [.day],
-            from: calendar.startOfDay(for: Date()),
+            from: today,
             to: calendar.startOfDay(for: releaseDate)
         ).day ?? 0
+    }
+}
+
+/// `RelativeDateTimeFormatter` is costly to set up, so one is kept per
+/// locale for all the rows.
+@MainActor
+private enum RelativeFormatters {
+    private static var cache: [String: RelativeDateTimeFormatter] = [:]
+
+    static func formatter(for locale: Locale) -> RelativeDateTimeFormatter {
+        if let cached = cache[locale.identifier] {
+            return cached
+        }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = locale
+        formatter.unitsStyle = .full
+        cache[locale.identifier] = formatter
+        return formatter
     }
 }
 
@@ -198,7 +226,7 @@ private struct UpcomingRow: View {
             Color.clear
                 .frame(width: 46, height: 66)
                 .overlay(
-                    CachedAsyncImage(url: URL(string: entry.manga.coverURL ?? ""), cornerRadius: 8)
+                    CoverImageView(url: URL(string: entry.manga.coverURL ?? ""), cornerRadius: 8)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
@@ -254,10 +282,8 @@ private struct UpcomingRow: View {
     }
 
     private var relativeText: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.locale = locale
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: entry.releaseDate, relativeTo: Date())
+        RelativeFormatters.formatter(for: locale)
+            .localizedString(for: entry.releaseDate, relativeTo: Date())
     }
 }
 

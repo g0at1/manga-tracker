@@ -9,31 +9,9 @@ struct MangaGridCardView: View {
 
     private static let cornerRadius: CGFloat = 14
 
-    private var readCount: Int {
-        manga.volumes.filter { $0.read == true }.count
-    }
-
-    private var totalCount: Int {
-        manga.volumes.count
-    }
-
-    private var readPercent: Double {
-        guard totalCount > 0 else { return 0 }
-        return Double(readCount) / Double(totalCount) * 100
-    }
-
-    private var totalPaid: Double {
-        manga.volumes
-            .filter { $0.owned }
-            .compactMap { $0.price }
-            .reduce(0, +)
-    }
-
-    private var isComplete: Bool {
-        totalCount > 0 && readCount == totalCount
-    }
-
     var body: some View {
+        let stats = manga.volumeStats
+
         VStack(alignment: .leading, spacing: 10) {
             cover
 
@@ -43,28 +21,28 @@ struct MangaGridCardView: View {
                     .lineLimit(2, reservesSpace: true)
 
                 HStack(alignment: .firstTextBaseline) {
-                    if isComplete {
-                        Label("\(totalCount)", systemImage: "checkmark.circle.fill")
+                    if stats.allRead {
+                        Label("\(stats.total)", systemImage: "checkmark.circle.fill")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.green)
                     } else {
-                        Text("\(readCount)/\(totalCount)")
+                        Text("\(stats.read)/\(stats.total)")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
 
                     Spacer(minLength: 4)
 
-                    Text("\(Int(readPercent.rounded()))%")
+                    Text("\(Int(stats.readPercent.rounded()))%")
                         .font(.caption2.monospacedDigit())
                         .foregroundStyle(.tertiary)
                 }
 
-                ProgressView(value: readPercent, total: 100)
+                ProgressView(value: stats.readPercent, total: 100)
                     .tint(.green)
                     .scaleEffect(y: 0.7)
 
-                Text(totalPaid, format: .currency(code: "PLN"))
+                Text(stats.totalPaid, format: .currency(code: "PLN"))
                     .font(.caption2)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
@@ -101,7 +79,7 @@ struct MangaGridCardView: View {
         Color.clear
             .aspectRatio(2 / 3, contentMode: .fit)
             .overlay(
-                CachedAsyncImage(
+                CoverImageView(
                     url: URL(string: manga.coverURL ?? ""),
                     cornerRadius: 10
                 )

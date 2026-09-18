@@ -6,213 +6,37 @@ struct DashboardView: View {
     let mangas: [Manga]
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
-    @State private var selectedReadDay: ReadDayData?
-    @State private var hoveredPurchase: MonthlyPurchaseData?
-
-    private var totalSeries: Int {
-        mangas.filter {
-            !($0.isSold ?? false) && !($0.isSpinOff ?? false)
-        }.count
-    }
-
-    private var totalVolumes: Int {
-        mangas.filter { !($0.isSold ?? false) }.flatMap { $0.volumes }.count
-    }
-
-    private var ownedVolumes: Int {
-        mangas.filter { !($0.isSold ?? false) }.flatMap { $0.volumes }.filter { $0.owned }.count
-    }
-
-    private var readVolumes: Int {
-        mangas.filter { !($0.isSold ?? false) }.flatMap { $0.volumes }.filter { $0.read == true }.count
-    }
-
-    private var averageVolumePrice: Double {
-        let prices = mangas
-            .filter { !($0.isSold ?? false) }
-            .flatMap { $0.volumes }
-            .filter { $0.owned }
-            .compactMap { $0.price }
-
-        guard !prices.isEmpty else { return 0 }
-
-        return prices.reduce(0, +) / Double(prices.count)
-    }
-
-    private var currentMonthSpending: Double {
-        let calendar = Calendar.current
-        let now = Date()
-
-        return monthlyPurchaseData.first {
-            calendar.isDate(
-                $0.month,
-                equalTo: now,
-                toGranularity: .month
-            )
-        }?.amount ?? 0
-    }
-
-    private var previousMonthSpending: Double {
-        let calendar = Calendar.current
-
-        guard let previousMonth = calendar.date(
-            byAdding: .month,
-            value: -1,
-            to: Date()
-        ) else {
-            return 0
-        }
-
-        return monthlyPurchaseData.first {
-            calendar.isDate(
-                $0.month,
-                equalTo: previousMonth,
-                toGranularity: .month
-            )
-        }?.amount ?? 0
-    }
-
-    private var monthlySpendingDifference: Double {
-        currentMonthSpending - previousMonthSpending
-    }
-
-    private var monthlySpendingPercentChange: Double? {
-        guard previousMonthSpending > 0 else {
-            return nil
-        }
-
-        return (monthlySpendingDifference / previousMonthSpending) * 100
-    }
-
-    private var readPercent: Double {
-        guard totalVolumes > 0 else { return 0 }
-        return (Double(readVolumes) / Double(totalVolumes)) * 100
-    }
-
-    private var mangaSpendData: [MangaSpendData] {
-        mangas
-            .map { manga in
-                MangaSpendData(
-                    title: manga.title,
-                    amount: manga.volumes
-                        .filter { $0.owned }
-                        .compactMap { $0.price }
-                        .reduce(0, +)
-                )
-            }
-            .filter { $0.amount > 0 }
-            .sorted { $0.amount > $1.amount }
-    }
-
-    private var mangaProgressData: [MangaProgressData] {
-        mangas
-            .map { manga in
-                let total = manga.volumes.count
-                let read = manga.volumes.filter { $0.read == true }.count
-                let percent =
-                    total > 0 ? (Double(read) / Double(total)) * 100 : 0
-
-                return MangaProgressData(
-                    title: manga.title,
-                    totalVolumes: total,
-                    readVolumes: read,
-                    percent: percent
-                )
-            }
-            .filter { $0.totalVolumes > 0 && $0.percent < 100 }
-            .sorted { $0.percent > $1.percent }
-    }
-
-    private var monthlyPurchaseData: [MonthlyPurchaseData] {
-        let calendar = Calendar.current
-
-        let grouped = Dictionary(
-            grouping: mangas.flatMap(\.volumes).filter {
-                $0.owned && $0.purchaseDate != nil
-            }
-        ) {
-            volume in
-            let comps = calendar.dateComponents(
-                [.year, .month],
-                from: volume.purchaseDate!
-            )
-            return calendar.date(from: comps) ?? .now
-        }
-
-        return
-            grouped
-                .map { date, volumes in
-                    MonthlyPurchaseData(
-                        month: date,
-                        count: volumes.count,
-                        amount: volumes.compactMap { $0.price }.reduce(0, +)
-                    )
-                }
-                .sorted { $0.month < $1.month }
-    }
-
-    private var readDayData: [ReadDayData] {
-        let calendar = Calendar.current
-        let entries =
-            mangas
-                .flatMap { $0.volumes }
-                .compactMap { volume -> (Date, Volume)? in
-                    guard let readDate = volume.readDate else { return nil }
-                    return (calendar.startOfDay(for: readDate), volume)
-                }
-
-        let grouped = Dictionary(grouping: entries, by: { $0.0 })
-
-        return
-            grouped
-                .map { day, values in
-                    let items =
-                        values
-                            .map { value in
-                                let title = value.1.manga?.title ?? L("Nieznany tytuł")
-                                return "\(title) #\(value.1.number)"
-                            }
-                            .sorted()
-
-                    return ReadDayData(
-                        date: day,
-                        count: values.count,
-                        items: items
-                    )
-                }
-                .sorted { $0.date < $1.date }
-    }
-
-    private var readDayLookup: [Date: ReadDayData] {
-        Dictionary(uniqueKeysWithValues: readDayData.map { ($0.date, $0) })
-    }
 
     var body: some View {
+        // One pass over the library; hover and selection state live in the
+        // cards below so mouse movement never triggers this again.
+        let data = DashboardData(mangas: mangas)
+
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 22) {
                 header
 
-                summaryTiles
+                summaryTiles(data)
 
                 HStack(alignment: .top, spacing: 18) {
-                    readingActivityCard
+                    ReadingActivityCard(readDays: data.readDays, readDayLookup: data.readDayLookup)
                         .frame(maxWidth: .infinity)
 
                     VStack(spacing: 18) {
-                        monthComparisonCard
-                        topSeriesCard
+                        monthComparisonCard(data)
+                        topSeriesCard(data.mangaSpend)
                     }
                     .frame(width: 340)
                 }
 
                 HStack(alignment: .top, spacing: 18) {
-                    spendingPerSeriesCard
-                    progressPerSeriesCard
+                    spendingPerSeriesCard(data.mangaSpend)
+                    progressPerSeriesCard(data.mangaProgress)
                 }
 
                 HStack(alignment: .top, spacing: 18) {
-                    monthlyPurchasesCard
-                    monthlySpendingCard
+                    monthlyPurchasesCard(data.monthlyPurchases)
+                    MonthlySpendingCard(monthlyPurchases: data.monthlyPurchases)
                 }
             }
             .padding(28)
@@ -221,9 +45,6 @@ struct DashboardView: View {
         .background(AppBackgroundView())
         .navigationTitle("Statystyki")
         .onAppear {
-            if selectedReadDay == nil {
-                selectedReadDay = readDayData.last
-            }
             WindowManager.ensureComfortableSize(windowID: "dashboard", minWidth: 1400, minHeight: 900)
         }
     }
@@ -240,15 +61,15 @@ struct DashboardView: View {
         }
     }
 
-    private var summaryTiles: some View {
+    private func summaryTiles(_ data: DashboardData) -> some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 175, maximum: 260), spacing: 12)], spacing: 12) {
-            StatCardView(title: "serii", value: "\(totalSeries)", systemImage: "books.vertical.fill", accentColor: .blue, expands: true)
-            StatCardView(title: "wszystkich tomów", value: "\(totalVolumes)", systemImage: "square.stack.3d.up.fill", accentColor: .teal, expands: true)
-            StatCardView(title: "kupionych", value: "\(ownedVolumes)", systemImage: "cart.fill", accentColor: .green, expands: true)
-            StatCardView(title: "przeczytanych", value: "\(readVolumes)", systemImage: "checkmark.circle.fill", accentColor: .green, expands: true)
+            StatCardView(title: "serii", value: "\(data.totalSeries)", systemImage: "books.vertical.fill", accentColor: .blue, expands: true)
+            StatCardView(title: "wszystkich tomów", value: "\(data.totalVolumes)", systemImage: "square.stack.3d.up.fill", accentColor: .teal, expands: true)
+            StatCardView(title: "kupionych", value: "\(data.ownedVolumes)", systemImage: "cart.fill", accentColor: .green, expands: true)
+            StatCardView(title: "przeczytanych", value: "\(data.readVolumes)", systemImage: "checkmark.circle.fill", accentColor: .green, expands: true)
             StatCardView(
                 title: "średnia cena tomu",
-                value: averageVolumePrice.formatted(.number.precision(.fractionLength(2)).locale(locale)),
+                value: data.averageVolumePrice.formatted(.number.precision(.fractionLength(2)).locale(locale)),
                 systemImage: "tag.fill",
                 accentColor: .orange,
                 unit: "PLN",
@@ -256,7 +77,7 @@ struct DashboardView: View {
             )
             StatCardView(
                 title: "postęp",
-                value: readPercent.formatted(.number.precision(.fractionLength(1)).locale(locale)) + "%",
+                value: data.readPercent.formatted(.number.precision(.fractionLength(1)).locale(locale)) + "%",
                 systemImage: "circle.dashed.inset.filled",
                 accentColor: .green,
                 expands: true
@@ -264,55 +85,12 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - Reading activity
-
-    private var readingActivityCard: some View {
-        DetailCard {
-            VStack(alignment: .leading, spacing: 16) {
-                DetailCardTitle(title: "Aktywność czytania", systemImage: "flame.fill")
-
-                if readDayData.isEmpty {
-                    emptyNote("Oznacz tom jako przeczytany, a tutaj pojawi się Twoja aktywność.")
-                } else {
-                    ReadHeatmapView(readDayLookup: readDayLookup, selectedDay: $selectedReadDay)
-
-                    if let selectedReadDay {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text(selectedReadDay.date.yyyyMMdd())
-                                    .font(.subheadline.weight(.semibold))
-                                Spacer()
-                                Text("\(selectedReadDay.count)")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(Color.green)
-                                    .padding(.horizontal, 7)
-                                    .padding(.vertical, 2)
-                                    .background(Color.green.opacity(0.16), in: Capsule())
-                            }
-                            ForEach(selectedReadDay.items, id: \.self) { item in
-                                Label(item, systemImage: "book.closed")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color.white.opacity(0.04))
-                        )
-                    } else {
-                        emptyNote("Wybierz dzień, aby zobaczyć co przeczytałeś.")
-                    }
-                }
-            }
-        }
-    }
-
     // MARK: - Month comparison & top series
 
-    private var monthComparisonCard: some View {
-        DetailCard {
+    private func monthComparisonCard(_ data: DashboardData) -> some View {
+        let difference = data.monthlySpendingDifference
+
+        return DetailCard {
             VStack(alignment: .leading, spacing: 14) {
                 DetailCardTitle(title: "Ten miesiąc vs poprzedni", systemImage: "calendar")
 
@@ -321,7 +99,7 @@ struct DashboardView: View {
                         Text("Ten miesiąc")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text(currentMonthSpending, format: .currency(code: "PLN"))
+                        Text(data.currentMonthSpending, format: .currency(code: "PLN"))
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .monospacedDigit()
                     }
@@ -329,7 +107,7 @@ struct DashboardView: View {
                         Text("Poprzedni miesiąc")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text(previousMonthSpending, format: .currency(code: "PLN"))
+                        Text(data.previousMonthSpending, format: .currency(code: "PLN"))
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
@@ -337,10 +115,10 @@ struct DashboardView: View {
                 }
 
                 HStack(spacing: 6) {
-                    Image(systemName: monthlySpendingDifference > 0
-                        ? "arrow.up.right" : monthlySpendingDifference < 0 ? "arrow.down.right" : "minus")
+                    Image(systemName: difference > 0
+                        ? "arrow.up.right" : difference < 0 ? "arrow.down.right" : "minus")
                         .font(.caption.weight(.bold))
-                    if let percent = monthlySpendingPercentChange {
+                    if let percent = data.monthlySpendingPercentChange {
                         (Text(percent, format: .number.precision(.fractionLength(1))) + Text("%"))
                             .monospacedDigit()
                     } else {
@@ -348,20 +126,20 @@ struct DashboardView: View {
                     }
                     Text("·")
                         .foregroundStyle(.secondary)
-                    Text(monthlySpendingDifference, format: .currency(code: "PLN"))
+                    Text(difference, format: .currency(code: "PLN"))
                         .monospacedDigit()
                 }
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(
-                    monthlySpendingDifference > 0 ? Color.red
-                        : monthlySpendingDifference < 0 ? Color.green : Color.secondary
+                    difference > 0 ? Color.red
+                        : difference < 0 ? Color.green : Color.secondary
                 )
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(
                     Capsule().fill(
-                        (monthlySpendingDifference > 0 ? Color.red
-                            : monthlySpendingDifference < 0 ? Color.green : Color.white)
+                        (difference > 0 ? Color.red
+                            : difference < 0 ? Color.green : Color.white)
                             .opacity(0.12)
                     )
                 )
@@ -370,15 +148,15 @@ struct DashboardView: View {
         }
     }
 
-    private var topSeriesCard: some View {
+    private func topSeriesCard(_ mangaSpend: [MangaSpendData]) -> some View {
         DetailCard {
             VStack(alignment: .leading, spacing: 12) {
                 DetailCardTitle(title: "Top serie", systemImage: "crown.fill")
 
-                if mangaSpendData.isEmpty {
+                if mangaSpend.isEmpty {
                     emptyNote("Wpisz ceny tomów, aby zobaczyć ranking.")
                 } else {
-                    let top = Array(mangaSpendData.prefix(5))
+                    let top = Array(mangaSpend.prefix(5))
                     let maxAmount = top.first?.amount ?? 1
                     VStack(spacing: 10) {
                         ForEach(Array(top.enumerated()), id: \.offset) { index, item in
@@ -417,15 +195,15 @@ struct DashboardView: View {
 
     // MARK: - Charts
 
-    private var spendingPerSeriesCard: some View {
+    private func spendingPerSeriesCard(_ mangaSpend: [MangaSpendData]) -> some View {
         DetailCard {
             VStack(alignment: .leading, spacing: 14) {
                 DetailCardTitle(title: "Wydatki na serie", systemImage: "banknote.fill")
 
-                if mangaSpendData.isEmpty {
+                if mangaSpend.isEmpty {
                     emptyNote("Wpisz ceny tomów, aby zobaczyć wykres.")
                 } else {
-                    Chart(mangaSpendData.prefix(8)) { item in
+                    Chart(mangaSpend.prefix(8)) { item in
                         BarMark(
                             x: .value("Kwota", item.amount),
                             y: .value("Manga", item.title)
@@ -452,15 +230,15 @@ struct DashboardView: View {
         }
     }
 
-    private var progressPerSeriesCard: some View {
+    private func progressPerSeriesCard(_ mangaProgress: [MangaProgressData]) -> some View {
         DetailCard {
             VStack(alignment: .leading, spacing: 14) {
                 DetailCardTitle(title: "Postęp czytania", systemImage: "chart.bar.fill")
 
-                if mangaProgressData.isEmpty {
+                if mangaProgress.isEmpty {
                     emptyNote("Wszystko przeczytane — nie ma czego pokazać.")
                 } else {
-                    Chart(mangaProgressData.prefix(8)) { item in
+                    Chart(mangaProgress.prefix(8)) { item in
                         BarMark(
                             x: .value("Postęp", item.percent),
                             y: .value("Manga", item.title)
@@ -497,15 +275,15 @@ struct DashboardView: View {
         }
     }
 
-    private var monthlyPurchasesCard: some View {
+    private func monthlyPurchasesCard(_ monthlyPurchases: [MonthlyPurchaseData]) -> some View {
         DetailCard {
             VStack(alignment: .leading, spacing: 14) {
                 DetailCardTitle(title: "Zakupy miesięczne", systemImage: "cart.fill")
 
-                if monthlyPurchaseData.isEmpty {
+                if monthlyPurchases.isEmpty {
                     emptyNote("Ustaw daty zakupu tomów, aby zobaczyć wykres.")
                 } else {
-                    Chart(monthlyPurchaseData) { item in
+                    Chart(monthlyPurchases) { item in
                         AreaMark(
                             x: .value("Miesiąc", item.month, unit: .month),
                             y: .value("Kupione tomy", item.count)
@@ -555,17 +333,278 @@ struct DashboardView: View {
             }
         }
     }
+}
 
-    private var monthlySpendingCard: some View {
+private func emptyNote(_ text: LocalizedStringKey) -> some View {
+    Text(text)
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, minHeight: 80, alignment: .center)
+}
+
+// MARK: - Models
+
+// Identities are the series or the month, not a fresh UUID, so Charts and
+// ForEach can diff between renders and a hovered/selected item stays matched.
+
+private struct MangaSpendData: Identifiable {
+    let id: PersistentIdentifier
+    let title: String
+    let amount: Double
+}
+
+private struct MangaProgressData: Identifiable {
+    let id: PersistentIdentifier
+    let title: String
+    let totalVolumes: Int
+    let readVolumes: Int
+    let percent: Double
+}
+
+private struct MonthlyPurchaseData: Identifiable, Equatable {
+    let month: Date
+    let count: Int
+    let amount: Double
+
+    var id: Date {
+        month
+    }
+}
+
+private struct ReadDayData: Identifiable, Equatable {
+    let date: Date
+    let count: Int
+    let items: [String]
+
+    var id: Date {
+        date
+    }
+}
+
+/// Everything the dashboard shows, derived from the library in one pass.
+private struct DashboardData {
+    /// Series that aren't sold or spin-offs.
+    let totalSeries: Int
+    let totalVolumes: Int
+    let ownedVolumes: Int
+    let readVolumes: Int
+    let averageVolumePrice: Double
+    /// Most expensive series first; series without prices are left out.
+    let mangaSpend: [MangaSpendData]
+    /// Unfinished series, closest to done first.
+    let mangaProgress: [MangaProgressData]
+    let monthlyPurchases: [MonthlyPurchaseData]
+    let readDays: [ReadDayData]
+    let readDayLookup: [Date: ReadDayData]
+    let currentMonthSpending: Double
+    let previousMonthSpending: Double
+
+    var readPercent: Double {
+        totalVolumes > 0 ? Double(readVolumes) / Double(totalVolumes) * 100 : 0
+    }
+
+    var monthlySpendingDifference: Double {
+        currentMonthSpending - previousMonthSpending
+    }
+
+    var monthlySpendingPercentChange: Double? {
+        guard previousMonthSpending > 0 else { return nil }
+        return monthlySpendingDifference / previousMonthSpending * 100
+    }
+
+    init(mangas: [Manga]) {
+        let calendar = Calendar.current
+        let unknownTitle = L("Nieznany tytuł")
+
+        var totalSeries = 0
+        var totalVolumes = 0
+        var ownedVolumes = 0
+        var readVolumes = 0
+        var ownedPriceSum = 0.0
+        var ownedPriceCount = 0
+        var mangaSpend: [MangaSpendData] = []
+        var mangaProgress: [MangaProgressData] = []
+        var purchasesByMonth: [Date: (count: Int, amount: Double)] = [:]
+        var itemsByReadDay: [Date: [String]] = [:]
+
+        for manga in mangas {
+            let isSold = manga.isSold ?? false
+            if !isSold, !(manga.isSpinOff ?? false) {
+                totalSeries += 1
+            }
+
+            var spent = 0.0
+            var read = 0
+            let volumes = manga.volumes
+
+            for volume in volumes {
+                let isRead = volume.read == true
+                if isRead {
+                    read += 1
+                }
+                if volume.owned {
+                    if let price = volume.price {
+                        spent += price
+                    }
+                    if let purchaseDate = volume.purchaseDate {
+                        let month = calendar.date(
+                            from: calendar.dateComponents([.year, .month], from: purchaseDate)
+                        ) ?? .now
+                        purchasesByMonth[month, default: (0, 0)].count += 1
+                        purchasesByMonth[month, default: (0, 0)].amount += volume.price ?? 0
+                    }
+                }
+                if let readDate = volume.readDate {
+                    let day = calendar.startOfDay(for: readDate)
+                    let title = volume.manga?.title ?? unknownTitle
+                    itemsByReadDay[day, default: []].append("\(title) #\(volume.number)")
+                }
+                if !isSold {
+                    totalVolumes += 1
+                    if volume.owned {
+                        ownedVolumes += 1
+                        if let price = volume.price {
+                            ownedPriceSum += price
+                            ownedPriceCount += 1
+                        }
+                    }
+                    if isRead {
+                        readVolumes += 1
+                    }
+                }
+            }
+
+            if spent > 0 {
+                mangaSpend.append(MangaSpendData(id: manga.persistentModelID, title: manga.title, amount: spent))
+            }
+            let percent = volumes.isEmpty ? 0 : Double(read) / Double(volumes.count) * 100
+            if !volumes.isEmpty, percent < 100 {
+                mangaProgress.append(MangaProgressData(
+                    id: manga.persistentModelID,
+                    title: manga.title,
+                    totalVolumes: volumes.count,
+                    readVolumes: read,
+                    percent: percent
+                ))
+            }
+        }
+
+        self.totalSeries = totalSeries
+        self.totalVolumes = totalVolumes
+        self.ownedVolumes = ownedVolumes
+        self.readVolumes = readVolumes
+        averageVolumePrice = ownedPriceCount > 0 ? ownedPriceSum / Double(ownedPriceCount) : 0
+        self.mangaSpend = mangaSpend.sorted { $0.amount > $1.amount }
+        self.mangaProgress = mangaProgress.sorted { $0.percent > $1.percent }
+
+        let monthlyPurchases = purchasesByMonth
+            .map { MonthlyPurchaseData(month: $0.key, count: $0.value.count, amount: $0.value.amount) }
+            .sorted { $0.month < $1.month }
+        self.monthlyPurchases = monthlyPurchases
+
+        readDays = itemsByReadDay
+            .map { ReadDayData(date: $0.key, count: $0.value.count, items: $0.value.sorted()) }
+            .sorted { $0.date < $1.date }
+        readDayLookup = Dictionary(uniqueKeysWithValues: readDays.map { ($0.date, $0) })
+
+        let now = Date()
+        let previousMonth = calendar.date(byAdding: .month, value: -1, to: now)
+        func spending(in month: Date?) -> Double {
+            guard let month else { return 0 }
+            return monthlyPurchases.first {
+                calendar.isDate($0.month, equalTo: month, toGranularity: .month)
+            }?.amount ?? 0
+        }
+        currentMonthSpending = spending(in: now)
+        previousMonthSpending = spending(in: previousMonth)
+    }
+}
+
+// MARK: - Reading activity
+
+/// Heatmap plus the list for the selected day. Owns the selection so
+/// clicking a cell doesn't re-derive the dashboard's data.
+private struct ReadingActivityCard: View {
+    let readDays: [ReadDayData]
+    let readDayLookup: [Date: ReadDayData]
+
+    @State private var selectedReadDay: ReadDayData?
+
+    var body: some View {
+        DetailCard {
+            VStack(alignment: .leading, spacing: 16) {
+                DetailCardTitle(title: "Aktywność czytania", systemImage: "flame.fill")
+
+                if readDays.isEmpty {
+                    emptyNote("Oznacz tom jako przeczytany, a tutaj pojawi się Twoja aktywność.")
+                } else {
+                    ReadHeatmapView(readDayLookup: readDayLookup, selectedDay: $selectedReadDay)
+
+                    if let selectedReadDay {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text(selectedReadDay.date.yyyyMMdd())
+                                    .font(.subheadline.weight(.semibold))
+                                Spacer()
+                                Text("\(selectedReadDay.count)")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(Color.green)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 2)
+                                    .background(Color.green.opacity(0.16), in: Capsule())
+                            }
+                            ForEach(selectedReadDay.items, id: \.self) { item in
+                                Label(item, systemImage: "book.closed")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.white.opacity(0.04))
+                        )
+                    } else {
+                        emptyNote("Wybierz dzień, aby zobaczyć co przeczytałeś.")
+                    }
+                }
+            }
+        }
+        .onAppear {
+            if selectedReadDay == nil {
+                selectedReadDay = readDays.last
+            }
+        }
+        .onChange(of: readDays) { _, newValue in
+            // Keep the selected day's list current after a volume is (un)marked.
+            if let selected = selectedReadDay {
+                selectedReadDay = newValue.first { $0.date == selected.date } ?? newValue.last
+            }
+        }
+    }
+}
+
+// MARK: - Monthly spending
+
+/// Bar chart with a hover tooltip. Owns the hover state so tracking the
+/// mouse only re-renders this chart.
+private struct MonthlySpendingCard: View {
+    let monthlyPurchases: [MonthlyPurchaseData]
+
+    @Environment(\.locale) private var locale
+    @State private var hoveredPurchase: MonthlyPurchaseData?
+
+    var body: some View {
         DetailCard {
             VStack(alignment: .leading, spacing: 14) {
                 DetailCardTitle(title: "Wydatki miesięczne", systemImage: "creditcard.fill")
 
-                if monthlyPurchaseData.isEmpty {
+                if monthlyPurchases.isEmpty {
                     emptyNote("Ustaw daty zakupu tomów, aby zobaczyć wykres.")
                 } else {
                     Chart {
-                        ForEach(monthlyPurchaseData) { item in
+                        ForEach(monthlyPurchases) { item in
                             BarMark(
                                 x: .value("Miesiąc", item.month, unit: .month),
                                 y: .value("Kwota", item.amount)
@@ -631,7 +670,7 @@ struct DashboardView: View {
                                             hoveredPurchase = nil
                                             return
                                         }
-                                        hoveredPurchase = monthlyPurchaseData.min {
+                                        hoveredPurchase = monthlyPurchases.min {
                                             abs($0.month.timeIntervalSince(date)) < abs($1.month.timeIntervalSince(date))
                                         }
                                     case .ended:
@@ -645,46 +684,6 @@ struct DashboardView: View {
             }
         }
     }
-
-    private func emptyNote(_ text: LocalizedStringKey) -> some View {
-        Text(text)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, minHeight: 80, alignment: .center)
-    }
-}
-
-// MARK: - Models
-
-private struct MangaSpendData: Identifiable {
-    let id = UUID()
-    let title: String
-    let amount: Double
-}
-
-private struct MangaProgressData: Identifiable {
-    let id = UUID()
-    let title: String
-    let totalVolumes: Int
-    let readVolumes: Int
-    let percent: Double
-}
-
-private struct MonthlyPurchaseData: Identifiable {
-    let id = UUID()
-    let month: Date
-    let count: Int
-    let amount: Double
-}
-
-private struct ReadDayData: Identifiable {
-    let date: Date
-    let count: Int
-    let items: [String]
-
-    var id: Date {
-        date
-    }
 }
 
 // MARK: - Heatmap
@@ -696,47 +695,38 @@ private struct ReadHeatmapView: View {
     private let cellSize: CGFloat = 14
     private let cellSpacing: CGFloat = 6
 
-    private var calendar: Calendar {
-        Calendar.current
-    }
+    // The grid covers the last 42 weeks. Its days are laid out once here
+    // rather than re-derived by every one of the ~300 cells.
+    private let weekdaySymbols: [String]
+    private let weeks: [[Date]]
+    /// Cells before this day (leading days of the first week) stay blank.
+    private let rangeStart: Date
+    /// Cells after today (trailing days of the current week) stay blank.
+    private let today: Date
 
-    private var weekdaySymbols: [String] {
-        calendar.shortWeekdaySymbols
-    }
+    init(readDayLookup: [Date: ReadDayData], selectedDay: Binding<ReadDayData?>) {
+        self.readDayLookup = readDayLookup
+        _selectedDay = selectedDay
 
-    private var dateRange: (start: Date, end: Date) {
+        let calendar = Calendar.current
+        weekdaySymbols = calendar.shortWeekdaySymbols
+
         let today = calendar.startOfDay(for: Date())
-        let start =
-            calendar.date(byAdding: .weekOfYear, value: -41, to: today)
-                ?? today
-
-        _ =
-            calendar.dateInterval(of: .weekOfYear, for: start)?.start
-                ?? start
-        let endWeek =
-            calendar.dateInterval(of: .weekOfYear, for: today)?.end
-                ?? today
-        let end = calendar.date(byAdding: .day, value: -1, to: endWeek) ?? today
-        return (start: start, end: end)
-    }
-
-    private var weeks: [[Date]] {
-        let start = dateRange.start
-        let end = dateRange.end
-        let startWeek =
-            calendar.dateInterval(of: .weekOfYear, for: start)?.start
-                ?? start
+        let rangeStart = calendar.date(byAdding: .weekOfYear, value: -41, to: today) ?? today
+        let firstWeekStart = calendar.dateInterval(of: .weekOfYear, for: rangeStart)?.start ?? rangeStart
+        let currentWeekEnd = calendar.dateInterval(of: .weekOfYear, for: today)?.end ?? today
+        let lastDay = calendar.date(byAdding: .day, value: -1, to: currentWeekEnd) ?? today
 
         var days: [Date] = []
-        var current = startWeek
-        while current <= end {
+        var current = firstWeekStart
+        while current <= lastDay, let next = calendar.date(byAdding: .day, value: 1, to: current) {
             days.append(current)
-            current =
-                calendar.date(byAdding: .day, value: 1, to: current)
-                    ?? current
+            current = next
         }
 
-        return stride(from: 0, to: days.count, by: 7).map {
+        self.today = today
+        self.rangeStart = rangeStart
+        weeks = stride(from: 0, to: days.count, by: 7).map {
             Array(days[$0 ..< min($0 + 7, days.count)])
         }
     }
@@ -787,10 +777,8 @@ private struct ReadHeatmapView: View {
 
     @ViewBuilder
     private func dayCell(_ day: Date) -> some View {
-        let start = dateRange.start
-        let end = calendar.startOfDay(for: Date())
-        let isOutsideRange = day < start || day > end
-        let readDay = readDayLookup[calendar.startOfDay(for: day)]
+        let isOutsideRange = day < rangeStart || day > today
+        let readDay = readDayLookup[day]
         let count = readDay?.count ?? 0
 
         Button {
@@ -804,7 +792,7 @@ private struct ReadHeatmapView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
                         .stroke(
-                            isSelected(day) ? .white.opacity(0.7) : .clear,
+                            selectedDay?.date == day ? .white.opacity(0.7) : .clear,
                             lineWidth: 1
                         )
                 )
@@ -812,11 +800,6 @@ private struct ReadHeatmapView: View {
         }
         .buttonStyle(.plain)
         .disabled(isOutsideRange || readDay == nil)
-    }
-
-    private func isSelected(_ day: Date) -> Bool {
-        guard let selectedDay else { return false }
-        return calendar.isDate(selectedDay.date, inSameDayAs: day)
     }
 
     private func color(for count: Int) -> Color {

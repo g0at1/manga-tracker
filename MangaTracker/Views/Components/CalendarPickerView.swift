@@ -163,9 +163,15 @@ private struct DayCell: View {
     }
 
     private var foreground: Color {
-        if isSelected { return Color.black.opacity(0.85) }
-        if !isInMonth { return Color.secondary.opacity(0.4) }
-        if isToday { return .green }
+        if isSelected {
+            return Color.black.opacity(0.85)
+        }
+        if !isInMonth {
+            return Color.secondary.opacity(0.4)
+        }
+        if isToday {
+            return .green
+        }
         return .primary
     }
 }
