@@ -120,7 +120,7 @@ struct MangaGridCardView: View {
             }
     }
 
-    private func badge(_ text: String, color: Color) -> some View {
+    private func badge(_ text: LocalizedStringKey, color: Color) -> some View {
         Text(text)
             .font(.caption2.weight(.bold))
             .foregroundStyle(.white)

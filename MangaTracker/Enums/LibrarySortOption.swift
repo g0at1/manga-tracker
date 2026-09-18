@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 enum LibrarySortOption: String, CaseIterable, Identifiable {
     case manual
@@ -13,7 +13,7 @@ enum LibrarySortOption: String, CaseIterable, Identifiable {
         rawValue
     }
 
-    var label: String {
+    var label: LocalizedStringKey {
         switch self {
         case .manual: "Własna kolejność"
         case .title: "Tytuł"

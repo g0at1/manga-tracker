@@ -1,9 +1,11 @@
 import AppKit
 import SwiftUI
 
+/// Upcoming volume releases as a timeline grouped by month.
 struct UpcomingView: View {
     let mangas: [Manga]
-    @Environment(\.dismiss) private var dismiss
+
+    @Environment(\.locale) private var locale
     @State private var editingBuyTarget: Volume?
 
     private var upcomingVolumes: [UpcomingVolume] {
@@ -11,14 +13,8 @@ struct UpcomingView: View {
 
         return mangas.flatMap { manga in
             manga.volumes.compactMap { volume -> UpcomingVolume? in
-                guard let releaseDate = volume.releaseDate else { return nil }
-                guard releaseDate >= now else { return nil }
-
-                return UpcomingVolume(
-                    manga: manga,
-                    volume: volume,
-                    releaseDate: releaseDate
-                )
+                guard let releaseDate = volume.releaseDate, releaseDate >= now else { return nil }
+                return UpcomingVolume(manga: manga, volume: volume, releaseDate: releaseDate)
             }
         }
         .sorted { lhs, rhs in
@@ -26,318 +22,278 @@ struct UpcomingView: View {
                 return lhs.releaseDate < rhs.releaseDate
             }
             if lhs.manga.title != rhs.manga.title {
-                return lhs.manga.title.localizedCaseInsensitiveCompare(
-                    rhs.manga.title
-                ) == .orderedAscending
+                return lhs.manga.title.localizedCaseInsensitiveCompare(rhs.manga.title) == .orderedAscending
             }
             return lhs.volume.number < rhs.volume.number
         }
     }
 
     private var next30Days: [UpcomingVolume] {
-        guard
-            let end = Calendar.current.date(
-                byAdding: .day,
-                value: 30,
-                to: Date()
-            )
-        else {
+        guard let end = Calendar.current.date(byAdding: .day, value: 30, to: Date()) else {
             return upcomingVolumes
         }
         return upcomingVolumes.filter { $0.releaseDate <= end }
     }
 
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    upcomingHeader
+    private var withBuyLink: Int {
+        upcomingVolumes.filter { $0.buyURL != nil }.count
+    }
 
-                    if upcomingVolumes.isEmpty {
+    /// Releases bucketed by month, in chronological order.
+    private var months: [(month: Date, entries: [UpcomingVolume])] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: upcomingVolumes) { entry in
+            calendar.date(from: calendar.dateComponents([.year, .month], from: entry.releaseDate)) ?? entry.releaseDate
+        }
+        return grouped.keys.sorted().map { (month: $0, entries: grouped[$0] ?? []) }
+    }
+
+    var body: some View {
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 22) {
+                header
+                tiles
+
+                if upcomingVolumes.isEmpty {
+                    DetailCard {
                         ContentUnavailableView(
                             "Brak nadchodzących tomów",
                             systemImage: "calendar.badge.clock",
-                            description: Text(
-                                "Ustaw datę premiery w szczegółach tomu, aby pojawił się na tej liście."
-                            )
+                            description: Text("Ustaw datę premiery w szczegółach tomu, aby pojawił się na tej liście.")
                         )
-                        .frame(maxWidth: .infinity, minHeight: 300)
-                    } else {
-                        upcomingSection(
-                            title: "Następne 30 dni",
-                            subtitle: "Premiery w najbliższym miesiącu",
-                            volumes: next30Days
-                        )
-
-                        upcomingSection(
-                            title: "Wszystkie nadchodzące",
-                            subtitle: "Pełna lista zaplanowanych premier",
-                            volumes: upcomingVolumes
-                        )
+                        .frame(maxWidth: .infinity, minHeight: 260)
                     }
-                }
-                .padding(24)
-            }
-            .navigationTitle("Nadchodzące")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Zamknij") {
-                        dismiss()
+                } else {
+                    ForEach(months, id: \.month) { group in
+                        monthCard(group.month, entries: group.entries)
                     }
                 }
             }
+            .padding(28)
         }
-        .frame(minWidth: 980, minHeight: 720)
-        .sheet(item: $editingBuyTarget) { target in
-            buyLinkEditorSheet(target)
-                .presentationDetents([.medium])
+        .frame(minWidth: 900, minHeight: 640)
+        .background(AppBackgroundView())
+        .navigationTitle("Nadchodzące")
+        .onAppear {
+            WindowManager.ensureComfortableSize(windowID: "upcoming", minWidth: 1100, minHeight: 820)
+        }
+        .sheet(item: $editingBuyTarget) { volume in
+            BuyLinkEditorSheet(volume: volume)
         }
     }
 
-    private var upcomingHeader: some View {
-        HStack(spacing: 16) {
-            Image(systemName: "calendar.badge.clock")
-                .font(.title2.weight(.bold))
-                .foregroundStyle(.green)
-                .padding(12)
-                .background(
-                    .green.opacity(0.12),
-                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                )
+    // MARK: - Header & tiles
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Premiery tomów")
-                    .font(.title2.weight(.bold))
-                Text("Zobacz co wychodzi i kiedy")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.background)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(.quaternary, lineWidth: 1)
-        )
-    }
-
-    private func upcomingSection(
-        title: String,
-        subtitle: String,
-        volumes: [UpcomingVolume]
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(title)
-                    .font(.title3.weight(.bold))
-
-                Text("(\(volumes.count))")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-            }
-
-            Text(subtitle)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Nadchodzące")
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+            Text("Zobacz co wychodzi i kiedy")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+        }
+    }
 
-            if volumes.isEmpty {
-                Text("Brak premier w tej sekcji")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 6)
-            } else {
-                LazyVStack(spacing: 12) {
-                    ForEach(volumes) { entry in
-                        UpcomingRow(entry: entry) {
-                            editingBuyTarget = entry.volume
-                        }
+    private var tiles: some View {
+        HStack(spacing: 12) {
+            StatCardView(
+                title: "najbliższa premiera",
+                value: upcomingVolumes.first.map { $0.releaseDate.yyyyMMdd() } ?? "—",
+                systemImage: "calendar.badge.clock",
+                accentColor: .green
+            )
+            StatCardView(
+                title: "w ciągu 30 dni",
+                value: "\(next30Days.count)",
+                systemImage: "clock.fill",
+                accentColor: .orange
+            )
+            StatCardView(
+                title: "wszystkich premier",
+                value: "\(upcomingVolumes.count)",
+                systemImage: "square.stack.3d.up.fill",
+                accentColor: .blue
+            )
+            StatCardView(
+                title: "z linkiem do zakupu",
+                value: "\(withBuyLink)",
+                systemImage: "cart.fill",
+                accentColor: .teal
+            )
+            Spacer(minLength: 0)
+        }
+    }
+
+    // MARK: - Month card
+
+    private func monthCard(_ month: Date, entries: [UpcomingVolume]) -> some View {
+        DetailCard(padding: 0) {
+            VStack(spacing: 0) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(month.formatted(.dateTime.month(.wide).year().locale(locale)).capitalized)
+                        .font(.headline)
+                    Text("\(entries.count)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(Color.white.opacity(0.08), in: Capsule())
+                    Spacer()
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+
+                Divider().overlay(Color.white.opacity(0.06))
+
+                ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                    UpcomingRow(entry: entry, isAlternate: index.isMultiple(of: 2)) {
+                        editingBuyTarget = entry.volume
                     }
                 }
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.background)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(.quaternary, lineWidth: 1)
-        )
-    }
-
-    private func buyLinkEditorSheet(_ volume: Volume) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Link do zakupu")
-                .font(.headline)
-
-            TextField(
-                "https://...",
-                text: Binding(
-                    get: { volume.buyURL ?? "" },
-                    set: { volume.buyURL = $0.isEmpty ? nil : $0 }
-                )
-            )
-            .textFieldStyle(.plain)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(
-                .white.opacity(0.05),
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(.white.opacity(0.08), lineWidth: 1)
-            )
-
-            HStack {
-                Button("Anuluj", role: .cancel) {
-                    editingBuyTarget = nil
-                }
-
-                Button("Usuń link", role: .destructive) {
-                    volume.buyURL = nil
-                    editingBuyTarget = nil
-                }
-
-                Spacer()
-
-                Button("Gotowe") {
-                    editingBuyTarget = nil
-                }
-                .keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(20)
-        .frame(minWidth: 360, minHeight: 220)
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 }
+
+// MARK: - Row
 
 private struct UpcomingVolume: Identifiable {
     let id = UUID()
     let manga: Manga
     let volume: Volume
     let releaseDate: Date
+
+    var buyURL: URL? {
+        guard let raw = volume.buyURL,
+              !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let url = URL(string: raw)
+        else { return nil }
+        return url
+    }
+
+    var daysUntil: Int {
+        let calendar = Calendar.current
+        return calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: Date()),
+            to: calendar.startOfDay(for: releaseDate)
+        ).day ?? 0
+    }
 }
 
 private struct UpcomingRow: View {
     let entry: UpcomingVolume
+    let isAlternate: Bool
     let onEditBuyURL: () -> Void
+
+    @Environment(\.locale) private var locale
+    @State private var isHovered = false
+
+    private var isSoon: Bool {
+        entry.daysUntil <= 30
+    }
 
     var body: some View {
         HStack(spacing: 14) {
-            CachedAsyncImage(
-                url: URL(string: entry.manga.coverURL ?? ""),
-                cornerRadius: 10
-            )
-            .frame(width: 54, height: 74)
+            Color.clear
+                .frame(width: 46, height: 66)
+                .overlay(
+                    CachedAsyncImage(url: URL(string: entry.manga.coverURL ?? ""), cornerRadius: 8)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(entry.manga.title)
-                    .font(.headline)
-                    .lineLimit(1)
-
-                Text("Tom #\(entry.volume.number)")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 6) {
-                Text(entry.releaseDate.yyyyMMdd())
-                    .font(.headline.weight(.bold))
-
-                Text(entry.releaseDate.relativeFormatted())
+                    .lineLimit(1)
+                Text("Tom #\(entry.volume.number)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-
-                if let url = buyURL {
-                    Button {
-                        NSWorkspace.shared.open(url)
-                    } label: {
-                        Label("Kup", systemImage: "cart")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(
-                                .green.opacity(0.12),
-                                in: Capsule()
-                            )
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    Button {
-                        onEditBuyURL()
-                    } label: {
-                        Label("Dodaj link", systemImage: "link.badge.plus")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(
-                                .white.opacity(0.08),
-                                in: Capsule()
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
             }
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.ultraThinMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(.quaternary, lineWidth: 1)
-        )
-        .contextMenu {
-            if let url = buyURL {
-                Button("Otwórz link zakupu") {
+
+            Spacer(minLength: 12)
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(entry.releaseDate.yyyyMMdd())
+                    .font(.subheadline.weight(.bold))
+                    .monospacedDigit()
+                Text(relativeText)
+                    .font(.caption.weight(isSoon ? .semibold : .regular))
+                    .foregroundStyle(isSoon ? Color.green : .secondary)
+            }
+            .frame(width: 130, alignment: .trailing)
+
+            if let url = entry.buyURL {
+                SubtleButton(title: "Kup", systemImage: "cart", tint: .green) {
                     NSWorkspace.shared.open(url)
                 }
+            } else {
+                SubtleButton(title: "Dodaj link", systemImage: "link.badge.plus", tint: .secondary, action: onEditBuyURL)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 10)
+        .background(
+            isHovered ? Color.white.opacity(0.05) : Color.white.opacity(isAlternate ? 0.025 : 0)
+        )
+        .onHover { isHovered = $0 }
+        .contextMenu {
+            if let url = entry.buyURL {
+                Button("Otwórz link zakupu") { NSWorkspace.shared.open(url) }
                 Divider()
             }
-
-            Button("Edytuj link zakupu") {
-                onEditBuyURL()
-            }
-
+            Button("Edytuj link zakupu", action: onEditBuyURL)
             Button("Skopiuj tytuł") {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(
-                    "\(entry.manga.title) — tom \(entry.volume.number)",
+                    L("%@ — tom %lld", entry.manga.title, entry.volume.number),
                     forType: .string
                 )
             }
         }
     }
 
-    private var buyURL: URL? {
-        guard let raw = entry.volume.buyURL,
-              !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              let url = URL(string: raw)
-        else { return nil }
-        return url
+    private var relativeText: String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = locale
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: entry.releaseDate, relativeTo: Date())
     }
 }
 
-private extension Date {
-    func relativeFormatted() -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.locale = Locale.current
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: self, relativeTo: Date())
+// MARK: - Buy link sheet
+
+private struct BuyLinkEditorSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Bindable var volume: Volume
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            DetailCardTitle(title: "Link do zakupu", systemImage: "cart")
+
+            TextField(
+                "https://…",
+                text: Binding(
+                    get: { volume.buyURL ?? "" },
+                    set: { volume.buyURL = $0.isEmpty ? nil : $0 }
+                )
+            )
+            .detailInput()
+
+            HStack {
+                SubtleButton(title: "Usuń link", systemImage: "trash", tint: .red) {
+                    volume.buyURL = nil
+                    dismiss()
+                }
+                Spacer()
+                Button("Anuluj", role: .cancel) { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button("Gotowe") { dismiss() }
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 420)
+        .background(AppBackgroundView())
     }
 }

@@ -94,7 +94,7 @@ struct NotificationsPopoverView: View {
 
 private struct HeaderAction: View {
     let systemImage: String
-    let help: String
+    let help: LocalizedStringKey
     let action: () -> Void
 
     @Environment(\.isEnabled) private var isEnabled
@@ -156,7 +156,6 @@ private struct NotificationRow: View {
                 }
 
                 Text(message.createdAt, format: .relative(presentation: .named))
-                    .environment(\.locale, Locale(identifier: "pl_PL"))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }

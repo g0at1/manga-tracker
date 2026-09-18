@@ -11,9 +11,13 @@ struct ContinueReadingCardView: View {
         manga.readPercent
     }
 
-    private var nextLabel: String {
-        guard let next = manga.nextUnreadVolume else { return "" }
-        return "Tom \(next.number) z \(manga.volumes.count)"
+    @ViewBuilder
+    private var nextLabel: some View {
+        if let next = manga.nextUnreadVolume {
+            Text("Tom \(next.number) z \(manga.volumes.count)")
+        } else {
+            Text(verbatim: "")
+        }
     }
 
     var body: some View {
@@ -33,7 +37,7 @@ struct ContinueReadingCardView: View {
                     .font(.headline)
                     .lineLimit(1)
 
-                Text(nextLabel)
+                nextLabel
                     .font(.caption)
                     .foregroundStyle(.secondary)
 

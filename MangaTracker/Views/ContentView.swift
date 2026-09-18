@@ -241,15 +241,15 @@ struct ContentView: View {
 
                     do {
                         try modelContext.save()
-                        toastService.show("Import pomyślny")
+                        toastService.show(L("Import pomyślny"))
                     } catch {
-                        toastService.show("Import nieudany: \(error.localizedDescription)")
+                        toastService.show(L("Import nieudany: %@", error.localizedDescription))
                     }
                 } catch {
-                    toastService.show("Import nieudany: \(error.localizedDescription)")
+                    toastService.show(L("Import nieudany: %@", error.localizedDescription))
                 }
             case let .failure(error):
-                toastService.show("Import nieudany: \(error.localizedDescription)")
+                toastService.show(L("Import nieudany: %@", error.localizedDescription))
             }
         }
     }
@@ -272,15 +272,15 @@ struct ContentView: View {
             let data = try encodeMangasToJSON(mangas)
             let filename = "manga-export-\(Date().yyyyMMdd()).json"
             guard let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first else {
-                toastService.show("Nie można znaleźć folderu Pobrane")
+                toastService.show(L("Nie można znaleźć folderu Pobrane"))
                 return
             }
             let url = downloads.appendingPathComponent(filename)
             try data.write(to: url, options: .atomic)
             lastBackupAtTimestamp = Date().timeIntervalSince1970
-            toastService.show("Eksport zapisano: \(url.path)")
+            toastService.show(L("Eksport zapisano: %@", url.path))
         } catch {
-            toastService.show("Eksport nieudany: \(error.localizedDescription)")
+            toastService.show(L("Eksport nieudany: %@", error.localizedDescription))
         }
     }
 
@@ -289,7 +289,7 @@ struct ContentView: View {
         let lastBackupDate = Date(timeIntervalSince1970: lastBackupAtTimestamp)
         let daysSinceBackup = Calendar.current.dateComponents([.day], from: lastBackupDate, to: Date()).day ?? 0
         if daysSinceBackup >= backupReminderIntervalDays {
-            toastService.show("Minęło \(daysSinceBackup) dni od ostatniego backupu. Warto wykonać eksport.")
+            toastService.show(L("Minęło %lld dni od ostatniego backupu. Warto wykonać eksport.", daysSinceBackup))
         }
     }
 }

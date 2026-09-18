@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 /// Sections of the library shown in the sidebar and as filter chips.
 enum LibraryCategory: String, CaseIterable, Identifiable {
@@ -13,7 +13,7 @@ enum LibraryCategory: String, CaseIterable, Identifiable {
         rawValue
     }
 
-    var label: String {
+    var label: LocalizedStringKey {
         switch self {
         case .all: "Biblioteka"
         case .inProgress: "W trakcie"
@@ -25,7 +25,7 @@ enum LibraryCategory: String, CaseIterable, Identifiable {
     }
 
     /// Shorter label used on the filter chips above the grid.
-    var chipLabel: String {
+    var chipLabel: LocalizedStringKey {
         self == .all ? "Wszystkie" : label
     }
 

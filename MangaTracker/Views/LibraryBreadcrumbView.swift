@@ -62,7 +62,7 @@ struct LibraryBreadcrumbView: View {
     /// otherwise squeeze the "Biblioteka" button instead.
     private var displayTitle: String {
         let title = manga.title.trimmingCharacters(in: .whitespaces)
-        guard !title.isEmpty else { return "Bez tytułu" }
+        guard !title.isEmpty else { return L("Bez tytułu") }
         let limit = 40
         return title.count > limit ? String(title.prefix(limit)).trimmingCharacters(in: .whitespaces) + "…" : title
     }

@@ -5,6 +5,7 @@ import SwiftUI
 struct DashboardView: View {
     let mangas: [Manga]
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @State private var selectedReadDay: ReadDayData?
     @State private var hoveredPurchase: MonthlyPurchaseData?
 
@@ -24,15 +25,6 @@ struct DashboardView: View {
 
     private var readVolumes: Int {
         mangas.filter { !($0.isSold ?? false) }.flatMap { $0.volumes }.filter { $0.read == true }.count
-    }
-
-    private var totalSpent: Double {
-        mangas
-            .filter { !($0.isSold ?? false) }
-            .flatMap { $0.volumes }
-            .filter { $0.owned }
-            .compactMap { $0.price }
-            .reduce(0, +)
     }
 
     private var averageVolumePrice: Double {
@@ -177,7 +169,7 @@ struct DashboardView: View {
                     let items =
                         values
                             .map { value in
-                                let title = value.1.manga?.title ?? "Nieznany tytul"
+                                let title = value.1.manga?.title ?? L("Nieznany tytuł")
                                 return "\(title) #\(value.1.number)"
                             }
                             .sorted()
@@ -196,390 +188,469 @@ struct DashboardView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    summaryCards
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 22) {
+                header
 
-                    if !readDayData.isEmpty {
-                        DashboardCard("Aktywnosc czytania") {
-                            VStack(alignment: .leading, spacing: 16) {
-                                ReadHeatmapView(
-                                    readDayLookup: readDayLookup,
-                                    selectedDay: $selectedReadDay
-                                )
+                summaryTiles
 
-                                if let selectedReadDay {
-                                    VStack(
-                                        alignment: .leading,
-                                        spacing: 8
-                                    ) {
-                                        Text(
-                                            selectedReadDay.date.yyyyMMdd()
-                                        )
-                                        .font(.headline)
+                HStack(alignment: .top, spacing: 18) {
+                    readingActivityCard
+                        .frame(maxWidth: .infinity)
 
-                                        ForEach(
-                                            selectedReadDay.items,
-                                            id: \.self
-                                        ) { item in
-                                            Text(item)
-                                                .font(.subheadline)
-                                                .foregroundStyle(
-                                                    .secondary
-                                                )
-                                        }
-                                    }
-                                    .frame(
-                                        maxWidth: .infinity,
-                                        alignment: .leading
-                                    )
-                                    .padding(12)
-                                    .background(
-                                        RoundedRectangle(
-                                            cornerRadius: 12,
-                                            style: .continuous
-                                        )
-                                        .fill(.white.opacity(0.04))
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(
-                                            cornerRadius: 12,
-                                            style: .continuous
-                                        )
-                                        .stroke(
-                                            .white.opacity(0.08),
-                                            lineWidth: 1
-                                        )
-                                    )
-                                } else {
-                                    Text(
-                                        "Wybierz dzien, aby zobaczyc co przeczytales."
-                                    )
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
+                    VStack(spacing: 18) {
+                        monthComparisonCard
+                        topSeriesCard
                     }
-
-                    if !mangaSpendData.isEmpty {
-                        DashboardCard("Wydatki na serie") {
-                            Chart(mangaSpendData.prefix(8)) { item in
-                                BarMark(
-                                    x: .value("Kwota", item.amount),
-                                    y: .value("Manga", item.title)
-                                )
-                            }
-                            .frame(height: 320)
-                        }
-                    }
-
-                    if !mangaProgressData.isEmpty {
-                        DashboardCard("Postęp czytania") {
-                            Chart(mangaProgressData.prefix(10)) { item in
-                                BarMark(
-                                    x: .value("Postęp", item.percent),
-                                    y: .value("Manga", item.title)
-                                )
-                            }
-                            .frame(height: 320)
-                        }
-                    }
-
-                    if !monthlyPurchaseData.isEmpty {
-                        DashboardCard("Zakupy miesięczne") {
-                            Chart(monthlyPurchaseData) { item in
-                                LineMark(
-                                    x: .value(
-                                        "Miesiąc",
-                                        item.month,
-                                        unit: .month
-                                    ),
-                                    y: .value("Kupione tomy", item.count)
-                                )
-
-                                AreaMark(
-                                    x: .value(
-                                        "Miesiąc",
-                                        item.month,
-                                        unit: .month
-                                    ),
-                                    y: .value("Kupione tomy", item.count)
-                                )
-                                .opacity(0.2)
-                            }
-                            .frame(height: 260)
-                        }
-
-                        DashboardCard("Wydatki miesięczne") {
-                            Chart {
-                                ForEach(monthlyPurchaseData) { item in
-                                    BarMark(
-                                        x: .value(
-                                            "Miesiąc",
-                                            item.month,
-                                            unit: .month
-                                        ),
-                                        y: .value("Kwota", item.amount)
-                                    )
-                                    .opacity(
-                                        hoveredPurchase == nil ||
-                                            hoveredPurchase?.id == item.id ? 1 : 0.5
-                                    )
-                                }
-
-                                if let hoveredPurchase {
-                                    RuleMark(
-                                        x: .value("Miesiąc", hoveredPurchase.month)
-                                    )
-                                    .foregroundStyle(.secondary.opacity(0.4))
-                                    .annotation(
-                                        position: .top,
-                                        spacing: 8
-                                    ) {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(
-                                                hoveredPurchase.month.formatted(
-                                                    .dateTime.month(.wide).year()
-                                                )
-                                            )
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-
-                                            Text(
-                                                hoveredPurchase.amount,
-                                                format: .currency(code: "PLN")
-                                            )
-                                            .font(.headline)
-                                            .monospacedDigit()
-                                        }
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 8)
-                                        .background(.regularMaterial)
-                                        .clipShape(
-                                            RoundedRectangle(
-                                                cornerRadius: 8,
-                                                style: .continuous
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                            .chartOverlay { proxy in
-                                GeometryReader { geometry in
-                                    Rectangle()
-                                        .fill(.clear)
-                                        .contentShape(Rectangle())
-                                        .onContinuousHover { phase in
-                                            switch phase {
-                                            case let .active(location):
-                                                let plotFrame = geometry[proxy.plotFrame!]
-
-                                                let xPosition =
-                                                    location.x - plotFrame.origin.x
-
-                                                guard
-                                                    xPosition >= 0,
-                                                    xPosition <= plotFrame.width,
-                                                    let date: Date = proxy.value(
-                                                        atX: xPosition
-                                                    )
-                                                else {
-                                                    hoveredPurchase = nil
-                                                    return
-                                                }
-
-                                                hoveredPurchase =
-                                                    monthlyPurchaseData.min {
-                                                        abs(
-                                                            $0.month.timeIntervalSince(date)
-                                                        )
-                                                            <
-                                                            abs(
-                                                                $1.month.timeIntervalSince(date)
-                                                            )
-                                                    }
-
-                                            case .ended:
-                                                hoveredPurchase = nil
-                                            }
-                                        }
-                                }
-                            }
-                            .frame(height: 260)
-                        }
-                    }
-
-                    DashboardCard("Top serie") {
-                        VStack(spacing: 12) {
-                            ForEach(
-                                Array(mangaSpendData.prefix(5).enumerated()),
-                                id: \.offset
-                            ) { index, item in
-                                HStack {
-                                    Text("\(index + 1).")
-                                        .font(.headline)
-                                        .frame(width: 28, alignment: .leading)
-
-                                    Text(item.title)
-                                        .lineLimit(1)
-
-                                    Spacer()
-
-                                    Text(
-                                        item.amount,
-                                        format: .currency(code: "PLN")
-                                    )
-                                    .monospacedDigit()
-                                    .foregroundStyle(.secondary)
-                                }
-
-                                if index < min(mangaSpendData.count, 5) - 1 {
-                                    Divider()
-                                }
-                            }
-                        }
-                    }
-                    DashboardCard("Ten miesiąc vs poprzedni") {
-                        HStack(spacing: 32) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Ten miesiąc")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-
-                                Text(
-                                    currentMonthSpending,
-                                    format: .currency(code: "PLN")
-                                )
-                                .font(.title2.weight(.bold))
-                                .monospacedDigit()
-                            }
-
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Poprzedni miesiąc")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-
-                                Text(
-                                    previousMonthSpending,
-                                    format: .currency(code: "PLN")
-                                )
-                                .font(.title2.weight(.bold))
-                                .monospacedDigit()
-                            }
-
-                            Spacer()
-
-                            VStack(alignment: .trailing, spacing: 6) {
-                                Text("Zmiana")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-
-                                HStack(spacing: 6) {
-                                    Image(
-                                        systemName:
-                                        monthlySpendingDifference > 0
-                                            ? "arrow.up.right"
-                                            : monthlySpendingDifference < 0
-                                            ? "arrow.down.right"
-                                            : "minus"
-                                    )
-
-                                    if let percent = monthlySpendingPercentChange {
-                                        Text(
-                                            percent,
-                                            format: .number
-                                                .precision(.fractionLength(1))
-                                        )
-
-                                        Text("%")
-                                    } else {
-                                        Text("—")
-                                    }
-                                }
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(
-                                    monthlySpendingDifference > 0
-                                        ? .red
-                                        : monthlySpendingDifference < 0
-                                        ? .green
-                                        : .secondary
-                                )
-
-                                Text(
-                                    monthlySpendingDifference,
-                                    format: .currency(code: "PLN")
-                                )
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                            }
-                        }
-                    }
+                    .frame(width: 340)
                 }
-                .padding(24)
-            }
-            .navigationTitle("Dashboard")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Zamknij") {
-                        dismiss()
-                    }
+
+                HStack(alignment: .top, spacing: 18) {
+                    spendingPerSeriesCard
+                    progressPerSeriesCard
+                }
+
+                HStack(alignment: .top, spacing: 18) {
+                    monthlyPurchasesCard
+                    monthlySpendingCard
                 }
             }
-            .onAppear {
-                if selectedReadDay == nil {
-                    selectedReadDay = readDayData.last
-                }
-            }
+            .padding(28)
         }
-        .frame(minWidth: 1000, minHeight: 720)
+        .frame(minWidth: 1100, minHeight: 760)
+        .background(AppBackgroundView())
+        .navigationTitle("Statystyki")
+        .onAppear {
+            if selectedReadDay == nil {
+                selectedReadDay = readDayData.last
+            }
+            WindowManager.ensureComfortableSize(windowID: "dashboard", minWidth: 1400, minHeight: 900)
+        }
     }
 
-    private var summaryCards: some View {
-        LazyVGrid(
-            columns: [
-                GridItem(.adaptive(minimum: 180), spacing: 16),
-            ],
-            spacing: 16
-        ) {
-            SummaryCard(
-                title: "Serie",
-                value: "\(totalSeries)",
-                systemImage: "books.vertical"
+    // MARK: - Header & tiles
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Statystyki")
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+            Text("Twoja kolekcja w liczbach")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var summaryTiles: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 175, maximum: 260), spacing: 12)], spacing: 12) {
+            StatCardView(title: "serii", value: "\(totalSeries)", systemImage: "books.vertical.fill", accentColor: .blue, expands: true)
+            StatCardView(title: "wszystkich tomów", value: "\(totalVolumes)", systemImage: "square.stack.3d.up.fill", accentColor: .teal, expands: true)
+            StatCardView(title: "kupionych", value: "\(ownedVolumes)", systemImage: "cart.fill", accentColor: .green, expands: true)
+            StatCardView(title: "przeczytanych", value: "\(readVolumes)", systemImage: "checkmark.circle.fill", accentColor: .green, expands: true)
+            StatCardView(
+                title: "średnia cena tomu",
+                value: averageVolumePrice.formatted(.number.precision(.fractionLength(2)).locale(locale)),
+                systemImage: "tag.fill",
+                accentColor: .orange,
+                unit: "PLN",
+                expands: true
             )
-            SummaryCard(
-                title: "Wszystkie tomy",
-                value: "\(totalVolumes)",
-                systemImage: "square.stack.3d.up"
-            )
-            SummaryCard(
-                title: "Kupione",
-                value: "\(ownedVolumes)",
-                systemImage: "cart"
-            )
-            SummaryCard(
-                title: "Przeczytane",
-                value: "\(readVolumes)",
-                systemImage: "book.closed"
-            )
-            SummaryCard(
-                title: "Wydano",
-                value: totalSpent.formatted(.currency(code: "PLN")),
-                systemImage: "creditcard"
-            )
-            SummaryCard(
-                title: "Średnia cena tomu",
-                value: averageVolumePrice.formatted(.currency(code: "PLN")),
-                systemImage: "tag"
-            )
-            SummaryCard(
-                title: "Postęp",
-                value: "\(Int(readPercent))%",
-                systemImage: "chart.pie"
+            StatCardView(
+                title: "postęp",
+                value: readPercent.formatted(.number.precision(.fractionLength(1)).locale(locale)) + "%",
+                systemImage: "circle.dashed.inset.filled",
+                accentColor: .green,
+                expands: true
             )
         }
+    }
+
+    // MARK: - Reading activity
+
+    private var readingActivityCard: some View {
+        DetailCard {
+            VStack(alignment: .leading, spacing: 16) {
+                DetailCardTitle(title: "Aktywność czytania", systemImage: "flame.fill")
+
+                if readDayData.isEmpty {
+                    emptyNote("Oznacz tom jako przeczytany, a tutaj pojawi się Twoja aktywność.")
+                } else {
+                    ReadHeatmapView(readDayLookup: readDayLookup, selectedDay: $selectedReadDay)
+
+                    if let selectedReadDay {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text(selectedReadDay.date.yyyyMMdd())
+                                    .font(.subheadline.weight(.semibold))
+                                Spacer()
+                                Text("\(selectedReadDay.count)")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(Color.green)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 2)
+                                    .background(Color.green.opacity(0.16), in: Capsule())
+                            }
+                            ForEach(selectedReadDay.items, id: \.self) { item in
+                                Label(item, systemImage: "book.closed")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.white.opacity(0.04))
+                        )
+                    } else {
+                        emptyNote("Wybierz dzień, aby zobaczyć co przeczytałeś.")
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Month comparison & top series
+
+    private var monthComparisonCard: some View {
+        DetailCard {
+            VStack(alignment: .leading, spacing: 14) {
+                DetailCardTitle(title: "Ten miesiąc vs poprzedni", systemImage: "calendar")
+
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Ten miesiąc")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(currentMonthSpending, format: .currency(code: "PLN"))
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Poprzedni miesiąc")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(previousMonthSpending, format: .currency(code: "PLN"))
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                HStack(spacing: 6) {
+                    Image(systemName: monthlySpendingDifference > 0
+                        ? "arrow.up.right" : monthlySpendingDifference < 0 ? "arrow.down.right" : "minus")
+                        .font(.caption.weight(.bold))
+                    if let percent = monthlySpendingPercentChange {
+                        (Text(percent, format: .number.precision(.fractionLength(1))) + Text("%"))
+                            .monospacedDigit()
+                    } else {
+                        Text("—")
+                    }
+                    Text("·")
+                        .foregroundStyle(.secondary)
+                    Text(monthlySpendingDifference, format: .currency(code: "PLN"))
+                        .monospacedDigit()
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(
+                    monthlySpendingDifference > 0 ? Color.red
+                        : monthlySpendingDifference < 0 ? Color.green : Color.secondary
+                )
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule().fill(
+                        (monthlySpendingDifference > 0 ? Color.red
+                            : monthlySpendingDifference < 0 ? Color.green : Color.white)
+                            .opacity(0.12)
+                    )
+                )
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var topSeriesCard: some View {
+        DetailCard {
+            VStack(alignment: .leading, spacing: 12) {
+                DetailCardTitle(title: "Top serie", systemImage: "crown.fill")
+
+                if mangaSpendData.isEmpty {
+                    emptyNote("Wpisz ceny tomów, aby zobaczyć ranking.")
+                } else {
+                    let top = Array(mangaSpendData.prefix(5))
+                    let maxAmount = top.first?.amount ?? 1
+                    VStack(spacing: 10) {
+                        ForEach(Array(top.enumerated()), id: \.offset) { index, item in
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack(spacing: 8) {
+                                    Text("\(index + 1)")
+                                        .font(.caption.weight(.bold).monospacedDigit())
+                                        .foregroundStyle(index == 0 ? Color.black.opacity(0.85) : .secondary)
+                                        .frame(width: 20, height: 20)
+                                        .background(
+                                            Circle().fill(index == 0 ? Color.green : Color.white.opacity(0.08))
+                                        )
+                                    Text(item.title)
+                                        .font(.subheadline.weight(.medium))
+                                        .lineLimit(1)
+                                    Spacer(minLength: 8)
+                                    Text(item.amount, format: .currency(code: "PLN"))
+                                        .font(.caption.weight(.semibold))
+                                        .monospacedDigit()
+                                        .foregroundStyle(.secondary)
+                                }
+                                GeometryReader { geo in
+                                    Capsule()
+                                        .fill(Color.green.opacity(index == 0 ? 0.9 : 0.45))
+                                        .frame(width: max(4, geo.size.width * item.amount / maxAmount))
+                                }
+                                .frame(height: 4)
+                                .background(Capsule().fill(Color.white.opacity(0.06)))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Charts
+
+    private var spendingPerSeriesCard: some View {
+        DetailCard {
+            VStack(alignment: .leading, spacing: 14) {
+                DetailCardTitle(title: "Wydatki na serie", systemImage: "banknote.fill")
+
+                if mangaSpendData.isEmpty {
+                    emptyNote("Wpisz ceny tomów, aby zobaczyć wykres.")
+                } else {
+                    Chart(mangaSpendData.prefix(8)) { item in
+                        BarMark(
+                            x: .value("Kwota", item.amount),
+                            y: .value("Manga", item.title)
+                        )
+                        .foregroundStyle(Color.green.gradient)
+                        .cornerRadius(4)
+                        .annotation(position: .trailing, spacing: 6) {
+                            Text(item.amount, format: .number.precision(.fractionLength(0)))
+                                .font(.caption2.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .chartXAxis(.hidden)
+                    .chartYAxis {
+                        AxisMarks { _ in
+                            AxisValueLabel()
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(height: 280)
+                }
+            }
+        }
+    }
+
+    private var progressPerSeriesCard: some View {
+        DetailCard {
+            VStack(alignment: .leading, spacing: 14) {
+                DetailCardTitle(title: "Postęp czytania", systemImage: "chart.bar.fill")
+
+                if mangaProgressData.isEmpty {
+                    emptyNote("Wszystko przeczytane — nie ma czego pokazać.")
+                } else {
+                    Chart(mangaProgressData.prefix(8)) { item in
+                        BarMark(
+                            x: .value("Postęp", item.percent),
+                            y: .value("Manga", item.title)
+                        )
+                        .foregroundStyle(Color.teal.gradient)
+                        .cornerRadius(4)
+                        .annotation(position: .trailing, spacing: 6) {
+                            Text("\(item.readVolumes)/\(item.totalVolumes)")
+                                .font(.caption2.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .chartXScale(domain: 0 ... 100)
+                    .chartXAxis {
+                        AxisMarks(values: [0, 25, 50, 75, 100]) { value in
+                            AxisGridLine().foregroundStyle(Color.white.opacity(0.08))
+                            AxisValueLabel {
+                                if let v = value.as(Int.self) {
+                                    Text("\(v)%").font(.caption2).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .chartYAxis {
+                        AxisMarks { _ in
+                            AxisValueLabel()
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(height: 280)
+                }
+            }
+        }
+    }
+
+    private var monthlyPurchasesCard: some View {
+        DetailCard {
+            VStack(alignment: .leading, spacing: 14) {
+                DetailCardTitle(title: "Zakupy miesięczne", systemImage: "cart.fill")
+
+                if monthlyPurchaseData.isEmpty {
+                    emptyNote("Ustaw daty zakupu tomów, aby zobaczyć wykres.")
+                } else {
+                    Chart(monthlyPurchaseData) { item in
+                        AreaMark(
+                            x: .value("Miesiąc", item.month, unit: .month),
+                            y: .value("Kupione tomy", item.count)
+                        )
+                        .interpolationMethod(.catmullRom)
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color.green.opacity(0.35), Color.green.opacity(0.02)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+
+                        LineMark(
+                            x: .value("Miesiąc", item.month, unit: .month),
+                            y: .value("Kupione tomy", item.count)
+                        )
+                        .interpolationMethod(.catmullRom)
+                        .foregroundStyle(Color.green)
+                        .lineStyle(StrokeStyle(lineWidth: 2))
+
+                        PointMark(
+                            x: .value("Miesiąc", item.month, unit: .month),
+                            y: .value("Kupione tomy", item.count)
+                        )
+                        .foregroundStyle(Color.green)
+                        .symbolSize(30)
+                    }
+                    .chartXAxis {
+                        AxisMarks(values: .stride(by: .month)) { _ in
+                            AxisGridLine().foregroundStyle(Color.white.opacity(0.06))
+                            AxisValueLabel(format: .dateTime.month(.abbreviated), centered: true)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .chartYAxis {
+                        AxisMarks(position: .leading) { _ in
+                            AxisGridLine().foregroundStyle(Color.white.opacity(0.08))
+                            AxisValueLabel()
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(height: 240)
+                }
+            }
+        }
+    }
+
+    private var monthlySpendingCard: some View {
+        DetailCard {
+            VStack(alignment: .leading, spacing: 14) {
+                DetailCardTitle(title: "Wydatki miesięczne", systemImage: "creditcard.fill")
+
+                if monthlyPurchaseData.isEmpty {
+                    emptyNote("Ustaw daty zakupu tomów, aby zobaczyć wykres.")
+                } else {
+                    Chart {
+                        ForEach(monthlyPurchaseData) { item in
+                            BarMark(
+                                x: .value("Miesiąc", item.month, unit: .month),
+                                y: .value("Kwota", item.amount)
+                            )
+                            .foregroundStyle(Color.yellow.gradient)
+                            .cornerRadius(4)
+                            .opacity(hoveredPurchase == nil || hoveredPurchase?.id == item.id ? 1 : 0.4)
+                        }
+
+                        if let hoveredPurchase {
+                            RuleMark(x: .value("Miesiąc", hoveredPurchase.month))
+                                .foregroundStyle(Color.white.opacity(0.25))
+                                .annotation(position: .top, spacing: 8) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(hoveredPurchase.month.formatted(.dateTime.month(.wide).year().locale(locale)))
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                        Text(hoveredPurchase.amount, format: .currency(code: "PLN"))
+                                            .font(.caption.weight(.bold))
+                                            .monospacedDigit()
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .fill(Color(red: 0.1, green: 0.11, blue: 0.12))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                    )
+                                }
+                        }
+                    }
+                    .chartXAxis {
+                        AxisMarks(values: .stride(by: .month)) { _ in
+                            AxisGridLine().foregroundStyle(Color.white.opacity(0.06))
+                            AxisValueLabel(format: .dateTime.month(.abbreviated), centered: true)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .chartYAxis {
+                        AxisMarks(position: .leading) { _ in
+                            AxisGridLine().foregroundStyle(Color.white.opacity(0.08))
+                            AxisValueLabel()
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .chartOverlay { proxy in
+                        GeometryReader { geometry in
+                            Rectangle()
+                                .fill(.clear)
+                                .contentShape(Rectangle())
+                                .onContinuousHover { phase in
+                                    switch phase {
+                                    case let .active(location):
+                                        guard let plotFrame = proxy.plotFrame else { return }
+                                        let frame = geometry[plotFrame]
+                                        let x = location.x - frame.origin.x
+                                        guard x >= 0, x <= frame.width, let date: Date = proxy.value(atX: x) else {
+                                            hoveredPurchase = nil
+                                            return
+                                        }
+                                        hoveredPurchase = monthlyPurchaseData.min {
+                                            abs($0.month.timeIntervalSince(date)) < abs($1.month.timeIntervalSince(date))
+                                        }
+                                    case .ended:
+                                        hoveredPurchase = nil
+                                    }
+                                }
+                        }
+                    }
+                    .frame(height: 240)
+                }
+            }
+        }
+    }
+
+    private func emptyNote(_ text: LocalizedStringKey) -> some View {
+        Text(text)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, minHeight: 80, alignment: .center)
     }
 }
 
@@ -616,66 +687,7 @@ private struct ReadDayData: Identifiable {
     }
 }
 
-// MARK: - Reusable UI
-
-private struct DashboardCard<Content: View>: View {
-    let title: String
-    @ViewBuilder let content: Content
-
-    init(_ title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(title)
-                .font(.title3.weight(.bold))
-
-            content
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.background)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(.quaternary, lineWidth: 1)
-        )
-    }
-}
-
-private struct SummaryCard: View {
-    let title: String
-    let value: String
-    let systemImage: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.title2)
-                .foregroundStyle(.green)
-
-            Text(value)
-                .font(.title.weight(.bold))
-
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading)
-        .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.background)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(.quaternary, lineWidth: 1)
-        )
-    }
-}
+// MARK: - Heatmap
 
 private struct ReadHeatmapView: View {
     let readDayLookup: [Date: ReadDayData]
@@ -766,7 +778,7 @@ private struct ReadHeatmapView: View {
                     }
                 }
 
-                Text("Wiecej")
+                Text("Więcej")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }

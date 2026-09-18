@@ -31,6 +31,7 @@ struct LibraryView: View {
     let onToggleSpinOff: (Manga) -> Void
 
     @FocusState private var searchFocused: Bool
+    @Environment(\.locale) private var locale
 
     private let horizontalPadding: CGFloat = 28
 
@@ -154,20 +155,20 @@ struct LibraryView: View {
                 )
                 StatCardView(
                     title: "przeczytane",
-                    value: stats.totalReadPercent.formatted(.number.precision(.fractionLength(1))) + "%",
+                    value: stats.totalReadPercent.formatted(.number.precision(.fractionLength(1)).locale(locale)) + "%",
                     systemImage: "circle.dashed.inset.filled",
                     accentColor: .green
                 )
                 StatCardView(
                     title: "łączna wartość",
-                    value: stats.totalPaid.formatted(.number.precision(.fractionLength(2))),
+                    value: stats.totalPaid.formatted(.number.precision(.fractionLength(2)).locale(locale)),
                     systemImage: "wallet.pass.fill",
                     accentColor: .yellow,
                     unit: "PLN"
                 )
                 StatCardView(
                     title: "streak",
-                    value: "\(stats.currentReadStreak) dni",
+                    value: L("%lld dni", stats.currentReadStreak),
                     systemImage: stats.didReadToday ? "flame.fill" : "flame",
                     accentColor: stats.didReadToday ? .orange : .gray
                 )
@@ -411,7 +412,7 @@ struct LibraryView: View {
     private var categoryChips: some View {
         HStack(spacing: 6) {
             ForEach(LibraryCategory.allCases) { section in
-                CategoryChip(
+                FilterChip(
                     title: section.chipLabel,
                     systemImage: section.systemImage,
                     count: count(for: section),
@@ -442,7 +443,8 @@ struct LibraryView: View {
             .pickerStyle(.inline)
         } label: {
             HStack(spacing: 6) {
-                Text("Sortuj: \(sortOption.label)")
+                Text("Sortuj:")
+                Text(sortOption.label)
                 Image(systemName: sortAscending ? "arrow.up" : "arrow.down")
                     .font(.caption.weight(.semibold))
             }
@@ -450,7 +452,7 @@ struct LibraryView: View {
         .menuStyle(.borderlessButton)
         .buttonStyle(.bordered)
         .controlSize(.regular)
-        .help(isReorderable ? "Własna kolejność: przeciągnij okładki, aby zmienić kolejność" : "")
+        .help(isReorderable ? L("Własna kolejność: przeciągnij okładki, aby zmienić kolejność") : "")
     }
 
     private var filterMenu: some View {
@@ -468,49 +470,5 @@ struct LibraryView: View {
         .buttonStyle(.bordered)
         .controlSize(.regular)
         .tint(hideSpinOffs ? .green : .primary)
-    }
-}
-
-private struct CategoryChip: View {
-    let title: String
-    let systemImage: String
-    let count: Int
-    let isSelected: Bool
-    let action: () -> Void
-
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 11, weight: .semibold))
-                Text(title)
-                    .font(.system(size: 12, weight: .semibold))
-                Text("\(count)")
-                    .font(.system(size: 10, weight: .semibold).monospacedDigit())
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 1)
-                    .background(
-                        Capsule().fill(
-                            isSelected ? Color.black.opacity(0.25) : Color.white.opacity(0.08)
-                        )
-                    )
-            }
-            .foregroundStyle(isSelected ? Color.black.opacity(0.85) : .secondary)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                Capsule().fill(
-                    isSelected
-                        ? Color.green
-                        : Color.white.opacity(isHovered ? 0.1 : 0.05)
-                )
-            )
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-        .animation(.easeOut(duration: 0.12), value: isHovered)
     }
 }

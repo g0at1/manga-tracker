@@ -4,7 +4,7 @@ import SwiftUI
 extension ContentView {
     func addManga() {
         let nextOrder = (mangas.compactMap(\.sortOrder).max() ?? -1) + 1
-        let manga = Manga(title: "Nowa manga", sortOrder: nextOrder)
+        let manga = Manga(title: L("Nowa manga"), sortOrder: nextOrder)
         modelContext.insert(manga)
         selectedManga = manga
     }

@@ -77,7 +77,7 @@ struct NavigationSidebarView: View {
     }
 
     private func row(
-        _ title: String,
+        _ title: LocalizedStringKey,
         systemImage: String,
         count: Int? = nil,
         badge: Int = 0,
@@ -96,7 +96,7 @@ struct NavigationSidebarView: View {
 }
 
 private struct SidebarRow: View {
-    let title: String
+    let title: LocalizedStringKey
     let systemImage: String
     let count: Int?
     /// Unread-style red badge; hidden when zero.

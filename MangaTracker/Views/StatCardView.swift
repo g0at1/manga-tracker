@@ -2,11 +2,13 @@ import SwiftUI
 
 /// Compact stat tile used in the library header: icon, big value, label.
 struct StatCardView: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let systemImage: String
     var accentColor: Color = .green
     var unit: String? = nil
+    /// Fill the available width (grid cells) instead of hugging the content.
+    var expands = false
 
     var body: some View {
         HStack(spacing: 14) {
@@ -37,14 +39,16 @@ struct StatCardView: View {
                 Text(title)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
 
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .frame(minWidth: 170, alignment: .leading)
-        .fixedSize(horizontal: true, vertical: false)
+        .frame(minWidth: 170, maxWidth: expands ? .infinity : nil, alignment: .leading)
+        .fixedSize(horizontal: !expands, vertical: false)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color.white.opacity(0.06))
