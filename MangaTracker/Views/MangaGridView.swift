@@ -27,32 +27,32 @@ struct MangaGridView: View {
             ) {
                 ForEach(mangas) { manga in
                     card(for: manga)
-                    .contextMenu {
-                        Button("Oznacz kolejny tom jako przeczytany") {
-                            onMarkNextAsRead(manga)
-                        }
-                        Button(
-                            manga.isSold ?? false
-                                ? "Cofnij sprzedane" : "Sprzedane"
-                        ) {
-                            onToggleSold(manga)
-                        }
-                        Button(
-                            manga.isSpinOff ?? false
-                                ? "Cofnij spin-off" : "Oznacz jako spin-off"
-                        ) {
-                            onToggleSpinOff(manga)
-                        }
-                        if isReorderable {
+                        .contextMenu {
+                            Button("Oznacz kolejny tom jako przeczytany") {
+                                onMarkNextAsRead(manga)
+                            }
+                            Button(
+                                manga.isSold ?? false
+                                    ? "Cofnij sprzedane" : "Sprzedane"
+                            ) {
+                                onToggleSold(manga)
+                            }
+                            Button(
+                                manga.isSpinOff ?? false
+                                    ? "Cofnij spin-off" : "Oznacz jako spin-off"
+                            ) {
+                                onToggleSpinOff(manga)
+                            }
+                            if isReorderable {
+                                Divider()
+                                Button("Przesuń wyżej") { onMoveMangaUp(manga) }
+                                Button("Przesuń niżej") { onMoveMangaDown(manga) }
+                            }
                             Divider()
-                            Button("Przesuń wyżej") { onMoveMangaUp(manga) }
-                            Button("Przesuń niżej") { onMoveMangaDown(manga) }
+                            Button("Usuń", role: .destructive) {
+                                onDeleteManga(manga)
+                            }
                         }
-                        Divider()
-                        Button("Usuń", role: .destructive) {
-                            onDeleteManga(manga)
-                        }
-                    }
                 }
             }
             .padding(12)

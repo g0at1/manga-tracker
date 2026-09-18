@@ -13,6 +13,12 @@ struct MangaDetailView: View {
     @State private var showBulkConfirm = false
     @State private var pendingBulkAction: BulkAction?
     @State private var editingDateTarget: EditingDateTarget?
+    @State private var selectedVolumeIDs: Set<PersistentIdentifier> = []
+    @State private var lastSelectedVolumeID: PersistentIdentifier?
+    @State private var showBulkPricePopover = false
+    @State private var bulkPriceText = ""
+    @State private var showBulkPurchaseDatePopover = false
+    @State private var bulkPurchaseDate: Date = .now
     @State private var volumeValidationMessage: String?
     @State private var isFetchingCover = false
     @State private var coverFetchMessage: String?
@@ -825,25 +831,6 @@ extension MangaDetailView {
     fileprivate var controlsSection: some View {
         PremiumCard {
             VStack(alignment: .leading, spacing: 18) {
-                HStack(alignment: .center, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Filtruj widok")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-
-                        Picker("Filtr", selection: $filterMode) {
-                            ForEach(FilterMode.allCases) { mode in
-                                Text(mode.rawValue).tag(mode)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .tint(.green)
-                        .frame(width: 360)
-                    }
-
-                    Spacer()
-                }
-
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Dodaj pojedynczy tom")
@@ -929,36 +916,60 @@ extension MangaDetailView {
                 Divider()
                     .overlay(.white.opacity(0.06))
 
-                ScrollView {
-                    LazyVGrid(
-                        columns: [
-                            GridItem(
-                                .adaptive(minimum: 260, maximum: 320),
-                                spacing: 16
-                            ),
-                        ],
-                        spacing: 16
-                    ) {
-                        ForEach(displayedVolumes) { volume in
-                            volumeTile(volume)
+                if !selectedVolumeIDs.isEmpty {
+                    bulkSelectionBar
+
+                    Divider()
+                        .overlay(.white.opacity(0.06))
+                }
+
+                volumesTableHeader
+
+                Divider()
+                    .overlay(.white.opacity(0.08))
+
+                if displayedVolumes.isEmpty {
+                    ContentUnavailableView(
+                        filterMode == .all ? "Brak tomów" : "Nic do pokazania",
+                        systemImage: "books.vertical",
+                        description: Text(
+                            filterMode == .all
+                                ? "Dodaj tomy powyżej."
+                                : "Żaden tom nie pasuje do filtra."
+                        )
+                    )
+                    .frame(minHeight: 240)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(displayedVolumes) { volume in
+                                volumeRow(volume)
+
+                                Divider()
+                                    .overlay(.white.opacity(0.05))
+                            }
                         }
                     }
-                    .padding(18)
+                    .frame(minHeight: 360)
                 }
-                .frame(minHeight: 360)
             }
         }
         .frame(maxWidth: .infinity)
+        .onChange(of: manga.volumes.count) { _, _ in
+            // Drop selections that point at deleted volumes.
+            let existing = Set(manga.volumes.map(\.persistentModelID))
+            selectedVolumeIDs = selectedVolumeIDs.intersection(existing)
+        }
     }
 
     private var volumesToolbar: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Tomy")
                         .font(.title3.weight(.bold))
 
-                    Text("Szybkie zarządzanie kupionymi i przeczytanymi tomami")
+                    Text("\(totalCount) tomów · \(ownedCount) kupionych · \(readCount) przeczytanych")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -1010,6 +1021,486 @@ extension MangaDetailView {
         .padding(20)
     }
 
+    // MARK: Selection & bulk actions
+
+    private var selectedVolumes: [Volume] {
+        sortedVolumes.filter { selectedVolumeIDs.contains($0.persistentModelID) }
+    }
+
+    private var allDisplayedSelected: Bool {
+        !displayedVolumes.isEmpty
+            && displayedVolumes.allSatisfy { selectedVolumeIDs.contains($0.persistentModelID) }
+    }
+
+    private var bulkSelectionBar: some View {
+        HStack(spacing: 8) {
+            Text("Zaznaczono: \(selectedVolumeIDs.count)")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.green)
+
+            Button("Odznacz") {
+                selectedVolumeIDs.removeAll()
+            }
+            .buttonStyle(.plain)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Button {
+                setOwned(true, for: selectedVolumes)
+            } label: {
+                Label("Kupione", systemImage: "checkmark.circle")
+            }
+            .volumeActionButton()
+
+            Button {
+                setRead(true, for: selectedVolumes)
+            } label: {
+                Label("Przeczytane", systemImage: "book.closed")
+            }
+            .volumeActionButton()
+
+            Menu {
+                Button("Oznacz jako nie kupione") {
+                    setOwned(false, for: selectedVolumes)
+                }
+                Button("Oznacz jako nieprzeczytane") {
+                    setRead(false, for: selectedVolumes)
+                }
+            } label: {
+                Label("Cofnij", systemImage: "arrow.uturn.backward")
+            }
+            .menuStyle(.borderlessButton)
+            .volumeActionButton()
+
+            Button {
+                bulkPriceText = ""
+                showBulkPricePopover = true
+            } label: {
+                Label("Cena", systemImage: "banknote")
+            }
+            .volumeActionButton()
+            .popover(isPresented: $showBulkPricePopover, arrowEdge: .bottom) {
+                bulkPricePopover
+            }
+
+            Button {
+                bulkPurchaseDate = .now
+                showBulkPurchaseDatePopover = true
+            } label: {
+                Label("Data zakupu", systemImage: "calendar")
+            }
+            .volumeActionButton()
+            .popover(isPresented: $showBulkPurchaseDatePopover, arrowEdge: .bottom) {
+                bulkPurchaseDatePopover
+            }
+
+            Button(role: .destructive) {
+                for volume in selectedVolumes {
+                    deleteVolume(volume)
+                }
+                selectedVolumeIDs.removeAll()
+            } label: {
+                Label("Usuń", systemImage: "trash")
+                    .foregroundStyle(.red)
+            }
+            .volumeActionButton()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(.green.opacity(0.06))
+    }
+
+    private var bulkPricePopover: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Cena dla \(selectedVolumeIDs.count) tomów")
+                .font(.headline)
+
+            HStack(spacing: 8) {
+                TextField("0,00", text: $bulkPriceText)
+                    .premiumInput(width: 120)
+                    .onSubmit(applyBulkPrice)
+
+                Text("PLN")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+
+            Text("Tomy, które nie są kupione, zostaną oznaczone jako kupione.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack {
+                Button("Anuluj") {
+                    showBulkPricePopover = false
+                }
+
+                Spacer()
+
+                Button("Zastosuj", action: applyBulkPrice)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(parsedBulkPrice == nil)
+            }
+        }
+        .padding(16)
+        .frame(width: 280)
+    }
+
+    private var parsedBulkPrice: Double? {
+        let normalized = bulkPriceText
+            .trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: ",", with: ".")
+        guard let value = Double(normalized), value >= 0 else { return nil }
+        return value
+    }
+
+    private func applyBulkPrice() {
+        guard let price = parsedBulkPrice else { return }
+        for volume in selectedVolumes {
+            volume.price = price
+            if !volume.owned {
+                volume.owned = true
+                if volume.purchaseDate == nil {
+                    volume.purchaseDate = .now
+                }
+            }
+        }
+        showBulkPricePopover = false
+    }
+
+    private var bulkPurchaseDatePopover: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Data zakupu dla \(selectedVolumeIDs.count) tomów")
+                .font(.headline)
+
+            DatePicker(
+                "Data zakupu",
+                selection: $bulkPurchaseDate,
+                displayedComponents: [.date]
+            )
+            .labelsHidden()
+            .datePickerStyle(.graphical)
+
+            HStack {
+                Button("Anuluj") {
+                    showBulkPurchaseDatePopover = false
+                }
+
+                Spacer()
+
+                Button("Zastosuj") {
+                    for volume in selectedVolumes {
+                        volume.owned = true
+                        volume.purchaseDate = bulkPurchaseDate
+                    }
+                    showBulkPurchaseDatePopover = false
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(16)
+    }
+
+    private func setOwned(_ owned: Bool, for volumes: [Volume]) {
+        for volume in volumes {
+            if owned {
+                volume.owned = true
+                if volume.purchaseDate == nil {
+                    volume.purchaseDate = .now
+                }
+            } else {
+                volume.owned = false
+                volume.purchaseDate = nil
+                volume.read = false
+                volume.readDate = nil
+            }
+        }
+    }
+
+    private func setRead(_ read: Bool, for volumes: [Volume]) {
+        for volume in volumes {
+            if read {
+                volume.owned = true
+                volume.read = true
+                if volume.purchaseDate == nil {
+                    volume.purchaseDate = .now
+                }
+                if volume.readDate == nil {
+                    volume.readDate = .now
+                }
+            } else {
+                volume.read = false
+                volume.readDate = nil
+            }
+        }
+    }
+
+    private func toggleSelection(_ volume: Volume) {
+        let id = volume.persistentModelID
+        let isShiftHeld = NSEvent.modifierFlags.contains(.shift)
+
+        if isShiftHeld,
+           let anchor = lastSelectedVolumeID,
+           let anchorIndex = displayedVolumes.firstIndex(where: { $0.persistentModelID == anchor }),
+           let targetIndex = displayedVolumes.firstIndex(where: { $0.persistentModelID == id })
+        {
+            let range = min(anchorIndex, targetIndex) ... max(anchorIndex, targetIndex)
+            for volume in displayedVolumes[range] {
+                selectedVolumeIDs.insert(volume.persistentModelID)
+            }
+        } else if selectedVolumeIDs.contains(id) {
+            selectedVolumeIDs.remove(id)
+        } else {
+            selectedVolumeIDs.insert(id)
+        }
+
+        lastSelectedVolumeID = id
+    }
+
+    private func toggleSelectAllDisplayed() {
+        if allDisplayedSelected {
+            for volume in displayedVolumes {
+                selectedVolumeIDs.remove(volume.persistentModelID)
+            }
+        } else {
+            for volume in displayedVolumes {
+                selectedVolumeIDs.insert(volume.persistentModelID)
+            }
+        }
+    }
+
+    private func selectionCheckbox(isOn: Bool, isMixed: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(
+                systemName: isOn
+                    ? "checkmark.square.fill"
+                    : (isMixed ? "minus.square.fill" : "square")
+            )
+            .font(.system(size: 16))
+            .foregroundStyle(isOn || isMixed ? Color.green : Color.secondary)
+            .frame(width: 24, height: 24)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Table
+
+    private enum VolumeColumn {
+        static let checkbox: CGFloat = 24
+        static let number: CGFloat = 48
+        static let status: CGFloat = 232
+        static let price: CGFloat = 132
+        static let date: CGFloat = 104
+        static let menu: CGFloat = 28
+        static let spacing: CGFloat = 12
+    }
+
+    private var volumesTableHeader: some View {
+        HStack(spacing: VolumeColumn.spacing) {
+            selectionCheckbox(
+                isOn: allDisplayedSelected,
+                isMixed: !allDisplayedSelected && !selectedVolumeIDs.isEmpty,
+                action: toggleSelectAllDisplayed
+            )
+            .help("Zaznacz widoczne tomy")
+
+            Text("Tom")
+                .frame(width: VolumeColumn.number, alignment: .leading)
+
+            Text("Status")
+                .frame(width: VolumeColumn.status, alignment: .leading)
+
+            Text("Cena")
+                .frame(width: VolumeColumn.price, alignment: .leading)
+
+            Spacer(minLength: 8)
+
+            Text("Zakup")
+                .frame(width: VolumeColumn.date, alignment: .leading)
+
+            Text("Przeczytano")
+                .frame(width: VolumeColumn.date, alignment: .leading)
+
+            Text("Premiera")
+                .frame(width: VolumeColumn.date, alignment: .leading)
+
+            Color.clear
+                .frame(width: VolumeColumn.menu, height: 1)
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+    }
+
+    private func volumeRow(_ volume: Volume) -> some View {
+        let isSelected = selectedVolumeIDs.contains(volume.persistentModelID)
+        let isRead = volume.read ?? false
+
+        return HStack(spacing: VolumeColumn.spacing) {
+            selectionCheckbox(isOn: isSelected) {
+                toggleSelection(volume)
+            }
+
+            Text("#\(volume.number)")
+                .font(.body.weight(.bold))
+                .monospacedDigit()
+                .frame(width: VolumeColumn.number, alignment: .leading)
+
+            HStack(spacing: 6) {
+                statusChip(
+                    title: "Kupiony",
+                    isActive: volume.owned,
+                    icon: "checkmark.circle.fill"
+                ) {
+                    toggleOwned(volume)
+                }
+
+                statusChip(
+                    title: "Przeczytany",
+                    isActive: isRead,
+                    icon: "book.closed.fill"
+                ) {
+                    toggleRead(volume)
+                }
+            }
+            .frame(width: VolumeColumn.status, alignment: .leading)
+
+            priceField(volume)
+                .frame(width: VolumeColumn.price, alignment: .leading)
+
+            Spacer(minLength: 8)
+
+            dateCell(
+                icon: "cart",
+                date: volume.purchaseDate,
+                help: "Data zakupu"
+            ) {
+                editingDateTarget = .purchase(volume)
+            }
+
+            dateCell(
+                icon: "book.closed",
+                date: volume.readDate,
+                help: "Data przeczytania"
+            ) {
+                editingDateTarget = .read(volume)
+            }
+
+            dateCell(
+                icon: "sparkles",
+                date: volume.releaseDate,
+                help: "Data premiery"
+            ) {
+                editingDateTarget = .release(volume)
+            }
+
+            Menu {
+                Button("Ustaw datę zakupu") {
+                    editingDateTarget = .purchase(volume)
+                }
+
+                Button("Ustaw datę przeczytania") {
+                    editingDateTarget = .read(volume)
+                }
+
+                Button("Ustaw datę premiery") {
+                    editingDateTarget = .release(volume)
+                }
+
+                Divider()
+
+                Button(role: .destructive) {
+                    deleteVolume(volume)
+                } label: {
+                    Text("Usuń tom")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .foregroundStyle(.secondary)
+                    .frame(width: VolumeColumn.menu, height: 28)
+                    .background(.white.opacity(0.05), in: Circle())
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .frame(width: VolumeColumn.menu)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(rowBackground(isSelected: isSelected, isRead: isRead, isOwned: volume.owned))
+    }
+
+    private func rowBackground(isSelected: Bool, isRead: Bool, isOwned: Bool) -> Color {
+        if isSelected {
+            return .green.opacity(0.10)
+        }
+        if isRead {
+            return .green.opacity(0.045)
+        }
+        if isOwned {
+            return .white.opacity(0.02)
+        }
+        return .clear
+    }
+
+    private func priceField(_ volume: Volume) -> some View {
+        HStack(spacing: 6) {
+            TextField(
+                "0,00",
+                value: Bindable(volume).price,
+                format: .number.precision(.fractionLength(2))
+            )
+            .textFieldStyle(.plain)
+            .font(.subheadline.weight(.semibold))
+            .monospacedDigit()
+            .multilineTextAlignment(.trailing)
+
+            Text("PLN")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            .white.opacity(volume.owned ? 0.06 : 0.02),
+            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(.white.opacity(0.08), lineWidth: 1)
+        )
+        .opacity(volume.owned ? 1 : 0.45)
+        .disabled(!volume.owned)
+        .help(volume.owned ? "Cena tomu" : "Oznacz tom jako kupiony, aby wpisać cenę")
+    }
+
+    private func dateCell(
+        icon: String,
+        date: Date?,
+        help: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundStyle(date == nil ? .tertiary : .secondary)
+                    .frame(width: 14)
+
+                Text(date?.yyyyMMdd() ?? "—")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(date == nil ? .tertiary : .primary)
+            }
+            .frame(width: VolumeColumn.date, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
     private func statusChip(
         title: String,
         isActive: Bool,
@@ -1017,49 +1508,28 @@ extension MangaDetailView {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
                 Image(systemName: icon)
-                    .font(.caption.weight(.bold))
+                    .font(.caption2.weight(.bold))
 
                 Text(title)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.85)
             }
             .font(.caption.weight(.bold))
             .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
             .foregroundStyle(isActive ? .black : .secondary)
             .background(
                 isActive ? Color.green : Color.white.opacity(0.06),
                 in: Capsule()
             )
+            .overlay(
+                Capsule()
+                    .stroke(isActive ? Color.clear : Color.white.opacity(0.08), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
-    }
-
-    private func tileBackground(for volume: Volume) -> Color {
-        if volume.read ?? false {
-            return .green.opacity(0.13)
-        }
-
-        if volume.owned {
-            return .white.opacity(0.07)
-        }
-
-        return .white.opacity(0.035)
-    }
-
-    private func tileBorder(for volume: Volume) -> Color {
-        if volume.read ?? false {
-            return .green.opacity(0.35)
-        }
-
-        if volume.owned {
-            return .green.opacity(0.18)
-        }
-
-        return .white.opacity(0.07)
+        .help(isActive ? "Kliknij, aby cofnąć" : "Kliknij, aby oznaczyć")
     }
 
     private func toggleOwned(_ volume: Volume) {
@@ -1135,319 +1605,6 @@ extension MangaDetailView {
             volume.read = false
             volume.readDate = nil
         }
-    }
-
-    private func volumeTile(_ volume: Volume) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("#\(volume.number)")
-                    .font(.title3.weight(.bold))
-
-                Spacer()
-
-                Menu {
-                    Button("Ustaw datę zakupu") {
-                        editingDateTarget = .purchase(volume)
-                    }
-
-                    Button("Ustaw datę przeczytania") {
-                        editingDateTarget = .read(volume)
-                    }
-
-                    Button("Ustaw datę premiery") {
-                        editingDateTarget = .release(volume)
-                    }
-
-                    Divider()
-
-                    Button(role: .destructive) {
-                        deleteVolume(volume)
-                    } label: {
-                        Text("Usuń tom")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 28, height: 28)
-                        .background(.white.opacity(0.05), in: Circle())
-                }
-                .buttonStyle(.plain)
-            }
-
-            HStack(spacing: 8) {
-                statusChip(
-                    title: "Kupiony",
-                    isActive: volume.owned,
-                    icon: "checkmark.circle.fill"
-                ) {
-                    toggleOwned(volume)
-                }
-
-                statusChip(
-                    title: "Przeczytany",
-                    isActive: volume.read ?? false,
-                    icon: "book.closed.fill"
-                ) {
-                    toggleRead(volume)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 7) {
-                dateLine(
-                    icon: "calendar",
-                    title: "Zakup",
-                    date: volume.purchaseDate,
-                    placeholder: "Brak daty zakupu"
-                ) {
-                    editingDateTarget = .purchase(volume)
-                }
-
-                dateLine(
-                    icon: "book.closed",
-                    title: "Czytanie",
-                    date: volume.readDate,
-                    placeholder: "Brak daty przeczytania"
-                ) {
-                    editingDateTarget = .read(volume)
-                }
-
-                dateLine(
-                    icon: "sparkles",
-                    title: "Premiera",
-                    date: volume.releaseDate,
-                    placeholder: "Brak daty premiery"
-                ) {
-                    editingDateTarget = .release(volume)
-                }
-            }
-
-            HStack(spacing: 8) {
-                TextField(
-                    "0.00",
-                    value: Bindable(volume).price,
-                    format: .number.precision(.fractionLength(2))
-                )
-                .textFieldStyle(.plain)
-                .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(
-                    .white.opacity(0.05),
-                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-                )
-                .disabled(!volume.owned)
-
-                Text("PLN")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(16)
-        .frame(minHeight: 190)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(tileBackground(for: volume))
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(tileBorder(for: volume), lineWidth: 1)
-        }
-    }
-
-    private func dateLine(
-        icon: String,
-        title: String,
-        date: Date?,
-        placeholder: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 16)
-
-                Text(title)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                Text(
-                    date?.yyyyMMdd()
-                        ?? placeholder
-                )
-                .font(.caption)
-                .lineLimit(1)
-            }
-        }
-        .buttonStyle(.plain)
-    }
-
-    fileprivate var volumesHeader: some View {
-        HStack(spacing: 12) {
-            Text("Tom")
-                .frame(width: 70, alignment: .leading)
-
-            Text("Kupiony")
-                .frame(width: 80, alignment: .center)
-
-            Text("Przeczytany")
-                .frame(width: 100, alignment: .center)
-
-            Text("Data zakupu")
-                .frame(minWidth: 150, maxWidth: .infinity, alignment: .leading)
-
-            Text("Data przeczytania")
-                .frame(minWidth: 150, maxWidth: .infinity, alignment: .leading)
-
-            Text("Data premiery")
-                .frame(minWidth: 150, maxWidth: .infinity, alignment: .leading)
-
-            Text("Cena")
-                .frame(width: 150, alignment: .leading)
-
-            Text("")
-                .frame(width: 44)
-        }
-        .font(.caption.weight(.semibold))
-        .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity)
-    }
-
-    fileprivate func volumeRow(_ v: Volume) -> some View {
-        HStack(spacing: 12) {
-            Text("#\(v.number)")
-                .font(.body.weight(.semibold))
-                .frame(width: 70, alignment: .leading)
-
-            Toggle(
-                "",
-                isOn: Binding(
-                    get: { v.owned },
-                    set: { newValue in
-                        if newValue == false {
-                            v.owned = false
-                            v.purchaseDate = nil
-                            return
-                        }
-
-                        if v.owned == false,
-                           shouldAskMarkPreviousOwned(upTo: v)
-                        {
-                            pendingBulkAction = .markOwnedUpTo(v)
-                            showBulkConfirm = true
-                            return
-                        }
-
-                        v.owned = true
-                        if v.purchaseDate == nil {
-                            v.purchaseDate = .now
-                        }
-                    }
-                )
-            )
-            .labelsHidden()
-            .toggleStyle(.checkbox)
-            .tint(.green)
-            .frame(width: 80, alignment: .center)
-
-            Toggle(
-                "",
-                isOn: Binding(
-                    get: { v.read ?? false },
-                    set: { newValue in
-                        if newValue == false {
-                            v.read = false
-                            v.readDate = nil
-                            return
-                        }
-
-                        let current = v.read ?? false
-                        if current == false,
-                           shouldAskMarkPreviousRead(upTo: v)
-                        {
-                            pendingBulkAction = .markReadUpTo(v)
-                            showBulkConfirm = true
-                            return
-                        }
-
-                        v.read = true
-                        if v.readDate == nil {
-                            v.readDate = .now
-                        }
-                    }
-                )
-            )
-            .labelsHidden()
-            .toggleStyle(.checkbox)
-            .tint(.green)
-            .frame(width: 100, alignment: .center)
-
-            dateButton(
-                date: v.purchaseDate,
-                placeholder: "Ustaw datę",
-                action: { editingDateTarget = .purchase(v) }
-            )
-            .frame(minWidth: 150, maxWidth: .infinity)
-
-            dateButton(
-                date: v.readDate,
-                placeholder: "Ustaw datę",
-                action: { editingDateTarget = .read(v) }
-            )
-            .frame(minWidth: 150, maxWidth: .infinity)
-
-            dateButton(
-                date: v.releaseDate,
-                placeholder: "Ustaw datę",
-                action: { editingDateTarget = .release(v) }
-            )
-            .frame(minWidth: 150, maxWidth: .infinity)
-
-            HStack(spacing: 8) {
-                TextField(
-                    "0.00",
-                    value: Bindable(v).price,
-                    format: .number.precision(.fractionLength(2))
-                )
-                .premiumInput(width: 85)
-
-                Text("PLN")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.secondary)
-            }
-            .frame(width: 150, alignment: .leading)
-
-            Button(role: .destructive) {
-                deleteVolume(v)
-            } label: {
-                Image(systemName: "trash")
-                    .foregroundStyle(.red.opacity(0.85))
-                    .frame(width: 32, height: 32)
-                    .background(
-                        .red.opacity(0.08),
-                        in: RoundedRectangle(
-                            cornerRadius: 8,
-                            style: .continuous
-                        )
-                    )
-            }
-            .buttonStyle(.plain)
-            .frame(width: 44)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.white.opacity(0.035))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(.white.opacity(0.06), lineWidth: 1)
-        )
     }
 }
 
@@ -1577,39 +1734,6 @@ private struct ViewHeightKey: PreferenceKey {
 // MARK: - Components
 
 extension MangaDetailView {
-    fileprivate func dateButton(
-        date: Date?,
-        placeholder: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: "calendar")
-                    .foregroundStyle(.secondary)
-
-                if let date {
-                    Text(date.yyyyMMdd())
-                        .foregroundStyle(.primary)
-                } else {
-                    Text(placeholder)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                .white.opacity(0.04),
-                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(.white.opacity(0.06), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
     private func dateEditorSheet(_ target: EditingDateTarget) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             switch target {

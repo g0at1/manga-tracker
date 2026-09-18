@@ -109,7 +109,7 @@ struct MangaGridCardView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 2)
+                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
         )
         .contentShape(RoundedRectangle(cornerRadius: 16))
     }

@@ -9,7 +9,9 @@ enum LibrarySortOption: String, CaseIterable, Identifiable {
     case rating
     case dateAdded
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var label: String {
         switch self {
