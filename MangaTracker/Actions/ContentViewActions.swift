@@ -2,12 +2,6 @@ import SwiftData
 import SwiftUI
 
 extension ContentView {
-    func toggleViewMode() {
-        viewModeRaw =
-            (viewMode == .list ? LibraryViewMode.grid : LibraryViewMode.list)
-                .rawValue
-    }
-
     func addManga() {
         let nextOrder = (mangas.compactMap(\.sortOrder).max() ?? -1) + 1
         let manga = Manga(title: "Nowa manga", sortOrder: nextOrder)
@@ -20,21 +14,6 @@ extension ContentView {
             selectedManga = nil
         }
         modelContext.delete(manga)
-    }
-
-    func moveMangas(from source: IndexSet, to destination: Int) {
-        var reordered = mangas
-        reordered.move(fromOffsets: source, toOffset: destination)
-
-        for (index, manga) in reordered.enumerated() {
-            manga.sortOrder = index
-        }
-
-        do {
-            try modelContext.save()
-        } catch {
-            print("Error while saving sort order: \(error)")
-        }
     }
 
     func moveMangaUp(_ manga: Manga) {

@@ -10,14 +10,16 @@ struct ContentView: View {
     var mangas: [Manga]
 
     @State var selectedManga: Manga?
+    /// Series closed most recently, so ⌘→ can reopen it.
+    @State private var lastClosedManga: Manga?
+    /// Rolled once per launch to pick the header banner.
+    @State private var bannerSeed = Int.random(in: 0 ..< 1_000_000)
     @State var searchText = ""
     @State var draggedManga: Manga?
 
-    @AppStorage("libraryViewMode") var viewModeRaw: String = LibraryViewMode.list.rawValue
     @AppStorage("librarySortOption") private var sortOptionRaw: String = LibrarySortOption.manual.rawValue
     @AppStorage("librarySortAscending") private var sortAscending: Bool = true
-    @AppStorage("libraryShowUnreadOnly") private var showUnreadOnly = false
-    @AppStorage("libraryHideSold") private var hideSold = false
+    @AppStorage("libraryCategory") private var categoryRaw: String = LibraryCategory.all.rawValue
     @AppStorage("libraryHideSpinOffs") private var hideSpinOffs = false
     @AppStorage("lastBackupAt") var lastBackupAtTimestamp: Double = 0
     @AppStorage("backupReminderIntervalDays") var backupReminderIntervalDays: Int = 7
@@ -25,16 +27,22 @@ struct ContentView: View {
 
     /// Import state
     @State private var isImporting: Bool = false
-
-    /// Slightly larger than the default toolbar glyph size.
-    static let toolbarIconFont: Font = .system(size: 16, weight: .medium)
-
-    var viewMode: LibraryViewMode {
-        LibraryViewMode(rawValue: viewModeRaw) ?? .list
-    }
+    @State private var isShowingSettings = false
 
     var sortOption: LibrarySortOption {
         LibrarySortOption(rawValue: sortOptionRaw) ?? .manual
+    }
+
+    var category: Binding<LibraryCategory> {
+        Binding(
+            get: { LibraryCategory(rawValue: categoryRaw) ?? .all },
+            set: { newValue in
+                categoryRaw = newValue.rawValue
+                // Picking a section always lands on the library, not a detail page.
+                goBackToLibrary()
+                NSApp.keyWindow?.makeFirstResponder(nil)
+            }
+        )
     }
 
     /// Drag-reordering only makes sense when the list shows the user's own order.
@@ -44,19 +52,7 @@ struct ContentView: View {
 
     var filteredMangas: [Manga] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        var result = mangas
-        if showUnreadOnly {
-            result = result.filter { manga in
-                manga.isSold != true &&
-                    manga.volumes.contains { volume in
-                        volume.owned &&
-                            volume.read != true
-                    }
-            }
-        }
-        if hideSold {
-            result = result.filter { $0.isSold != true }
-        }
+        var result = mangas.filter(category.wrappedValue.contains)
         if hideSpinOffs {
             result = result.filter { $0.isSpinOff != true }
         }
@@ -72,107 +68,85 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             NavigationSplitView {
-                StatsSidebarView(mangas: mangas)
-                    .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
-            } content: {
-                LibrarySidebarView(
-                    filteredMangas: filteredMangas,
-                    selectedManga: $selectedManga,
-                    searchText: $searchText,
-                    draggedManga: $draggedManga,
-                    sortOptionRaw: $sortOptionRaw,
-                    sortAscending: $sortAscending,
-                    showUnreadOnly: $showUnreadOnly,
-                    hideSold: $hideSold,
-                    hideSpinOffs: $hideSpinOffs,
-                    viewMode: viewMode,
-                    isReorderable: isReorderable,
-                    onToggleViewMode: toggleViewMode,
-                    onAddManga: addManga,
-                    onDeleteManga: deleteManga,
-                    onMoveMangaUp: moveMangaUp,
-                    onMoveMangaDown: moveMangaDown,
-                    onMoveMangas: moveMangas,
-                    onMoveMangaInGrid: moveMangaInGrid,
-                    onMarkNextAsRead: markNextAsRead,
-                    onToggleSold: toggleSold,
-                    onToggleSpinOff: toggleSpinOff
+                NavigationSidebarView(
+                    mangas: mangas,
+                    hideSpinOffs: hideSpinOffs,
+                    category: category,
+                    toastService: toastService,
+                    onOpenStatistics: {
+                        NSApp.keyWindow?.makeFirstResponder(nil)
+                        openWindow(id: "dashboard")
+                    },
+                    onOpenUpcoming: {
+                        NSApp.keyWindow?.makeFirstResponder(nil)
+                        openWindow(id: "upcoming")
+                    },
+                    onOpenSettings: {
+                        NSApp.keyWindow?.makeFirstResponder(nil)
+                        isShowingSettings = true
+                    }
                 )
-                .navigationSplitViewColumnWidth(min: 320, ideal: 380)
-                .toolbar {
-                    ToolbarItemGroup(placement: .primaryAction) {
-                        Button {
-                            toggleViewMode()
-                        } label: {
-                            Label(
-                                viewMode == .list ? "Grid view" : "List view",
-                                systemImage: viewMode == .list ? "square.grid.2x2" : "list.bullet"
+                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
+            } detail: {
+                ZStack {
+                    if let selectedManga {
+                        MangaDetailView(manga: selectedManga)
+                            .id(selectedManga.persistentModelID)
+                            .transition(
+                                .opacity.combined(with: .offset(x: 28))
                             )
-                            .font(Self.toolbarIconFont)
-                        }
-
-                        Button {
-                            openWindow(id: "dashboard")
-                        } label: {
-                            Label("Dashboard", systemImage: "chart.xyaxis.line")
-                                .font(Self.toolbarIconFont)
-                        }
-
-                        Button {
-                            openWindow(id: "upcoming")
-                        } label: {
-                            Label("Nadchodzące", systemImage: "calendar.badge.clock")
-                                .font(Self.toolbarIconFont)
-                        }
-
-                        NotificationsMenuView(toastService: toastService)
-
-                        Button {
-                            // Export to Downloads folder (avoids save panel entitlement issues)
-                            exportToDownloads()
-                        } label: {
-                            Label("Eksportuj", systemImage: "square.and.arrow.up")
-                                .font(Self.toolbarIconFont)
-                        }
-                        .help(backupStatusText())
-
-                        Button {
-                            // show import dialog (open panel) to pick JSON file
-                            isImporting = true
-                        } label: {
-                            Label("Importuj", systemImage: "square.and.arrow.down")
-                                .font(Self.toolbarIconFont)
-                        }
-
-                        Button {
-                            addManga()
-                        } label: {
-                            Label("Dodaj", systemImage: "plus")
-                                .font(Self.toolbarIconFont)
+                    } else {
+                        LibraryView(
+                            allMangas: mangas,
+                            filteredMangas: filteredMangas,
+                            selectedManga: $selectedManga,
+                            category: category,
+                            searchText: $searchText,
+                            draggedManga: $draggedManga,
+                            sortOptionRaw: $sortOptionRaw,
+                            sortAscending: $sortAscending,
+                            hideSpinOffs: $hideSpinOffs,
+                            isReorderable: isReorderable,
+                            bannerSeed: bannerSeed,
+                            onAddManga: addManga,
+                            onDeleteManga: deleteManga,
+                            onMoveMangaUp: moveMangaUp,
+                            onMoveMangaDown: moveMangaDown,
+                            onMoveMangaInGrid: moveMangaInGrid,
+                            onMarkNextAsRead: markNextAsRead,
+                            onToggleSold: toggleSold,
+                            onToggleSpinOff: toggleSpinOff
+                        )
+                        .transition(.opacity)
+                    }
+                }
+                .animation(
+                    .spring(response: 0.32, dampingFraction: 0.9),
+                    value: selectedManga?.persistentModelID
+                )
+                .background {
+                    // Invisible: only provides ⌘→ to reopen the last closed series.
+                    if selectedManga == nil, lastClosedManga != nil {
+                        Button("Dalej", action: reopenLastClosedManga)
+                            .keyboardShortcut(.rightArrow, modifiers: .command)
+                            .frame(width: 0, height: 0)
+                            .opacity(0)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .navigation) {
+                        if let selectedManga {
+                            LibraryBreadcrumbView(manga: selectedManga, onBack: goBackToLibrary)
+                                .id(selectedManga.persistentModelID)
                         }
                     }
+                    // The system glass pill is sized lazily and lags behind the
+                    // title; the breadcrumb draws its own background instead.
+                    .sharedBackgroundVisibility(.hidden)
                 }
                 .onAppear {
-                    if selectedManga == nil {
-                        selectedManga = filteredMangas.first
-                    }
                     showBackupReminderIfNeeded()
-                }
-                .onChange(of: mangas) { _, newValue in
-                    if selectedManga == nil {
-                        selectedManga = newValue.first
-                    }
-                }
-            } detail: {
-                if let selectedManga {
-                    MangaDetailView(manga: selectedManga)
-                        .id(selectedManga.persistentModelID)
-                } else {
-                    ContentUnavailableView(
-                        "Wybierz mangę",
-                        systemImage: "books.vertical",
-                        description: Text("Albo dodaj nową po lewej.")
-                    )
                 }
             }
             .frame(minWidth: 1100, minHeight: 600)
@@ -198,6 +172,14 @@ struct ContentView: View {
             .spring(response: 0.35, dampingFraction: 0.85),
             value: toastService.toasts
         )
+        .sheet(isPresented: $isShowingSettings) {
+            SettingsSheetView(
+                backupReminderIntervalDays: $backupReminderIntervalDays,
+                lastBackupAt: lastBackupAtTimestamp,
+                onExport: exportToDownloads,
+                onImport: { isImporting = true }
+            )
+        }
         .fileImporter(
             isPresented: $isImporting,
             allowedContentTypes: [.json]
@@ -272,6 +254,19 @@ struct ContentView: View {
         }
     }
 
+    func goBackToLibrary() {
+        guard let selectedManga else { return }
+        lastClosedManga = selectedManga
+        self.selectedManga = nil
+    }
+
+    private func reopenLastClosedManga() {
+        guard selectedManga == nil, let lastClosedManga,
+              mangas.contains(where: { $0.persistentModelID == lastClosedManga.persistentModelID })
+        else { return }
+        selectedManga = lastClosedManga
+    }
+
     private func exportToDownloads() {
         do {
             let data = try encodeMangasToJSON(mangas)
@@ -287,15 +282,6 @@ struct ContentView: View {
         } catch {
             toastService.show("Eksport nieudany: \(error.localizedDescription)")
         }
-    }
-
-    private func backupStatusText() -> String {
-        guard lastBackupAtTimestamp > 0 else {
-            return "Ostatni backup: nigdy"
-        }
-        let date = Date(timeIntervalSince1970: lastBackupAtTimestamp)
-        let formatted = DateFormatters.yyyyMMdd.string(from: date)
-        return "Ostatni backup: \(formatted)"
     }
 
     private func showBackupReminderIfNeeded() {

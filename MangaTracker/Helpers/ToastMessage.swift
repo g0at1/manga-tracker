@@ -1,15 +1,15 @@
 import SwiftUI
 
-struct ToastMessage: Identifiable, Equatable {
-    let id = UUID()
+struct ToastMessage: Identifiable, Equatable, Codable {
+    var id = UUID()
     let text: String
     let description: String?
     let type: ToastType
     let duration: TimeInterval
-    let createdAt: Date = .now
+    var createdAt: Date = .now
 }
 
-enum ToastType {
+enum ToastType: String, Codable {
     case success
     case error
     case info

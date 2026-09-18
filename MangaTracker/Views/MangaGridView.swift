@@ -18,57 +18,50 @@ struct MangaGridView: View {
     let isReorderable: Bool
 
     var body: some View {
-        ScrollView {
-            LazyVGrid(
-                columns: [
-                    GridItem(.adaptive(minimum: 180, maximum: 220), spacing: 16),
-                ],
-                spacing: 20
-            ) {
-                ForEach(mangas) { manga in
-                    card(for: manga)
-                        .contextMenu {
-                            Button("Oznacz kolejny tom jako przeczytany") {
-                                onMarkNextAsRead(manga)
-                            }
-                            Button(
-                                manga.isSold ?? false
-                                    ? "Cofnij sprzedane" : "Sprzedane"
-                            ) {
-                                onToggleSold(manga)
-                            }
-                            Button(
-                                manga.isSpinOff ?? false
-                                    ? "Cofnij spin-off" : "Oznacz jako spin-off"
-                            ) {
-                                onToggleSpinOff(manga)
-                            }
-                            if isReorderable {
-                                Divider()
-                                Button("Przesuń wyżej") { onMoveMangaUp(manga) }
-                                Button("Przesuń niżej") { onMoveMangaDown(manga) }
-                            }
-                            Divider()
-                            Button("Usuń", role: .destructive) {
-                                onDeleteManga(manga)
-                            }
+        LazyVGrid(
+            columns: [
+                GridItem(.adaptive(minimum: 140, maximum: 175), spacing: 14),
+            ],
+            spacing: 16
+        ) {
+            ForEach(mangas) { manga in
+                card(for: manga)
+                    .contextMenu {
+                        Button("Oznacz kolejny tom jako przeczytany") {
+                            onMarkNextAsRead(manga)
                         }
-                }
+                        Button(
+                            manga.isSold ?? false
+                                ? "Cofnij sprzedane" : "Sprzedane"
+                        ) {
+                            onToggleSold(manga)
+                        }
+                        Button(
+                            manga.isSpinOff ?? false
+                                ? "Cofnij spin-off" : "Oznacz jako spin-off"
+                        ) {
+                            onToggleSpinOff(manga)
+                        }
+                        if isReorderable {
+                            Divider()
+                            Button("Przesuń wyżej") { onMoveMangaUp(manga) }
+                            Button("Przesuń niżej") { onMoveMangaDown(manga) }
+                        }
+                        Divider()
+                        Button("Usuń", role: .destructive) {
+                            onDeleteManga(manga)
+                        }
+                    }
             }
-            .padding(12)
         }
     }
 
     @ViewBuilder
     private func card(for manga: Manga) -> some View {
-        let card = MangaGridCardView(
-            manga: manga,
-            isSelected: selectedManga?.persistentModelID
-                == manga.persistentModelID
-        )
-        .onTapGesture {
-            selectedManga = manga
-        }
+        let card = MangaGridCardView(manga: manga)
+            .onTapGesture {
+                selectedManga = manga
+            }
 
         if isReorderable {
             card
