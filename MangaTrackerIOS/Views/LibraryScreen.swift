@@ -99,7 +99,11 @@ struct LibraryScreen: View {
             "Usunąć tę serię?",
             isPresented: Binding(
                 get: { mangaToDelete != nil },
-                set: { if !$0 { mangaToDelete = nil } }
+                set: {
+                    if !$0 {
+                        mangaToDelete = nil
+                    }
+                }
             ),
             titleVisibility: .visible,
             presenting: mangaToDelete

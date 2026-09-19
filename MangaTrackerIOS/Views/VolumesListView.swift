@@ -108,7 +108,11 @@ struct VolumesListView: View {
             "Zastosować także do poprzednich tomów?",
             isPresented: Binding(
                 get: { pendingBulkAction != nil },
-                set: { if !$0 { pendingBulkAction = nil } }
+                set: {
+                    if !$0 {
+                        pendingBulkAction = nil
+                    }
+                }
             ),
             titleVisibility: .visible,
             presenting: pendingBulkAction
