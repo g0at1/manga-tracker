@@ -38,3 +38,6 @@ fastlane/test_output
 *.orig
 .env
 .env.*
+
+# Firebase credentials are per developer; drop your own into Shared/.
+GoogleService-Info.plist

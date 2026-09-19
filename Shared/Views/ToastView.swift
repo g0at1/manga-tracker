@@ -5,6 +5,13 @@ struct ToastView: View {
 
     @State private var progress: CGFloat = 1
 
+    #if os(iOS)
+        /// Fits a phone screen with the overlay's side padding.
+        private static let width: CGFloat = 340
+    #else
+        private static let width: CGFloat = 420
+    #endif
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 10) {
@@ -53,7 +60,7 @@ struct ToastView: View {
             }
             .frame(height: 3)
         }
-        .frame(width: 420)
+        .frame(width: Self.width)
         .background(
             .regularMaterial,
             in: RoundedRectangle(cornerRadius: 16, style: .continuous)

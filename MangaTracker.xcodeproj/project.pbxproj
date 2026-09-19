@@ -6,8 +6,25 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C1A0DE0000000000000C0004 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = C1A0DE0000000000000C0002 /* FirebaseFirestore */; };
+		C1A0DE0000000000000C0005 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = C1A0DE0000000000000C0003 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C1A0DE0000000000000D000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 859C65682F117BE300BC1618 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C1A0DE0000000000000B0001;
+			remoteInfo = MangaTrackerIOS;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		859C65702F117BE300BC1618 /* MangaTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MangaTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1A0DE0000000000000B0002 /* MangaTrackerIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MangaTrackerIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1A0DE0000000000000D0003 /* MangaTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MangaTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +33,41 @@
 			path = MangaTracker;
 			sourceTree = "<group>";
 		};
+		C1A0DE0000000000000A0001 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		C1A0DE0000000000000A0002 /* MangaTrackerIOS */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MangaTrackerIOS;
+			sourceTree = "<group>";
+		};
+		C1A0DE0000000000000D0001 /* MangaTrackerTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MangaTrackerTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		859C656D2F117BE300BC1618 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1A0DE0000000000000C0004 /* FirebaseFirestore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1A0DE0000000000000B0004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1A0DE0000000000000C0005 /* FirebaseFirestore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1A0DE0000000000000D0005 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -32,7 +80,10 @@
 		859C65672F117BE300BC1618 = {
 			isa = PBXGroup;
 			children = (
+				C1A0DE0000000000000A0001 /* Shared */,
 				859C65722F117BE300BC1618 /* MangaTracker */,
+				C1A0DE0000000000000A0002 /* MangaTrackerIOS */,
+				C1A0DE0000000000000D0001 /* MangaTrackerTests */,
 				859C65712F117BE300BC1618 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +92,8 @@
 			isa = PBXGroup;
 			children = (
 				859C65702F117BE300BC1618 /* MangaTracker.app */,
+				C1A0DE0000000000000B0002 /* MangaTrackerIOS.app */,
+				C1A0DE0000000000000D0003 /* MangaTrackerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -62,13 +115,62 @@
 			);
 			fileSystemSynchronizedGroups = (
 				859C65722F117BE300BC1618 /* MangaTracker */,
+				C1A0DE0000000000000A0001 /* Shared */,
 			);
 			name = MangaTracker;
 			packageProductDependencies = (
+				C1A0DE0000000000000C0002 /* FirebaseFirestore */,
 			);
 			productName = MangaTracker;
 			productReference = 859C65702F117BE300BC1618 /* MangaTracker.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C1A0DE0000000000000B0001 /* MangaTrackerIOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C1A0DE0000000000000B0006 /* Build configuration list for PBXNativeTarget "MangaTrackerIOS" */;
+			buildPhases = (
+				C1A0DE0000000000000B0003 /* Sources */,
+				C1A0DE0000000000000B0004 /* Frameworks */,
+				C1A0DE0000000000000B0005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C1A0DE0000000000000A0001 /* Shared */,
+				C1A0DE0000000000000A0002 /* MangaTrackerIOS */,
+			);
+			name = MangaTrackerIOS;
+			packageProductDependencies = (
+				C1A0DE0000000000000C0003 /* FirebaseFirestore */,
+			);
+			productName = MangaTrackerIOS;
+			productReference = C1A0DE0000000000000B0002 /* MangaTrackerIOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C1A0DE0000000000000D0002 /* MangaTrackerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C1A0DE0000000000000D0007 /* Build configuration list for PBXNativeTarget "MangaTrackerTests" */;
+			buildPhases = (
+				C1A0DE0000000000000D0004 /* Sources */,
+				C1A0DE0000000000000D0005 /* Frameworks */,
+				C1A0DE0000000000000D0006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C1A0DE0000000000000D000A /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C1A0DE0000000000000D0001 /* MangaTrackerTests */,
+			);
+			name = MangaTrackerTests;
+			packageProductDependencies = (
+			);
+			productName = MangaTrackerTests;
+			productReference = C1A0DE0000000000000D0003 /* MangaTrackerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -83,6 +185,13 @@
 					859C656F2F117BE300BC1618 = {
 						CreatedOnToolsVersion = 26.2;
 					};
+					C1A0DE0000000000000B0001 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					C1A0DE0000000000000D0002 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = C1A0DE0000000000000B0001;
+					};
 				};
 			};
 			buildConfigurationList = 859C656B2F117BE300BC1618 /* Build configuration list for PBXProject "MangaTracker" */;
@@ -95,18 +204,37 @@
 			);
 			mainGroup = 859C65672F117BE300BC1618;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C1A0DE0000000000000C0001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 859C65712F117BE300BC1618 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				859C656F2F117BE300BC1618 /* MangaTracker */,
+				C1A0DE0000000000000B0001 /* MangaTrackerIOS */,
+				C1A0DE0000000000000D0002 /* MangaTrackerTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		859C656E2F117BE300BC1618 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1A0DE0000000000000B0005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1A0DE0000000000000D0006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -123,7 +251,29 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C1A0DE0000000000000B0003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1A0DE0000000000000D0004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C1A0DE0000000000000D000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C1A0DE0000000000000B0001 /* MangaTrackerIOS */;
+			targetProxy = C1A0DE0000000000000D000B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		859C657B2F117BE500BC1618 /* Debug */ = {
@@ -334,6 +484,124 @@
 			};
 			name = Release;
 		};
+		C1A0DE0000000000000B0007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = ZLAZ6VV9QT;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = MangaTracker;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.michalL.MangaTracker;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C1A0DE0000000000000B0008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = ZLAZ6VV9QT;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = MangaTracker;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.michalL.MangaTracker;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C1A0DE0000000000000D0008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = ZLAZ6VV9QT;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.michalL.MangaTrackerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MangaTrackerIOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MangaTrackerIOS";
+			};
+			name = Debug;
+		};
+		C1A0DE0000000000000D0009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = ZLAZ6VV9QT;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.michalL.MangaTrackerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MangaTrackerIOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MangaTrackerIOS";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -355,7 +623,49 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		C1A0DE0000000000000B0006 /* Build configuration list for PBXNativeTarget "MangaTrackerIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1A0DE0000000000000B0007 /* Debug */,
+				C1A0DE0000000000000B0008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C1A0DE0000000000000D0007 /* Build configuration list for PBXNativeTarget "MangaTrackerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1A0DE0000000000000D0008 /* Debug */,
+				C1A0DE0000000000000D0009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C1A0DE0000000000000C0001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.19.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C1A0DE0000000000000C0002 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C1A0DE0000000000000C0001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		C1A0DE0000000000000C0003 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C1A0DE0000000000000C0001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 859C65682F117BE300BC1618 /* Project object */;
 }

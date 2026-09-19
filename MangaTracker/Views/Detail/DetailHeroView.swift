@@ -333,30 +333,7 @@ struct DetailHeroView: View {
                 return
             }
 
-            manga.aniListId = info.id
-            manga.aniListStatus = info.status
-            manga.aniListGenresRaw = info.genres.joined(separator: ", ")
-            manga.aniListAverageScore = info.averageScore
-            manga.aniListStartDate = info.startDate
-            manga.aniListEndDate = info.endDate
-            manga.aniListAuthor = info.author
-            manga.bannerImage = info.bannerImage
-            manga.aniListParentId = info.parentId
-            manga.isSpinOff = info.parentId != nil
-            if let description = info.description {
-                manga.summary = description
-            }
-
-            if let totalVolumes = info.volumes, totalVolumes > 0 {
-                let existing = Set(manga.volumes.map(\.number))
-                for number in 1 ... totalVolumes where !existing.contains(number) {
-                    manga.volumes.append(Volume(number: number, owned: false, manga: manga))
-                }
-            }
-
-            if (manga.coverURL ?? "").isEmpty {
-                manga.coverURL = info.coverURL
-            }
+            manga.applyAniListInfo(info)
 
             ToastService.shared.show(L("Dane z AniList odświeżone dla %@.", title), type: .success)
         } catch {

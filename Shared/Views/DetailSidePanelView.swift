@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Right column of the detail page: add volumes, personal note, synopsis.
+/// Add volumes, personal note, synopsis. The right column of the detail
+/// page on the Mac; stacked under the volumes on the phone.
 struct DetailSidePanelView: View {
     @Bindable var manga: Manga
 
@@ -31,6 +32,7 @@ struct DetailSidePanelView: View {
                     HStack(spacing: 8) {
                         TextField("Nr", text: $newVolumeNumber)
                             .detailInput()
+                            .numericKeyboard()
                             .onSubmit(addSingleVolume)
                             .onChange(of: newVolumeNumber) { _, _ in validationMessage = nil }
                         AccentButton(title: "Dodaj", systemImage: "plus", action: addSingleVolume)
@@ -44,10 +46,12 @@ struct DetailSidePanelView: View {
                     HStack(spacing: 8) {
                         TextField("Od", text: $bulkFrom)
                             .detailInput()
+                            .numericKeyboard()
                         Text("–")
                             .foregroundStyle(.tertiary)
                         TextField("Do", text: $bulkTo)
                             .detailInput()
+                            .numericKeyboard()
                             .onSubmit(addBulkVolumes)
                         SubtleButton(title: "Dodaj", systemImage: "square.stack.3d.up", action: addBulkVolumes)
                     }
@@ -140,5 +144,16 @@ struct DetailSidePanelView: View {
                     }
             }
         }
+    }
+}
+
+private extension View {
+    /// Number pad on the phone; no-op on the Mac.
+    func numericKeyboard() -> some View {
+        #if os(iOS)
+            keyboardType(.numberPad)
+        #else
+            self
+        #endif
     }
 }

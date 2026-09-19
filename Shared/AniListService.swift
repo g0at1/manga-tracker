@@ -1,5 +1,9 @@
-import AppKit
 import Foundation
+#if canImport(AppKit)
+    import AppKit
+#else
+    import UIKit
+#endif
 
 struct AniListMangaInfo {
     let id: Int

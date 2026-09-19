@@ -25,6 +25,10 @@ final class Manga {
     var isPlanned: Bool?
     /// Hearted by the user; what "Ulubione" shows.
     var isFavorite: Bool?
+    /// Stable identity shared with the sync backend, so the same series can
+    /// be matched across devices. Rows from before sync existed get one
+    /// assigned on the first launch of the sync engine.
+    var syncID: String?
 
     @Relationship(deleteRule: .cascade, inverse: \Volume.manga)
     var volumes: [Volume]
@@ -50,7 +54,8 @@ final class Manga {
         aniListParentId: Int? = nil,
         isSpinOff: Bool? = false,
         isPlanned: Bool? = false,
-        isFavorite: Bool? = false
+        isFavorite: Bool? = false,
+        syncID: String? = UUID().uuidString
     ) {
         self.title = title
         self.note = note
@@ -73,6 +78,7 @@ final class Manga {
         self.isSpinOff = isSpinOff
         self.isPlanned = isPlanned
         self.isFavorite = isFavorite
+        self.syncID = syncID
     }
 }
 

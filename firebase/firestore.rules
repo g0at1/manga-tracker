@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // A library is reachable only by its 24-character key; the top-level
+    // collection can't be listed, so keys can't be discovered.
+    match /libraries/{libraryKey}/mangas/{mangaId} {
+      allow read, write: if libraryKey.size() == 24;
+    }
+  }
+}

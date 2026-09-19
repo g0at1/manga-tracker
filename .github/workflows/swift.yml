@@ -30,3 +30,13 @@ jobs:
             -configuration Debug \
             -destination 'platform=macOS' \
             clean build
+
+      - name: Build iOS app
+        run: |
+          xcodebuild \
+            -project MangaTracker.xcodeproj \
+            -scheme MangaTrackerIOS \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build

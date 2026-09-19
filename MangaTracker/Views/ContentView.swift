@@ -163,6 +163,14 @@ struct ContentView: View {
                     migrateFavoritesIfNeeded()
                     showBackupReminderIfNeeded()
                 }
+                .onChange(of: mangas.map(\.persistentModelID)) { _, ids in
+                    // A series deleted on another device while open here
+                    // can't be read any more; fall back to the library.
+                    if let selectedManga, !ids.contains(selectedManga.persistentModelID) {
+                        self.selectedManga = nil
+                        lastClosedManga = nil
+                    }
+                }
             }
             .frame(minWidth: 1100, minHeight: 600)
             .toolbarBackground(.hidden, for: .windowToolbar)
@@ -193,49 +201,7 @@ struct ContentView: View {
                     }
 
                     for em in exported {
-                        let m = Manga(
-                            title: em.title,
-                            note: em.note,
-                            summary: em.summary,
-                            createdAt: em.createdAt,
-                            volumes: [],
-                            coverUrl: em.coverURL,
-                            sortOrder: em.sortOrder,
-                            rating: em.rating,
-                            isSold: em.isSold,
-                            aniListId: em.aniListId,
-                            aniListStatus: em.aniListStatus,
-                            aniListAverageScore: em.aniListAverageScore,
-                            aniListStartDate: em.aniListStartDate,
-                            aniListEndDate: em.aniListEndDate,
-                            aniListGenresRaw: em.aniListGenresRaw,
-                            aniListAuthor: em.aniListAuthor,
-                            bannerImage: em.bannerImage,
-                            aniListParentId: em.aniListParentId,
-                            isSpinOff: em.isSpinOff,
-                            isPlanned: em.isPlanned,
-                            isFavorite: em.isFavorite
-                        )
-
-                        var vols: [Volume] = []
-                        for ev in em.volumes {
-                            let v = Volume(
-                                number: ev.number,
-                                owned: ev.owned,
-                                purchaseDate: ev.purchaseDate,
-                                price: ev.price,
-                                read: ev.read,
-                                manga: nil,
-                                readDate: ev.readDate,
-                                releaseDate: ev.releaseDate,
-                                buyURL: ev.buyURL
-                            )
-                            v.manga = m
-                            vols.append(v)
-                        }
-
-                        m.volumes = vols
-                        modelContext.insert(m)
+                        modelContext.insert(Manga(exported: em))
                     }
 
                     do {

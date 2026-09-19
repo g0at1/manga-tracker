@@ -13,6 +13,22 @@
     "·" : {
 
     },
+    "„%@” i wszystkie jej tomy zostaną usunięte także na pozostałych urządzeniach." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” and all its volumes will be deleted on the other devices too."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@” i wszystkie jej tomy zostaną usunięte także na pozostałych urządzeniach."
+          }
+        }
+      }
+    },
     "“A good story stays with you.”" : {
 
     },
@@ -222,8 +238,40 @@
         }
       }
     },
+    "albo dołącz do istniejącej" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "or join an existing one"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "albo dołącz do istniejącej"
+          }
+        }
+      }
+    },
     "AniList" : {
 
+    },
+    "AniList uzupełni okładkę, autora, opis i listę tomów. Zawsze możesz to odświeżyć później." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AniList fills in the cover, author, synopsis and volume list. You can always refresh it later."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AniList uzupełni okładkę, autora, opis i listę tomów. Zawsze możesz to odświeżyć później."
+          }
+        }
+      }
     },
     "Anulowana" : {
       "extractionState" : "manual",
@@ -307,6 +355,38 @@
         }
       }
     },
+    "Biblioteka zostanie na tym urządzeniu, ale zmiany przestaną być wymieniane z pozostałymi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The library stays on this device, but changes will no longer be exchanged with the others."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Biblioteka zostanie na tym urządzeniu, ale zmiany przestaną być wymieniane z pozostałymi."
+          }
+        }
+      }
+    },
+    "Błąd: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Błąd: %@"
+          }
+        }
+      }
+    },
     "Brak nadchodzących tomów" : {
       "localizations" : {
         "en" : {
@@ -319,6 +399,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Brak nadchodzących tomów"
+          }
+        }
+      }
+    },
+    "Brak planowanych serii" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No planned series"
           }
         }
       }
@@ -629,6 +719,22 @@
         }
       }
     },
+    "Daty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dates"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daty"
+          }
+        }
+      }
+    },
     "Do" : {
       "localizations" : {
         "en" : {
@@ -645,6 +751,16 @@
         }
       }
     },
+    "Do planowanych" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to planned"
+          }
+        }
+      }
+    },
     "Dodaj" : {
       "localizations" : {
         "en" : {
@@ -657,6 +773,32 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dodaj"
+          }
+        }
+      }
+    },
+    "Dodaj do ulubionych" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to favorites"
+          }
+        }
+      }
+    },
+    "Dodaj jako planowaną" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to planned"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj jako planowaną"
           }
         }
       }
@@ -757,6 +899,26 @@
         }
       }
     },
+    "Dodaj serię do listy planowanych" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add the series to your planned list"
+          }
+        }
+      }
+    },
+    "Dodaj serie z ekranu rekomendacji albo z menu karty (prawy przycisk). Po zakupie przenieś je stąd do biblioteki." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add series from the recommendations screen or a card's context menu (right-click). Once bought, move them from here into the library."
+          }
+        }
+      }
+    },
     "Dodaj tomy" : {
       "localizations" : {
         "en" : {
@@ -769,6 +931,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dodaj tomy"
+          }
+        }
+      }
+    },
+    "Dodaj tomy poniżej" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add volumes below"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj tomy poniżej"
           }
         }
       }
@@ -801,6 +979,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dodaj tomy w panelu po prawej."
+          }
+        }
+      }
+    },
+    "Dodaj tomy w sekcji poniżej." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add volumes in the section below."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj tomy w sekcji poniżej."
+          }
+        }
+      }
+    },
+    "Dodano do planowanych: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added to planned: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodano do planowanych: %@"
           }
         }
       }
@@ -843,6 +1054,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edytuj link zakupu"
+          }
+        }
+      }
+    },
+    "Edytuj serię" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit series"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj serię"
+          }
+        }
+      }
+    },
+    "Edytuj tom…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit volume…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj tom…"
+          }
+        }
+      }
+    },
+    "Edytuj tytuł i okładkę…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit title and cover…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj tytuł i okładkę…"
           }
         }
       }
@@ -1149,6 +1408,54 @@
         }
       }
     },
+    "Klucz biblioteki" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Library key"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klucz biblioteki"
+          }
+        }
+      }
+    },
+    "Klucz ma 24 znaki, np. ABCD-EFGH-JKMN-PQRS-TUVW-XYZ2." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A key has 24 characters, e.g. ABCD-EFGH-JKMN-PQRS-TUVW-XYZ2."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klucz ma 24 znaki, np. ABCD-EFGH-JKMN-PQRS-TUVW-XYZ2."
+          }
+        }
+      }
+    },
+    "Klucz z drugiego urządzenia" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key from the other device"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klucz z drugiego urządzenia"
+          }
+        }
+      }
+    },
     "Kontynuuj czytanie" : {
       "localizations" : {
         "en" : {
@@ -1181,6 +1488,22 @@
         }
       }
     },
+    "Kopiuj" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiuj"
+          }
+        }
+      }
+    },
     "Kup" : {
       "localizations" : {
         "en" : {
@@ -1193,6 +1516,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kup"
+          }
+        }
+      }
+    },
+    "Kupiona — przenieś do biblioteki" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bought — move to library"
           }
         }
       }
@@ -1273,6 +1606,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kwota"
+          }
+        }
+      }
+    },
+    "Łączenie…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecting…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Łączenie…"
           }
         }
       }
@@ -1486,6 +1835,22 @@
         }
       }
     },
+    "Najlepiej tytuł angielski albo romaji — tak, jak w AniList." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferably the English or romaji title, as on AniList."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Najlepiej tytuł angielski albo romaji — tak, jak w AniList."
+          }
+        }
+      }
+    },
     "Najpierw odśwież dane z AniList" : {
       "localizations" : {
         "en" : {
@@ -1532,6 +1897,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Najpierw wpisz tytuł mangi."
+          }
+        }
+      }
+    },
+    "Następny do kupienia" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next to buy"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Następny do kupienia"
           }
         }
       }
@@ -1614,6 +1995,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nie udało się odświeżyć danych z AniList."
+          }
+        }
+      }
+    },
+    "Nie udało się pobrać danych z AniList." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't fetch data from AniList."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się pobrać danych z AniList."
           }
         }
       }
@@ -1818,6 +2216,22 @@
         }
       }
     },
+    "Oczekujące zmiany: %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pending changes: %lld"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oczekujące zmiany: %lld"
+          }
+        }
+      }
+    },
     "Od" : {
       "localizations" : {
         "en" : {
@@ -1866,6 +2280,22 @@
         }
       }
     },
+    "Offline — zmiany zostaną wysłane po połączeniu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offline — changes will be sent once connected"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offline — zmiany zostaną wysłane po połączeniu"
+          }
+        }
+      }
+    },
     "Okładka" : {
       "localizations" : {
         "en" : {
@@ -1895,6 +2325,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Okładka pobrana z AniList."
+          }
+        }
+      }
+    },
+    "Online" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Online"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Online"
+          }
+        }
+      }
+    },
+    "Online · zsynchronizowano %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Online · synced at %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Online · zsynchronizowano %@"
           }
         }
       }
@@ -2139,6 +2601,16 @@
         }
       }
     },
+    "Planowana" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planned"
+          }
+        }
+      }
+    },
     "Planowane" : {
       "localizations" : {
         "en" : {
@@ -2167,6 +2639,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PLN"
+          }
+        }
+      }
+    },
+    "Pobierz dane z AniList" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fetch data from AniList"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pobierz dane z AniList"
           }
         }
       }
@@ -2253,6 +2741,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pojedynczy tom"
+          }
+        }
+      }
+    },
+    "Połącz" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Połącz"
+          }
+        }
+      }
+    },
+    "Połącz komputer i telefon jednym kluczem biblioteki. Utwórz go na pierwszym urządzeniu, potem wklej na drugim." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link your Mac and phone with one library key. Create it on the first device, then paste it on the second."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Połącz komputer i telefon jednym kluczem biblioteki. Utwórz go na pierwszym urządzeniu, potem wklej na drugim."
           }
         }
       }
@@ -2449,6 +2969,16 @@
         }
       }
     },
+    "Przenieś do planowanych" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to planned"
+          }
+        }
+      }
+    },
     "Przesuń niżej" : {
       "localizations" : {
         "en" : {
@@ -2545,6 +3075,38 @@
         }
       }
     },
+    "Rozłącz" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disconnect"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozłącz"
+          }
+        }
+      }
+    },
+    "Rozłączyć to urządzenie?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disconnect this device?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozłączyć to urządzenie?"
+          }
+        }
+      }
+    },
     "serii" : {
       "localizations" : {
         "en" : {
@@ -2557,6 +3119,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "serii"
+          }
+        }
+      }
+    },
+    "Skopiowano" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copied"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skopiowano"
           }
         }
       }
@@ -2705,6 +3283,38 @@
         }
       }
     },
+    "Synchronizacja" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronizacja"
+          }
+        }
+      }
+    },
+    "Szczegóły" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szczegóły"
+          }
+        }
+      }
+    },
     "Szukaj" : {
       "localizations" : {
         "en" : {
@@ -2733,6 +3343,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Szukaj tytułu…"
+          }
+        }
+      }
+    },
+    "Ta kompilacja nie ma konfiguracji Firebase (GoogleService-Info.plist). Zobacz sekcję „Synchronizacja” w README." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This build has no Firebase configuration (GoogleService-Info.plist). See the “Sync” section of the README."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta kompilacja nie ma konfiguracji Firebase (GoogleService-Info.plist). Zobacz sekcję „Synchronizacja” w README."
           }
         }
       }
@@ -2781,6 +3407,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ten miesiąc vs poprzedni"
+          }
+        }
+      }
+    },
+    "Ten sam format JSON, który eksportuje i importuje aplikacja na Macu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The same JSON format the Mac app exports and imports."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ten sam format JSON, który eksportuje i importuje aplikacja na Macu."
           }
         }
       }
@@ -3046,6 +3688,22 @@
         }
       }
     },
+    "Udostępnij eksport JSON" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share JSON export"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Udostępnij eksport JSON"
+          }
+        }
+      }
+    },
     "Ukończone" : {
       "localizations" : {
         "en" : {
@@ -3238,6 +3896,22 @@
         }
       }
     },
+    "Usuń serię" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete series"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń serię"
+          }
+        }
+      }
+    },
     "Usuń tom" : {
       "localizations" : {
         "en" : {
@@ -3266,6 +3940,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usuń wszystkie"
+          }
+        }
+      }
+    },
+    "Usuń z ulubionych" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove from favorites"
+          }
+        }
+      }
+    },
+    "Usunąć tę serię?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this series?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usunąć tę serię?"
+          }
+        }
+      }
+    },
+    "Usunąć ten tom?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this volume?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usunąć ten tom?"
+          }
+        }
+      }
+    },
+    "Utwórz nową bibliotekę" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a new library"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utwórz nową bibliotekę"
           }
         }
       }
@@ -3324,6 +4056,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Więcej"
+          }
+        }
+      }
+    },
+    "Wklej" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklej"
           }
         }
       }
@@ -3738,6 +4486,22 @@
         }
       }
     },
+    "Wyślij całą bibliotekę" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send the whole library"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyślij całą bibliotekę"
+          }
+        }
+      }
+    },
     "z linkiem do zakupu" : {
       "localizations" : {
         "en" : {
@@ -4003,113 +4767,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zobacz co wychodzi i kiedy"
-          }
-        }
-      }
-    },
-    "Do planowanych" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add to planned"
-          }
-        }
-      }
-    },
-    "Dodaj serię do listy planowanych" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add the series to your planned list"
-          }
-        }
-      }
-    },
-    "Planowana" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Planned"
-          }
-        }
-      }
-    },
-    "Dodano do planowanych: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Added to planned: %@"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dodano do planowanych: %@"
-          }
-        }
-      },
-      "extractionState" : "manual"
-    },
-    "Kupiona — przenieś do biblioteki" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bought — move to library"
-          }
-        }
-      }
-    },
-    "Przenieś do planowanych" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move to planned"
-          }
-        }
-      }
-    },
-    "Brak planowanych serii" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No planned series"
-          }
-        }
-      }
-    },
-    "Dodaj serie z ekranu rekomendacji albo z menu karty (prawy przycisk). Po zakupie przenieś je stąd do biblioteki." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add series from the recommendations screen or a card's context menu (right-click). Once bought, move them from here into the library."
-          }
-        }
-      }
-    },
-    "Dodaj do ulubionych" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add to favorites"
-          }
-        }
-      }
-    },
-    "Usuń z ulubionych" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove from favorites"
           }
         }
       }

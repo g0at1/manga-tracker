@@ -2,18 +2,15 @@ import SwiftData
 import SwiftUI
 
 @main
-struct MangaTrackerApp: App {
+struct MangaTrackerIOSApp: App {
     @AppStorage(AppLanguage.storageKey) private var languageRaw = AppLanguage.polish.rawValue
     @Environment(\.scenePhase) private var scenePhase
 
-    /// One store for every window. Separate `.modelContainer(for:)` calls
-    /// would each open their own container, so edits in the library wouldn't
-    /// reach the dashboard until relaunch.
     private let container: ModelContainer
 
     /// Mirrors the store to the backend (and back). Without Firebase
     /// credentials in the bundle it stays in the `unavailable` state and
-    /// the app is local-only, as before.
+    /// the app is local-only.
     @State private var syncEngine: SyncEngine
 
     init() {
@@ -36,46 +33,24 @@ struct MangaTrackerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .localized(language)
+            RootView()
+                // The `id` rebuilds the tree on a language change so strings
+                // assembled in code pick up the new language too.
+                .environment(\.locale, language.locale)
+                .id(language)
                 .environment(syncEngine)
+                // The palette is built for the Mac app's dark surface.
+                .preferredColorScheme(.dark)
                 .onAppear {
-                    WindowManager.maximizeMainWindow()
                     syncEngine.start()
                 }
                 .onChange(of: scenePhase) { _, phase in
-                    // Send what's queued before the app goes quiet.
+                    // Send what's queued before iOS suspends the app.
                     if phase != .active {
                         syncEngine.flush()
                     }
                 }
         }
-        .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .modelContainer(container)
-
-        WindowGroup("Nadchodzące", id: "upcoming") {
-            UpcomingWindowView()
-                .localized(language)
-                .environment(syncEngine)
-        }
-        .defaultSize(width: 1200, height: 880)
-        .modelContainer(container)
-
-        WindowGroup("Statystyki", id: "dashboard") {
-            DashboardWindowView()
-                .localized(language)
-                .environment(syncEngine)
-        }
-        .defaultSize(width: 1500, height: 960)
-        .modelContainer(container)
-    }
-}
-
-private extension View {
-    /// Applies the chosen UI language. The `id` rebuilds the tree on change so
-    /// strings assembled in code pick up the new language too.
-    func localized(_ language: AppLanguage) -> some View {
-        environment(\.locale, language.locale)
-            .id(language)
     }
 }

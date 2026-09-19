@@ -84,22 +84,7 @@ extension ContentView {
     }
 
     func markNextAsRead(_ manga: Manga) {
-        let sortedVolumes = manga.volumes.sorted { $0.number < $1.number }
-
-        guard !sortedVolumes.isEmpty else { return }
-
-        let lastReadIndex =
-            sortedVolumes.lastIndex(where: { $0.read == true }) ?? -1
-        let nextIndex = lastReadIndex + 1
-
-        guard sortedVolumes.indices.contains(nextIndex) else { return }
-
-        let nextVolume = sortedVolumes[nextIndex]
-
-        guard nextVolume.read != true else { return }
-
-        nextVolume.read = true
-        nextVolume.readDate = Date()
+        manga.markNextAsRead()
 
         do {
             try modelContext.save()

@@ -45,6 +45,8 @@ struct SettingsSheetView: View {
                 }
             }
 
+            SyncSettingsCard()
+
             DetailCard {
                 VStack(alignment: .leading, spacing: 14) {
                     DetailCardTitle(title: "Kopia zapasowa", systemImage: "externaldrive.fill")
