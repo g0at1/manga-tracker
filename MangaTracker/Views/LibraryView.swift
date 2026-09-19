@@ -31,6 +31,8 @@ struct LibraryView: View {
     let onMarkNextAsRead: (Manga) -> Void
     let onToggleSold: (Manga) -> Void
     let onToggleSpinOff: (Manga) -> Void
+    let onTogglePlanned: (Manga) -> Void
+    let onToggleFavorite: (Manga) -> Void
 
     @FocusState private var searchFocused: Bool
     @Environment(\.locale) private var locale
@@ -371,6 +373,14 @@ struct LibraryView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
+            } else if filteredMangas.isEmpty, category == .planned, searchText.isEmpty {
+                ContentUnavailableView(
+                    "Brak planowanych serii",
+                    systemImage: "bookmark",
+                    description: Text("Dodaj serie z ekranu rekomendacji albo z menu karty (prawy przycisk). Po zakupie przenieś je stąd do biblioteki.")
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
             } else if filteredMangas.isEmpty {
                 ContentUnavailableView(
                     "Brak wyników",
@@ -391,6 +401,8 @@ struct LibraryView: View {
                     onMarkNextAsRead: onMarkNextAsRead,
                     onToggleSold: onToggleSold,
                     onToggleSpinOff: onToggleSpinOff,
+                    onTogglePlanned: onTogglePlanned,
+                    onToggleFavorite: onToggleFavorite,
                     isReorderable: isReorderable
                 )
                 .padding(.top, 4)

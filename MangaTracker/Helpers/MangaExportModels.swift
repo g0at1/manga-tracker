@@ -30,6 +30,8 @@ struct ExportedManga: Codable {
     var aniListAuthor: String?
     var aniListParentId: Int?
     var isSpinOff: Bool?
+    var isPlanned: Bool?
+    var isFavorite: Bool?
 
     var volumes: [ExportedVolume]
 }
@@ -55,6 +57,8 @@ func encodeMangasToJSON(_ mangas: [Manga]) throws -> Data {
             aniListAuthor: manga.aniListAuthor,
             aniListParentId: manga.aniListParentId,
             isSpinOff: manga.isSpinOff,
+            isPlanned: manga.isPlanned,
+            isFavorite: manga.isFavorite,
             volumes: manga.volumes.map { v in
                 ExportedVolume(
                     number: v.number,

@@ -118,6 +118,44 @@ extension ContentView {
         }
     }
 
+    func toggleFavorite(_ manga: Manga) {
+        manga.isFavorite = !(manga.isFavorite ?? false)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error while toggling favorite state: \(error)")
+        }
+    }
+
+    /// "Ulubione" used to be every series rated 4.5+. The first launch with
+    /// the heart carries those over so the section doesn't come up empty.
+    func migrateFavoritesIfNeeded() {
+        let key = "didMigrateFavoritesFromRating"
+        guard !UserDefaults.standard.bool(forKey: key), !mangas.isEmpty else { return }
+
+        for manga in mangas where manga.isFavorite == nil {
+            manga.isFavorite = (manga.rating ?? 0) >= 4.5
+        }
+
+        do {
+            try modelContext.save()
+            UserDefaults.standard.set(true, forKey: key)
+        } catch {
+            print("Error while migrating favorites: \(error)")
+        }
+    }
+
+    func togglePlanned(_ manga: Manga) {
+        manga.isPlanned = !(manga.isPlanned ?? false)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error while toggling planned state: \(error)")
+        }
+    }
+
     func toggleSpinOff(_ manga: Manga) {
         manga.isSpinOff = !(manga.isSpinOff ?? false)
 

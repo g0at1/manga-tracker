@@ -18,8 +18,15 @@ struct AniListMangaInfo {
 
 struct AniListRecommendation: Identifiable {
     let id: Int
+    /// How many AniList users upvoted this recommendation.
     let rating: Int?
     let type: String?
+    /// MANGA, NOVEL, ONE_SHOT…
+    let format: String?
+    let status: String?
+    let genres: [String]
+    let volumes: Int?
+    let startYear: Int?
     let title: AniListRecommendationTitle
     let coverImageLarge: String?
     let coverImageMedium: String?
@@ -94,92 +101,70 @@ enum AniListService {
             ?? decoded.data?.Media?.coverImage?.medium
     }
 
+    /// Everything `Manga` stores about a series, requested by both lookups below.
+    private static let mangaInfoFields = """
+    id
+    status
+    genres
+    averageScore
+    description
+    volumes
+    bannerImage
+    format
+    title {
+      romaji
+      english
+      native
+    }
+    startDate {
+      year
+      month
+      day
+    }
+    endDate {
+      year
+      month
+      day
+    }
+    coverImage {
+      extraLarge
+      large
+      medium
+    }
+    relations {
+      edges {
+        relationType
+        node {
+          id
+        }
+      }
+    }
+    staff {
+      edges {
+        role
+        node {
+          id
+          name {
+            full
+          }
+        }
+      }
+    }
+    """
+
     static func fetchMangaInfo(title: String) async throws -> AniListMangaInfo? {
         let query = """
         query ($search: String) {
           Page(page: 1, perPage: 10) {
             media(search: $search, type: MANGA, sort: SEARCH_MATCH) {
-              id
-              status
-              genres
-              averageScore
-              description
-              volumes
-              bannerImage
-              format
-              title {
-                romaji
-                english
-                native
-              }
-              startDate {
-                year
-                month
-                day
-              }
-              endDate {
-                year
-                month
-                day
-              }
-              coverImage {
-                extraLarge
-                large
-                medium
-              }
-              relations {
-                edges {
-                  relationType
-                  node {
-                    id
-                  }
-                }
-              }
-              staff {
-                edges {
-                  role
-                  node {
-                    id
-                    name {
-                      full
-                    }
-                  }
-                }
-              }
+        \(mangaInfoFields)
             }
           }
         }
         """
 
-        let body: [String: Any] = [
-            "query": query,
-            "variables": [
-                "search": title,
-            ],
-        ]
-
-        let url = URL(string: "https://graphql.anilist.co")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let http = response as? HTTPURLResponse,
-              (200 ..< 300).contains(http.statusCode)
-        else {
-            throw URLError(.badServerResponse)
-        }
-
-        let decoded = try JSONDecoder().decode(
-            AniListInfoResponse.self,
-            from: data
-        )
-
-        guard let results = decoded.data?.Page?.media, !results.isEmpty else {
-            return nil
-        }
+        let results = try await fetchInfoMedia(query: query, variables: ["search": title])
+        guard !results.isEmpty else { return nil }
 
         let normalizedSearch = normalizeTitle(title)
 
@@ -196,6 +181,53 @@ enum AniListService {
             })
             ?? results.first(where: { $0.format == "MANGA" })
             ?? results[0]
+
+        return info(from: media)
+    }
+
+    /// Exact lookup by AniList id, for series picked from recommendations.
+    static func fetchMangaInfo(id: Int) async throws -> AniListMangaInfo? {
+        let query = """
+        query ($id: Int) {
+          Page(page: 1, perPage: 1) {
+            media(id: $id, type: MANGA) {
+        \(mangaInfoFields)
+            }
+          }
+        }
+        """
+
+        return try await fetchInfoMedia(query: query, variables: ["id": id]).first.map(info(from:))
+    }
+
+    private static func fetchInfoMedia(
+        query: String,
+        variables: [String: Any]
+    ) async throws -> [AniListInfoResponse.Media] {
+        let body: [String: Any] = [
+            "query": query,
+            "variables": variables,
+        ]
+
+        let url = URL(string: "https://graphql.anilist.co")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let http = response as? HTTPURLResponse,
+              (200 ..< 300).contains(http.statusCode)
+        else {
+            throw URLError(.badServerResponse)
+        }
+
+        let decoded = try JSONDecoder().decode(AniListInfoResponse.self, from: data)
+        return decoded.data?.Page?.media ?? []
+    }
+
+    private static func info(from media: AniListInfoResponse.Media) -> AniListMangaInfo {
         let coverURL =
             media.coverImage?.extraLarge
                 ?? media.coverImage?.large
@@ -240,6 +272,13 @@ enum AniListService {
                 mediaRecommendation {
                   id
                   type
+                  format
+                  status
+                  genres
+                  volumes
+                  startDate {
+                    year
+                  }
                   title {
                     romaji
                     english
@@ -303,6 +342,11 @@ enum AniListService {
                 id: media.id,
                 rating: node.rating,
                 type: media.type,
+                format: media.format,
+                status: media.status,
+                genres: media.genres ?? [],
+                volumes: media.volumes,
+                startYear: media.startDate?.year,
                 title: title,
                 coverImageLarge: media.coverImage?.large,
                 coverImageMedium: media.coverImage?.medium,
@@ -447,10 +491,19 @@ private struct AniListRecommendationResponse: Decodable {
     struct MediaRecommendation: Decodable {
         let id: Int
         let type: String?
+        let format: String?
+        let status: String?
+        let genres: [String]?
+        let volumes: Int?
+        let startDate: StartDate?
         let title: MediaTitle?
         let coverImage: CoverImage?
         let averageScore: Int?
         let siteUrl: String?
+    }
+
+    struct StartDate: Decodable {
+        let year: Int?
     }
 
     struct MediaTitle: Decodable {

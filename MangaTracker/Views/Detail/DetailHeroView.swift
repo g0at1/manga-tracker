@@ -53,7 +53,11 @@ struct DetailHeroView: View {
                 .padding(.trailing, horizontalPadding)
         }
         .sheet(isPresented: $showRecommendationsSheet) {
-            RecommendationsSheetView(recommendations: recommendations)
+            RecommendationsSheetView(
+                sourceTitle: manga.title,
+                bannerURL: (manga.bannerImage ?? "").isEmpty ? nil : URL(string: manga.bannerImage ?? ""),
+                recommendations: recommendations
+            )
         }
     }
 
@@ -111,6 +115,9 @@ struct DetailHeroView: View {
                     }
                     if manga.isSpinOff ?? false {
                         badge("Spin-off", color: .gray)
+                    }
+                    if manga.isPlanned ?? false {
+                        badge("Planowana", color: .blue)
                     }
                 }
                 .padding(8)
@@ -232,14 +239,22 @@ struct DetailHeroView: View {
             .disabled(isFetchingRecommendations || manga.aniListId == nil)
             .help(manga.aniListId == nil ? "Najpierw odśwież dane z AniList" : "")
 
+            FavoriteHeartButton(manga: manga, size: 30)
+
             Menu {
-                Toggle("Sprzedane", isOn: Binding(
-                    get: { manga.isSold ?? false },
-                    set: { manga.isSold = $0 }
-                ))
+                if !(manga.isPlanned ?? false) {
+                    Toggle("Sprzedane", isOn: Binding(
+                        get: { manga.isSold ?? false },
+                        set: { manga.isSold = $0 }
+                    ))
+                }
                 Toggle("Spin-off", isOn: Binding(
                     get: { manga.isSpinOff ?? false },
                     set: { manga.isSpinOff = $0 }
+                ))
+                Toggle("Planowana", isOn: Binding(
+                    get: { manga.isPlanned ?? false },
+                    set: { manga.isPlanned = $0 }
                 ))
                 Divider()
                 Button("Zmień okładkę…") {
@@ -394,109 +409,5 @@ struct DetailHeroView: View {
             ToastService.shared.show(L("Nie udało się pobrać rekomendacji."), type: .error)
             print("AniList recommendations error:", error)
         }
-    }
-}
-
-// MARK: - Recommendations sheet
-
-private struct RecommendationsSheetView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    let recommendations: [AniListRecommendation]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Rekomendacje")
-                        .font(.title2.weight(.bold))
-                    Text("Znalezione: \(recommendations.count)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Button("Zamknij") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
-            }
-
-            ScrollView {
-                LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 170, maximum: 200), spacing: 14)],
-                    spacing: 14
-                ) {
-                    ForEach(recommendations) { recommendation in
-                        RecommendationCard(recommendation: recommendation)
-                    }
-                }
-                .padding(.bottom, 8)
-            }
-        }
-        .padding(24)
-        .frame(minWidth: 1100, minHeight: 520)
-        .background(AppBackgroundView())
-    }
-}
-
-private struct RecommendationCard: View {
-    let recommendation: AniListRecommendation
-
-    @State private var isHovered = false
-
-    private var title: String {
-        recommendation.title.userPreferred
-            ?? recommendation.title.english
-            ?? recommendation.title.romaji
-            ?? recommendation.title.native
-            ?? ""
-    }
-
-    var body: some View {
-        Button {
-            if let urlString = recommendation.siteUrl, let url = URL(string: urlString) {
-                NSWorkspace.shared.open(url)
-            }
-        } label: {
-            VStack(alignment: .leading, spacing: 10) {
-                Color.clear
-                    .aspectRatio(2 / 3, contentMode: .fit)
-                    .overlay(
-                        CoverImageView(
-                            url: URL(string: recommendation.coverImageLarge ?? recommendation.coverImageMedium ?? ""),
-                            cornerRadius: 10
-                        )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(2, reservesSpace: true)
-
-                HStack(spacing: 10) {
-                    Label(recommendation.averageScore.map { "\($0)%" } ?? "—", systemImage: "star.fill")
-                    Label(recommendation.rating.map { "\($0)" } ?? "—", systemImage: "heart.fill")
-                    Spacer(minLength: 0)
-                    Text(recommendation.type ?? "MANGA")
-                        .foregroundStyle(.green)
-                }
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.secondary)
-            }
-            .padding(10)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.white.opacity(isHovered ? 0.08 : 0.04))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Color.white.opacity(isHovered ? 0.18 : 0.07), lineWidth: 1)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .help("Otwórz w AniList")
-        .onHover { isHovered = $0 }
-        .animation(.easeOut(duration: 0.14), value: isHovered)
     }
 }

@@ -429,7 +429,8 @@ private struct DashboardData {
 
         for manga in mangas {
             let isSold = manga.isSold ?? false
-            if !isSold, !(manga.isSpinOff ?? false) {
+            let isPlanned = manga.isPlanned ?? false
+            if !isSold, !isPlanned, !(manga.isSpinOff ?? false) {
                 totalSeries += 1
             }
 
@@ -459,7 +460,7 @@ private struct DashboardData {
                     let title = volume.manga?.title ?? unknownTitle
                     itemsByReadDay[day, default: []].append("\(title) #\(volume.number)")
                 }
-                if !isSold {
+                if !isSold, !isPlanned {
                     totalVolumes += 1
                     if volume.owned {
                         ownedVolumes += 1
@@ -478,7 +479,7 @@ private struct DashboardData {
                 mangaSpend.append(MangaSpendData(id: manga.persistentModelID, title: manga.title, amount: spent))
             }
             let percent = volumes.isEmpty ? 0 : Double(read) / Double(volumes.count) * 100
-            if !volumes.isEmpty, percent < 100 {
+            if !isPlanned, !volumes.isEmpty, percent < 100 {
                 mangaProgress.append(MangaProgressData(
                     id: manga.persistentModelID,
                     title: manga.title,

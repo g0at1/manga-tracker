@@ -96,6 +96,13 @@ struct MangaGridCardView: View {
                 }
                 .padding(8)
             }
+            .overlay(alignment: .topLeading) {
+                if isHovered || manga.isFavorite ?? false {
+                    FavoriteHeartButton(manga: manga)
+                        .padding(8)
+                        .transition(.opacity)
+                }
+            }
     }
 
     private func badge(_ text: LocalizedStringKey, color: Color) -> some View {
@@ -110,5 +117,42 @@ struct MangaGridCardView: View {
                     .stroke(.white.opacity(0.85), lineWidth: 1)
             }
             .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+    }
+}
+
+/// Round heart that toggles `isFavorite`. Filled red once hearted; sits on
+/// top of the cover so it works without opening the series.
+struct FavoriteHeartButton: View {
+    let manga: Manga
+    var size: CGFloat = 28
+
+    @State private var isHovered = false
+
+    private var isFavorite: Bool {
+        manga.isFavorite ?? false
+    }
+
+    var body: some View {
+        Button {
+            manga.isFavorite = !isFavorite
+        } label: {
+            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                .font(.system(size: size * 0.46, weight: .bold))
+                .foregroundStyle(isFavorite ? Color.red : .white.opacity(0.92))
+                .frame(width: size, height: size)
+                .background(
+                    Circle()
+                        .fill(Color.black.opacity(isHovered ? 0.6 : 0.45))
+                        .background(.ultraThinMaterial, in: Circle())
+                )
+                .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
+                .scaleEffect(isHovered ? 1.08 : 1)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(isFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych")
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.12), value: isHovered)
+        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isFavorite)
     }
 }

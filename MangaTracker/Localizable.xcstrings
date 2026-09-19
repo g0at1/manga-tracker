@@ -87,6 +87,58 @@
         }
       }
     },
+    "%lld tomów" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld volume"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld volumes"
+                }
+              }
+            }
+          }
+        },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld tomy"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld tomów"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld tom"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld tomu"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld/%lld" : {
       "localizations" : {
         "pl" : {
@@ -169,6 +221,9 @@
           }
         }
       }
+    },
+    "AniList" : {
+
     },
     "Anulowana" : {
       "extractionState" : "manual",
@@ -750,6 +805,16 @@
         }
       }
     },
+    "Domyślny" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default"
+          }
+        }
+      }
+    },
     "Dziś" : {
       "localizations" : {
         "en" : {
@@ -778,6 +843,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edytuj link zakupu"
+          }
+        }
+      }
+    },
+    "Eksport do pliku JSON" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export to a JSON file"
           }
         }
       }
@@ -860,6 +935,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtry (1)"
+          }
+        }
+      }
+    },
+    "Folder eksportu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export folder"
+          }
+        }
+      }
+    },
+    "Folder eksportu jest niedostępny. Wybierz go ponownie w Ustawieniach." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The export folder is unavailable. Pick it again in Settings."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folder eksportu jest niedostępny. Wybierz go ponownie w Ustawieniach."
+          }
+        }
+      }
+    },
+    "Folder eksportu: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export folder: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folder eksportu: %@"
           }
         }
       }
@@ -1533,6 +1652,23 @@
         }
       }
     },
+    "Nie udało się zapamiętać folderu: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't remember the folder: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się zapamiętać folderu: %@"
+          }
+        }
+      }
+    },
     "Nie znaleziono danych w AniList dla: %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2051,6 +2187,16 @@
         }
       }
     },
+    "Pobrane (domyślny)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloads (default)"
+          }
+        }
+      }
+    },
     "Podaj numer tomu." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2081,6 +2227,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podaj zakres, np. 1–30."
+          }
+        }
+      }
+    },
+    "Podobne do %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Similar to %@"
           }
         }
       }
@@ -2854,6 +3010,26 @@
         }
       }
     },
+    "Tyle osób poleca tę serię" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How many people recommend this series"
+          }
+        }
+      }
+    },
+    "Tylko nowe" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New only"
+          }
+        }
+      }
+    },
     "Tytuł" : {
       "localizations" : {
         "en" : {
@@ -3094,6 +3270,16 @@
         }
       }
     },
+    "W bibliotece" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In library"
+          }
+        }
+      }
+    },
     "w ciągu 30 dni" : {
       "localizations" : {
         "en" : {
@@ -3235,6 +3421,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wróć do biblioteki (⌘←)"
+          }
+        }
+      }
+    },
+    "Wróć do folderu Pobrane" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go back to the Downloads folder"
           }
         }
       }
@@ -3385,6 +3581,23 @@
         }
       }
     },
+    "Wybierz" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz"
+          }
+        }
+      }
+    },
     "Wybierz dzień, aby zobaczyć co przeczytałeś." : {
       "localizations" : {
         "en" : {
@@ -3397,6 +3610,33 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wybierz dzień, aby zobaczyć co przeczytałeś."
+          }
+        }
+      }
+    },
+    "Wybierz folder, do którego będą zapisywane eksporty." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose the folder where exports will be saved."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz folder, do którego będą zapisywane eksporty."
+          }
+        }
+      }
+    },
+    "Wybierz inny folder" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a different folder"
           }
         }
       }
@@ -3724,7 +3964,18 @@
         }
       }
     },
+    "Zmień…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change…"
+          }
+        }
+      }
+    },
     "Znalezione: %lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3756,160 +4007,112 @@
         }
       }
     },
-    "Folder eksportu" : {
+    "Do planowanych" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Export folder"
+            "value" : "Add to planned"
           }
         }
       }
     },
-    "Pobrane (domyślny)" : {
+    "Dodaj serię do listy planowanych" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Downloads (default)"
+            "value" : "Add the series to your planned list"
           }
         }
       }
     },
-    "Zmień…" : {
+    "Planowana" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Change…"
+            "value" : "Planned"
           }
         }
       }
     },
-    "Domyślny" : {
+    "Dodano do planowanych: %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Default"
-          }
-        }
-      }
-    },
-    "Wybierz inny folder" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pick a different folder"
-          }
-        }
-      }
-    },
-    "Wróć do folderu Pobrane" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Go back to the Downloads folder"
-          }
-        }
-      }
-    },
-    "Eksport do pliku JSON" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Export to a JSON file"
-          }
-        }
-      }
-    },
-    "Wybierz folder, do którego będą zapisywane eksporty." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose the folder where exports will be saved."
+            "value" : "Added to planned: %@"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wybierz folder, do którego będą zapisywane eksporty."
+            "value" : "Dodano do planowanych: %@"
           }
         }
       },
       "extractionState" : "manual"
     },
-    "Wybierz" : {
+    "Kupiona — przenieś do biblioteki" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choose"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wybierz"
+            "value" : "Bought — move to library"
           }
         }
-      },
-      "extractionState" : "manual"
+      }
     },
-    "Folder eksportu: %@" : {
+    "Przenieś do planowanych" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Export folder: %@"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Folder eksportu: %@"
+            "value" : "Move to planned"
           }
         }
-      },
-      "extractionState" : "manual"
+      }
     },
-    "Nie udało się zapamiętać folderu: %@" : {
+    "Brak planowanych serii" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Couldn't remember the folder: %@"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nie udało się zapamiętać folderu: %@"
+            "value" : "No planned series"
           }
         }
-      },
-      "extractionState" : "manual"
+      }
     },
-    "Folder eksportu jest niedostępny. Wybierz go ponownie w Ustawieniach." : {
+    "Dodaj serie z ekranu rekomendacji albo z menu karty (prawy przycisk). Po zakupie przenieś je stąd do biblioteki." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The export folder is unavailable. Pick it again in Settings."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Folder eksportu jest niedostępny. Wybierz go ponownie w Ustawieniach."
+            "value" : "Add series from the recommendations screen or a card's context menu (right-click). Once bought, move them from here into the library."
           }
         }
-      },
-      "extractionState" : "manual"
+      }
+    },
+    "Dodaj do ulubionych" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to favorites"
+          }
+        }
+      }
+    },
+    "Usuń z ulubionych" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove from favorites"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

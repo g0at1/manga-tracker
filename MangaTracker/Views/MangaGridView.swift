@@ -15,6 +15,8 @@ struct MangaGridView: View {
     let onMarkNextAsRead: (Manga) -> Void
     let onToggleSold: (Manga) -> Void
     let onToggleSpinOff: (Manga) -> Void
+    let onTogglePlanned: (Manga) -> Void
+    let onToggleFavorite: (Manga) -> Void
     let isReorderable: Bool
 
     var body: some View {
@@ -27,14 +29,31 @@ struct MangaGridView: View {
             ForEach(mangas) { manga in
                 card(for: manga)
                     .contextMenu {
-                        Button("Oznacz kolejny tom jako przeczytany") {
-                            onMarkNextAsRead(manga)
-                        }
-                        Button(
-                            manga.isSold ?? false
-                                ? "Cofnij sprzedane" : "Sprzedane"
-                        ) {
-                            onToggleSold(manga)
+                        if manga.isPlanned ?? false {
+                            // Wishlist entry: buying it moves it into the library proper.
+                            // Nothing to sell yet, so that option stays hidden.
+                            Button("Kupiona — przenieś do biblioteki", systemImage: "cart") {
+                                onTogglePlanned(manga)
+                            }
+                        } else {
+                            Button("Oznacz kolejny tom jako przeczytany") {
+                                onMarkNextAsRead(manga)
+                            }
+                            Button(
+                                manga.isFavorite ?? false ? "Usuń z ulubionych" : "Dodaj do ulubionych",
+                                systemImage: manga.isFavorite ?? false ? "heart.slash" : "heart"
+                            ) {
+                                onToggleFavorite(manga)
+                            }
+                            Button("Przenieś do planowanych", systemImage: "bookmark") {
+                                onTogglePlanned(manga)
+                            }
+                            Button(
+                                manga.isSold ?? false
+                                    ? "Cofnij sprzedane" : "Sprzedane"
+                            ) {
+                                onToggleSold(manga)
+                            }
                         }
                         Button(
                             manga.isSpinOff ?? false

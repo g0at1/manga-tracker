@@ -127,7 +127,9 @@ struct ContentView: View {
                             onMoveMangaInGrid: moveMangaInGrid,
                             onMarkNextAsRead: markNextAsRead,
                             onToggleSold: toggleSold,
-                            onToggleSpinOff: toggleSpinOff
+                            onToggleSpinOff: toggleSpinOff,
+                            onTogglePlanned: togglePlanned,
+                            onToggleFavorite: toggleFavorite
                         )
                         .transition(.opacity)
                     }
@@ -158,6 +160,7 @@ struct ContentView: View {
                     .sharedBackgroundVisibility(.hidden)
                 }
                 .onAppear {
+                    migrateFavoritesIfNeeded()
                     showBackupReminderIfNeeded()
                 }
             }
@@ -209,7 +212,9 @@ struct ContentView: View {
                             aniListAuthor: em.aniListAuthor,
                             bannerImage: em.bannerImage,
                             aniListParentId: em.aniListParentId,
-                            isSpinOff: em.isSpinOff
+                            isSpinOff: em.isSpinOff,
+                            isPlanned: em.isPlanned,
+                            isFavorite: em.isFavorite
                         )
 
                         var vols: [Volume] = []

@@ -1,9 +1,10 @@
 import Foundation
 
 /// Library-wide numbers for the header tiles, computed in a single pass
-/// over every series and volume.
+/// over every series and volume. Sold series and the wishlist are left
+/// out of the collection numbers; read days count from everything.
 struct MangaLibraryStats {
-    /// Series that aren't sold or spin-offs.
+    /// Series that aren't sold, planned or spin-offs.
     let mangaCount: Int
     /// Owned volumes across unsold series.
     let ownedVolumesCount: Int
@@ -23,15 +24,15 @@ struct MangaLibraryStats {
         var readDays = Set<Date>()
 
         for manga in mangas {
-            let isSold = manga.isSold ?? false
-            if !isSold, !(manga.isSpinOff ?? false) {
+            let isExcluded = (manga.isSold ?? false) || (manga.isPlanned ?? false)
+            if !isExcluded, !(manga.isSpinOff ?? false) {
                 mangaCount += 1
             }
             for volume in manga.volumes {
                 if let readDate = volume.readDate {
                     readDays.insert(calendar.startOfDay(for: readDate))
                 }
-                guard !isSold, volume.owned else { continue }
+                guard !isExcluded, volume.owned else { continue }
                 ownedCount += 1
                 totalPaid += volume.price ?? 0
                 if volume.read == true {

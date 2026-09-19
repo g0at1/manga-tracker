@@ -35,7 +35,7 @@ enum LibraryCategory: String, CaseIterable, Identifiable {
         case .inProgress: "book"
         case .completed: "checkmark.circle"
         case .favorites: "heart"
-        case .planned: "cart"
+        case .planned: "bookmark"
         case .sold: "tag"
         }
     }
@@ -45,26 +45,27 @@ enum LibraryCategory: String, CaseIterable, Identifiable {
     /// don't look at volumes never compute them.
     func contains(_ manga: Manga, stats: MangaVolumeStats? = nil) -> Bool {
         let isSold = manga.isSold ?? false
+        // A wishlist entry only shows under "Planowane" until it's bought.
+        let isPlanned = !isSold && manga.isPlanned == true
 
         switch self {
         case .all:
-            return !isSold
+            return !isSold && !isPlanned
         case .sold:
             return isSold
+        case .planned:
+            return isPlanned
         case .favorites:
-            return !isSold && (manga.rating ?? 0) >= 4.5
+            return !isSold && !isPlanned && manga.isFavorite == true
         case .inProgress:
             // Everything you own that isn't wrapped up yet — including fully
             // read series that are still being published.
-            guard !isSold else { return false }
+            guard !isSold, !isPlanned else { return false }
             let stats = stats ?? manga.volumeStats
             return stats.ownsAnything && !manga.isCompleted(stats)
         case .completed:
-            guard !isSold else { return false }
+            guard !isSold, !isPlanned else { return false }
             return manga.isCompleted(stats ?? manga.volumeStats)
-        case .planned:
-            guard !isSold else { return false }
-            return (stats ?? manga.volumeStats).hasMissing
         }
     }
 }

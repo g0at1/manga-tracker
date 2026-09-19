@@ -23,10 +23,6 @@ struct MangaVolumeStats {
         owned > 0
     }
 
-    var hasMissing: Bool {
-        owned < total
-    }
-
     var allRead: Bool {
         total > 0 && read == total
     }

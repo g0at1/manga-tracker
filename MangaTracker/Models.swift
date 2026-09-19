@@ -21,6 +21,10 @@ final class Manga {
     var aniListAuthor: String?
     var aniListParentId: Int?
     var isSpinOff: Bool?
+    /// On the wishlist: shown under "Planowane" until unmarked.
+    var isPlanned: Bool?
+    /// Hearted by the user; what "Ulubione" shows.
+    var isFavorite: Bool?
 
     @Relationship(deleteRule: .cascade, inverse: \Volume.manga)
     var volumes: [Volume]
@@ -44,7 +48,9 @@ final class Manga {
         aniListAuthor: String? = nil,
         bannerImage: String? = "",
         aniListParentId: Int? = nil,
-        isSpinOff: Bool? = false
+        isSpinOff: Bool? = false,
+        isPlanned: Bool? = false,
+        isFavorite: Bool? = false
     ) {
         self.title = title
         self.note = note
@@ -65,6 +71,8 @@ final class Manga {
         self.bannerImage = bannerImage
         self.aniListParentId = aniListParentId
         self.isSpinOff = isSpinOff
+        self.isPlanned = isPlanned
+        self.isFavorite = isFavorite
     }
 }
 
