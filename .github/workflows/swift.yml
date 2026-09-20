@@ -22,14 +22,27 @@ jobs:
       - name: List schemes
         run: xcodebuild -list -project MangaTracker.xcodeproj
 
-      - name: Build app
+      # Shared with the Tests workflow (same key), so whichever runs first
+      # pays for the ~900 MB Firebase download.
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('MangaTracker.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+
+      - name: Build macOS app
         run: |
           xcodebuild \
             -project MangaTracker.xcodeproj \
             -scheme MangaTracker \
             -configuration Debug \
             -destination 'platform=macOS' \
-            clean build
+            -clonedSourcePackagesDirPath SourcePackages \
+            -derivedDataPath DerivedData \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            build
 
       - name: Build iOS app
         run: |
@@ -38,5 +51,8 @@ jobs:
             -scheme MangaTrackerIOS \
             -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
+            -clonedSourcePackagesDirPath SourcePackages \
+            -derivedDataPath DerivedData \
             CODE_SIGNING_ALLOWED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO \
             build

@@ -17,7 +17,9 @@ xcuserdata/
 **/Previews/**
 .build/
 Packages/
-Package.resolved
+# Package.resolved is committed on purpose: reproducible builds and a stable CI cache key.
+# Packages cloned by CI (xcodebuild -clonedSourcePackagesDirPath).
+SourcePackages/
 Pods/
 Carthage/Build/
 *.store
@@ -41,3 +43,4 @@ fastlane/test_output
 
 # Firebase credentials are per developer; drop your own into Shared/.
 GoogleService-Info.plist
+TestResults.xcresult

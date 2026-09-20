@@ -1,0 +1,112 @@
+name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  # Exact version so the npm/npx cache below stays valid; the emulator jar
+  # it downloads is tied to it too.
+  FIREBASE_TOOLS_VERSION: 15.30.2
+
+jobs:
+  test:
+    # Same image as the build workflow. It ships Node and Java (both needed
+    # by the Firestore emulator) and iOS simulators for the test host.
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      # Firebase's SPM dependencies are ~900 MB of binary frameworks; keyed
+      # on Package.resolved so a version bump refreshes the cache.
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('MangaTracker.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+
+      - name: Cache firebase-tools and the emulator
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm/_npx
+            ~/.cache/firebase/emulators
+          key: firebase-emulator-${{ runner.os }}-${{ env.FIREBASE_TOOLS_VERSION }}
+
+      # The emulator and the simulator take a while to come up, so both are
+      # started now and only waited for once the build is done.
+      - name: Start Firestore emulator in the background
+        working-directory: firebase
+        run: |
+          nohup npx --yes firebase-tools@${{ env.FIREBASE_TOOLS_VERSION }} emulators:start --only firestore --project demo-mangatracker > emulator.log 2>&1 &
+
+      - name: Pick and boot a simulator
+        id: simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          for runtime, items in sorted(devices.items(), reverse=True):
+              if "iOS" not in runtime:
+                  continue
+              for device in items:
+                  if device["name"].startswith("iPhone") and device["isAvailable"]:
+                      print(device["udid"]); sys.exit(0)
+          sys.exit("no available iPhone simulator")
+          ')
+          echo "Using simulator $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID" || true
+
+      - name: Build for testing
+        run: |
+          xcodebuild build-for-testing \
+            -project MangaTracker.xcodeproj \
+            -scheme MangaTrackerIOS \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -clonedSourcePackagesDirPath SourcePackages \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      # The sync tests talk to the emulator and skip themselves when it isn't
+      # reachable — so make sure it is, or fail loudly.
+      - name: Wait for the Firestore emulator
+        working-directory: firebase
+        run: |
+          for _ in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8080/ > /dev/null; then
+              echo "Firestore emulator is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Firestore emulator did not start:"
+          cat emulator.log
+          exit 1
+
+      - name: Run tests
+        run: |
+          xcodebuild test-without-building \
+            -project MangaTracker.xcodeproj \
+            -scheme MangaTrackerIOS \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath DerivedData \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults.xcresult

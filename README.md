@@ -81,4 +81,4 @@ The tests in `MangaTrackerTests` simulate two devices against the Firestore emul
 cd firebase && npx firebase-tools emulators:start --only firestore --project demo-mangatracker
 ```
 
-then run the `MangaTrackerIOS` scheme's tests. They skip themselves when the emulator isn't reachable. Both apps can also be pointed at the emulator instead of a real project with the `MANGATRACKER_FIRESTORE_EMULATOR=127.0.0.1:8080` environment variable.
+then run the `MangaTrackerIOS` scheme's tests. They skip themselves when the emulator isn't reachable. The `Tests` GitHub workflow does the same on every push: it starts the emulator on the runner, then runs the suite on an iOS simulator. Both apps can also be pointed at the emulator instead of a real project with the `MANGATRACKER_FIRESTORE_EMULATOR=127.0.0.1:8080` environment variable.
