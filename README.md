@@ -49,6 +49,16 @@ Open `MangaTracker.xcodeproj`. The project has three targets:
 
 Everything platform-neutral — models, AniList client, image cache, export format, the sync engine and a few views — lives in `Shared/`.
 
+### Installing the Mac app
+
+`scripts/install-mac.sh` builds the macOS app in Release and replaces `/Applications/MangaTracker.app` with it. A running copy is quit first (through the normal ⌘Q path, so pending sync goes out) and relaunched afterwards:
+
+```bash
+scripts/install-mac.sh
+```
+
+Pass a configuration name to install a different build, e.g. `scripts/install-mac.sh Debug`.
+
 ---
 
 ## 🔄 Synchronizacja (sync)

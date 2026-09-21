@@ -66,6 +66,7 @@ final class SyncEngine {
     private var pushTask: Task<Void, Never>?
     private var saveObserver: NSObjectProtocol?
     private var didStart = false
+    private var isShutDown = false
 
     private var context: ModelContext {
         container.mainContext
@@ -170,8 +171,21 @@ final class SyncEngine {
         pushPending()
     }
 
+    /// Sends what's queued, then closes the backend; for right before the
+    /// process exits. gRPC, under Firestore, holds `exit()` for up to two
+    /// seconds waiting for its connections to be closed, so a quit with a
+    /// live connection lingers that long. Returns once the backend is
+    /// closed; the engine can't be used afterwards.
+    func shutDown() async {
+        flush()
+        guard let backend, !isShutDown else { return }
+        isShutDown = true
+        reminders.detach()
+        await backend.shutDown()
+    }
+
     private func connect() {
-        guard let backend, let key = state.libraryKey else { return }
+        guard let backend, let key = state.libraryKey, !isShutDown else { return }
         status = .connecting
 
         // Anything the backend has never heard of from this device goes up
@@ -250,7 +264,7 @@ final class SyncEngine {
     }
 
     private func pushPending() {
-        guard let backend, let key = state.libraryKey, status.isConnected else { return }
+        guard let backend, let key = state.libraryKey, status.isConnected, !isShutDown else { return }
         let upsertIDs = state.pendingUpserts
         let deleteIDs = state.pendingDeletes
         guard !upsertIDs.isEmpty || !deleteIDs.isEmpty else { return }

@@ -66,4 +66,10 @@ protocol SyncBackend: AnyObject {
         _ settings: ReminderSettings,
         completion: @escaping @MainActor (Error?) -> Void
     )
+
+    /// Stops the listeners and closes the connection, for right before the
+    /// process exits. Writes handed over and not yet acknowledged stay in
+    /// the backend's durable queue and go out on the next launch. Returns
+    /// once the connection is closed; the backend can't be used afterwards.
+    func shutDown() async
 }
