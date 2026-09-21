@@ -1,6 +1,7 @@
+import AppKit
 import SwiftUI
 
-/// App preferences: UI language and backup reminders.
+/// App preferences: UI language, sync, e-mail reminders and backups.
 struct SettingsSheetView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -21,7 +22,43 @@ struct SettingsSheetView: View {
         return "\(version) (\(build))"
     }
 
+    /// The cards can outgrow a laptop screen, so they scroll once they
+    /// pass this height (a sheet can't grow past its window); the footer
+    /// with "Gotowe" stays put either way.
+    private static let maxCardsHeight: CGFloat = {
+        let screen = NSScreen.main?.visibleFrame.height ?? 900
+        return min(900, screen - 130)
+    }()
+
+    @State private var cardsHeight = Self.maxCardsHeight
+
     var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(.vertical) {
+                cards
+                    .padding(24)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { cardsHeight = $0 }
+            }
+            .frame(height: min(cardsHeight, Self.maxCardsHeight))
+
+            Divider().overlay(Color.white.opacity(0.06))
+
+            HStack {
+                Text("MangaTracker \(appVersion)")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Button("Gotowe") { dismiss() }
+                    .keyboardShortcut(.defaultAction)
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 14)
+        }
+        .frame(width: 480)
+        .background(AppBackgroundView())
+    }
+
+    private var cards: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Ustawienia")
@@ -46,6 +83,8 @@ struct SettingsSheetView: View {
             }
 
             SyncSettingsCard()
+
+            ReminderSettingsCard()
 
             DetailCard {
                 VStack(alignment: .leading, spacing: 14) {
@@ -101,19 +140,7 @@ struct SettingsSheetView: View {
                     }
                 }
             }
-
-            HStack {
-                Text("MangaTracker \(appVersion)")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                Spacer()
-                Button("Gotowe") { dismiss() }
-                    .keyboardShortcut(.defaultAction)
-            }
         }
-        .padding(24)
-        .frame(width: 480)
-        .background(AppBackgroundView())
     }
 
     private var lastBackupText: Text {

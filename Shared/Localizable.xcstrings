@@ -206,6 +206,22 @@
         }
       }
     },
+    "Adres e-mail" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-mail address"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adres e-mail"
+          }
+        }
+      }
+    },
     "Akcje dla wszystkich tomów" : {
       "localizations" : {
         "en" : {
@@ -1261,6 +1277,22 @@
     "https://…" : {
 
     },
+    "Ile dni przed premierą" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days before release"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ile dni przed premierą"
+          }
+        }
+      }
+    },
     "Import nieudany: %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1674,6 +1706,22 @@
         }
       }
     },
+    "Lista tomów z linkami do zakupu, wysyłana rano na kilka dni przed premierą." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A list of volumes with purchase links, e-mailed in the morning a few days before release."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista tomów z linkami do zakupu, wysyłana rano na kilka dni przed premierą."
+          }
+        }
+      }
+    },
     "Malejąco" : {
       "localizations" : {
         "en" : {
@@ -1945,6 +1993,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nic do pokazania"
+          }
+        }
+      }
+    },
+    "Nie udało się wczytać ustawień: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load the settings: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się wczytać ustawień: %@"
+          }
+        }
+      }
+    },
+    "Nie udało się zapisać: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się zapisać: %@"
           }
         }
       }
@@ -2409,6 +2491,55 @@
         }
       }
     },
+    "Ostatni e-mail: " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last e-mail: "
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ostatni e-mail: "
+          }
+        }
+      }
+    },
+    "Ostatnia wysyłka nie powiodła się: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The last e-mail failed: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ostatnia wysyłka nie powiodła się: %@"
+          }
+        }
+      }
+    },
+    "Ostatnie sprawdzenie premier: " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last release check: "
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ostatnie sprawdzenie premier: "
+          }
+        }
+      }
+    },
     "Otwórz link zakupu" : {
       "localizations" : {
         "en" : {
@@ -2685,6 +2816,22 @@
         }
       }
     },
+    "Podaj adres, na który mają przychodzić przypomnienia." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the address the reminders should go to."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podaj adres, na który mają przychodzić przypomnienia."
+          }
+        }
+      }
+    },
     "Podaj numer tomu." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2698,6 +2845,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podaj numer tomu."
+          }
+        }
+      }
+    },
+    "Podaj poprawny adres e-mail." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a valid e-mail address."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podaj poprawny adres e-mail."
           }
         }
       }
@@ -3027,6 +3190,38 @@
         }
       }
     },
+    "Przypomnienia e-mail" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-mail reminders"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przypomnienia e-mail"
+          }
+        }
+      }
+    },
+    "Przypomnienia wysyła serwer synchronizacji, więc dochodzą także wtedy, gdy aplikacja jest zamknięta. Najpierw połącz bibliotekę w sekcji „Synchronizacja”." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminders are sent by the sync server, so they arrive even while the app is closed. Connect a library in the “Sync” section first."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przypomnienia wysyła serwer synchronizacji, więc dochodzą także wtedy, gdy aplikacja jest zamknięta. Najpierw połącz bibliotekę w sekcji „Synchronizacja”."
+          }
+        }
+      }
+    },
     "Pusta biblioteka" : {
       "localizations" : {
         "en" : {
@@ -3123,6 +3318,54 @@
         }
       }
     },
+    "Serwer nie odpowiada. Czy funkcje są wdrożone? Zobacz „Przypomnienia e-mail” w README." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No answer from the server. Are the functions deployed? See “E-mail reminders” in the README."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serwer nie odpowiada. Czy funkcje są wdrożone? Zobacz „Przypomnienia e-mail” w README."
+          }
+        }
+      }
+    },
+    "Serwer odrzucił odczyt. Wdróż aktualne reguły z firebase/firestore.rules (sekcja „Przypomnienia e-mail” w README)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The server refused the read. Deploy the current rules from firebase/firestore.rules (see “E-mail reminders” in the README)."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serwer odrzucił odczyt. Wdróż aktualne reguły z firebase/firestore.rules (sekcja „Przypomnienia e-mail” w README)."
+          }
+        }
+      }
+    },
+    "Serwer sprawdza premiery raz dziennie rano; jeszcze nie sprawdzał." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The server checks releases once a day in the morning; it hasn't run yet."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serwer sprawdza premiery raz dziennie rano; jeszcze nie sprawdzał."
+          }
+        }
+      }
+    },
     "Skopiowano" : {
       "localizations" : {
         "en" : {
@@ -3199,6 +3442,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spin-off"
+          }
+        }
+      }
+    },
+    "Sprawdź, czy wszystko działa, zanim nadejdzie pierwsza premiera." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check that everything works before the first release comes up."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprawdź, czy wszystko działa, zanim nadejdzie pierwsza premiera."
           }
         }
       }
@@ -3427,6 +3686,39 @@
         }
       }
     },
+    "Test nie powiódł się: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test failed: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test nie powiódł się: %@"
+          }
+        }
+      }
+    },
+    "Testowy e-mail wysłany " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test e-mail sent "
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testowy e-mail wysłany "
+          }
+        }
+      }
+    },
     "Tip: zakres 1–30 doda wszystkie brakujące numery." : {
       "localizations" : {
         "en" : {
@@ -3648,6 +3940,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Twoje mangi w jednym miejscu"
+          }
+        }
+      }
+    },
+    "ty@example.com" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "you@example.com"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ty@example.com"
           }
         }
       }
@@ -4040,6 +4348,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "W trakcie"
+          }
+        }
+      }
+    },
+    "Wczytywanie ustawień…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading settings…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wczytywanie ustawień…"
           }
         }
       }
@@ -4498,6 +4822,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wyślij całą bibliotekę"
+          }
+        }
+      }
+    },
+    "Wyślij testowy e-mail" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send a test e-mail"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyślij testowy e-mail"
+          }
+        }
+      }
+    },
+    "Wysyłaj przypomnienia" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send reminders"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wysyłaj przypomnienia"
+          }
+        }
+      }
+    },
+    "Wysyłanie testowego e-maila…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sending the test e-mail…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wysyłanie testowego e-maila…"
           }
         }
       }

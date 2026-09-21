@@ -1,0 +1,5 @@
+node_modules/
+# Deploy-time parameter values (SMTP host, user…); per Firebase project.
+.env
+.env.*
+*.log

@@ -94,6 +94,21 @@ jobs:
           cat emulator.log
           exit 1
 
+      # The reminder functions have their own suite: pure logic plus a few
+      # cases against the same emulator with a fake SMTP transport.
+      - name: Set up Node for the functions tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+
+      - name: Test the Cloud Functions
+        working-directory: firebase/functions
+        run: |
+          npm ci
+          npm test
+
       - name: Run tests
         run: |
           xcodebuild test-without-building \

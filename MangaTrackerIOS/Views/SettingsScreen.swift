@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// App preferences: UI language and sync; the JSON backup as a share sheet.
+/// App preferences: UI language, sync and e-mail reminders; the JSON backup as a share sheet.
 struct SettingsScreen: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var mangas: [Manga]
@@ -35,6 +35,8 @@ struct SettingsScreen: View {
                     }
 
                     SyncSettingsCard()
+
+                    ReminderSettingsCard()
 
                     DetailCard {
                         VStack(alignment: .leading, spacing: 12) {

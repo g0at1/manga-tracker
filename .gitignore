@@ -43,4 +43,6 @@ fastlane/test_output
 
 # Firebase credentials are per developer; drop your own into Shared/.
 GoogleService-Info.plist
+# Which Firebase project the CLI deploys to (`firebase use --add`); also per developer.
+firebase/.firebaserc
 TestResults.xcresult

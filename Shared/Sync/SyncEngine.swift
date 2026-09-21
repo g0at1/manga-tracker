@@ -39,6 +39,9 @@ final class SyncEngine {
     private(set) var status: SyncStatus
     /// Series changed locally and not yet handed to the backend.
     private(set) var pendingCount = 0
+    /// E-mail reminder settings of the connected library; follows
+    /// `connect`/`disconnect`.
+    let reminders: LibraryReminders
 
     var libraryKey: String? {
         state.libraryKey
@@ -79,6 +82,7 @@ final class SyncEngine {
         self.backend = backend
         self.state = state
         self.pushDelay = pushDelay
+        reminders = LibraryReminders(backend: backend)
         status = backend == nil ? .unavailable : (state.libraryKey == nil ? .disconnected : .connecting)
         pendingCount = state.pendingUpserts.count + state.pendingDeletes.count
     }
@@ -143,6 +147,7 @@ final class SyncEngine {
         pushTask?.cancel()
         pushTask = nil
         backend?.stopListening()
+        reminders.detach()
         state.libraryKey = nil
         state.resetLibraryBookkeeping()
         pendingCount = 0
@@ -182,6 +187,7 @@ final class SyncEngine {
         backend.listen(libraryKey: key) { [weak self] result in
             self?.handleSnapshot(result)
         }
+        reminders.attach(libraryKey: key)
         schedulePush()
     }
 

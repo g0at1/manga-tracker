@@ -10,6 +10,7 @@ import Foundation
 final class FirestoreSyncBackend: SyncBackend {
     private let database: Firestore
     private var registration: ListenerRegistration?
+    private var libraryRegistration: ListenerRegistration?
 
     /// Firestore caps a batch at 500 operations.
     private static let batchLimit = 400
@@ -18,8 +19,12 @@ final class FirestoreSyncBackend: SyncBackend {
         self.database = database
     }
 
+    private func library(_ libraryKey: String) -> DocumentReference {
+        database.collection("libraries").document(libraryKey)
+    }
+
     private func mangas(in libraryKey: String) -> CollectionReference {
-        database.collection("libraries").document(libraryKey).collection("mangas")
+        library(libraryKey).collection("mangas")
     }
 
     func listen(
@@ -68,6 +73,58 @@ final class FirestoreSyncBackend: SyncBackend {
     func stopListening() {
         registration?.remove()
         registration = nil
+    }
+
+    func listenLibrary(
+        libraryKey: String,
+        onSnapshot: @escaping @MainActor (Result<RemoteLibrary?, Error>) -> Void
+    ) {
+        stopListeningLibrary()
+        libraryRegistration = library(libraryKey).addSnapshotListener { snapshot, error in
+            MainActor.assumeIsolated {
+                if let error {
+                    onSnapshot(.failure(error))
+                    return
+                }
+                guard let snapshot, snapshot.exists else {
+                    onSnapshot(.success(nil))
+                    return
+                }
+                do {
+                    let library = try snapshot.data(as: RemoteLibrary.self)
+                    onSnapshot(.success(library))
+                } catch {
+                    onSnapshot(.failure(error))
+                }
+            }
+        }
+    }
+
+    func stopListeningLibrary() {
+        libraryRegistration?.remove()
+        libraryRegistration = nil
+    }
+
+    func writeReminderSettings(
+        libraryKey: String,
+        _ settings: ReminderSettings,
+        completion: @escaping @MainActor (Error?) -> Void
+    ) {
+        do {
+            // `mergeFields` replaces the whole `reminders` map (a plain merge
+            // would keep keys the new value dropped) and leaves the server's
+            // `reminderLog` alone.
+            try library(libraryKey).setData(
+                from: RemoteLibrary(reminders: settings),
+                mergeFields: ["reminders"]
+            ) { error in
+                MainActor.assumeIsolated {
+                    completion(error)
+                }
+            }
+        } catch {
+            completion(error)
+        }
     }
 
     func write(

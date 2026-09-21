@@ -48,4 +48,22 @@ protocol SyncBackend: AnyObject {
         deletes: [String],
         completion: @escaping @MainActor (Error?) -> Void
     )
+
+    /// Delivers the library document itself (reminder settings and the
+    /// server's log), first as it is, then on every change. `nil` means
+    /// the document doesn't exist yet.
+    func listenLibrary(
+        libraryKey: String,
+        onSnapshot: @escaping @MainActor (Result<RemoteLibrary?, Error>) -> Void
+    )
+
+    func stopListeningLibrary()
+
+    /// Replaces the `reminders` field of the library document, creating
+    /// the document if needed; nothing else on it is touched.
+    func writeReminderSettings(
+        libraryKey: String,
+        _ settings: ReminderSettings,
+        completion: @escaping @MainActor (Error?) -> Void
+    )
 }

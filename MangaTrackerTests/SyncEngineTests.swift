@@ -208,6 +208,61 @@ final class SyncEngineTests: XCTestCase {
         XCTAssertTrue(["from A", "from B"].contains(manga.note))
     }
 
+    func testReminderSettingsAreSharedByTheLibrary() async throws {
+        let key = LibraryKey.generate()
+        let a = try makeDevice("A", key: key)
+        let b = try makeDevice("B", key: key)
+
+        // A library nobody has configured shows the defaults on both sides.
+        try await waitUntil("both devices loaded the library document") {
+            a.engine.reminders.isLoaded && b.engine.reminders.isLoaded
+        }
+        XCTAssertEqual(a.engine.reminders.settings?.enabled, false)
+        XCTAssertEqual(b.engine.reminders.settings?.daysBefore, 3)
+        XCTAssertNil(a.engine.reminders.log)
+
+        var settings = try XCTUnwrap(a.engine.reminders.settings)
+        settings.enabled = true
+        settings.email = "  reader@example.com "
+        settings.daysBefore = 7
+        a.engine.reminders.save(settings)
+
+        try await waitUntil("B sees A's settings") {
+            b.engine.reminders.settings?.email == "reader@example.com"
+        }
+        let remote = try XCTUnwrap(b.engine.reminders.settings)
+        XCTAssertTrue(remote.enabled)
+        XCTAssertEqual(remote.daysBefore, 7)
+        XCTAssertEqual(remote.timeZone, TimeZone.current.identifier)
+        XCTAssertNil(a.engine.reminders.error)
+
+        // A test request is a stamp the server answers to; until then it's pending.
+        b.engine.reminders.requestTest()
+        XCTAssertTrue(b.engine.reminders.isTestPending)
+        try await waitUntil("A sees the test request") {
+            a.engine.reminders.settings?.testRequestedAt != nil
+        }
+        XCTAssertTrue(a.engine.reminders.isTestPending)
+        XCTAssertNil(a.engine.reminders.latestTestResult)
+
+        // Disconnecting forgets the library's settings; reconnecting brings them back.
+        b.engine.disconnect()
+        XCTAssertNil(b.engine.reminders.settings)
+        b.engine.connect(libraryKey: key)
+        try await waitUntil("B reloaded the settings") {
+            b.engine.reminders.settings?.daysBefore == 7
+        }
+    }
+
+    func testEmailValidation() {
+        XCTAssertTrue(ReminderSettings.isValidEmail("me@example.com"))
+        XCTAssertTrue(ReminderSettings.isValidEmail("  me@example.com\n"))
+        XCTAssertFalse(ReminderSettings.isValidEmail(""))
+        XCTAssertFalse(ReminderSettings.isValidEmail("me@example"))
+        XCTAssertFalse(ReminderSettings.isValidEmail("me example@x.pl"))
+        XCTAssertFalse(ReminderSettings.isValidEmail("@example.com"))
+    }
+
     func testLibraryKeyRoundTrips() {
         let key = LibraryKey.generate()
         XCTAssertEqual(key.count, 24)
