@@ -11,6 +11,9 @@ final class FirestoreSyncBackend: SyncBackend {
     private let database: Firestore
     private var registration: ListenerRegistration?
     private var libraryRegistration: ListenerRegistration?
+    /// Whether anything was ever read or written: an untouched `Firestore`
+    /// has no client to terminate, and `terminate` would create one.
+    private var didUseDatabase = false
 
     /// Firestore caps a batch at 500 operations.
     private static let batchLimit = 400
@@ -20,7 +23,8 @@ final class FirestoreSyncBackend: SyncBackend {
     }
 
     private func library(_ libraryKey: String) -> DocumentReference {
-        database.collection("libraries").document(libraryKey)
+        didUseDatabase = true
+        return database.collection("libraries").document(libraryKey)
     }
 
     private func mangas(in libraryKey: String) -> CollectionReference {
@@ -103,6 +107,16 @@ final class FirestoreSyncBackend: SyncBackend {
     func stopListeningLibrary() {
         libraryRegistration?.remove()
         libraryRegistration = nil
+    }
+
+    /// `terminate` runs after everything already queued on Firestore's
+    /// worker, so a write handed over just before is in the on-disk queue
+    /// by the time the connection closes.
+    func shutDown() async {
+        stopListening()
+        stopListeningLibrary()
+        guard didUseDatabase else { return }
+        try? await database.terminate()
     }
 
     func writeReminderSettings(

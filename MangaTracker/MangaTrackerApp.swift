@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct MangaTrackerApp: App {
+    @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @AppStorage(AppLanguage.storageKey) private var languageRaw = AppLanguage.polish.rawValue
     @Environment(\.scenePhase) private var scenePhase
 
@@ -42,6 +43,7 @@ struct MangaTrackerApp: App {
                 .onAppear {
                     WindowManager.maximizeMainWindow()
                     syncEngine.start()
+                    appDelegate.syncEngine = syncEngine
                 }
                 .onChange(of: scenePhase) { _, phase in
                     // Send what's queued before the app goes quiet.
