@@ -3,7 +3,8 @@ import SwiftData
 import SwiftUI
 
 /// The series' volumes: filter chips, bulk selection, and one row per volume
-/// with owned/read toggles, price and dates.
+/// with owned/read toggles, price and dates. A volume split into parts (a
+/// collected edition) gets a row per part underneath, each read on its own.
 struct VolumesTableView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var manga: Manga
@@ -14,6 +15,7 @@ struct VolumesTableView: View {
     @State private var showBulkConfirm = false
     @State private var pendingBulkAction: BulkAction?
     @State private var editingDateTarget: EditingDateTarget?
+    @State private var editingPartsTarget: PartsEditTarget?
     @State private var showBulkPricePopover = false
     @State private var bulkPriceText = ""
     @State private var showBulkPurchaseDatePopover = false
@@ -46,13 +48,25 @@ struct VolumesTableView: View {
         case purchase(Volume)
         case read(Volume)
         case release(Volume)
+        case partRead(VolumePart)
 
         var id: String {
             switch self {
             case let .purchase(volume): "purchase-\(volume.persistentModelID)"
             case let .read(volume): "read-\(volume.persistentModelID)"
             case let .release(volume): "release-\(volume.persistentModelID)"
+            case let .partRead(part): "part-read-\(part.persistentModelID)"
             }
+        }
+    }
+
+    /// The volumes the split sheet is about: one from its row menu, or the
+    /// whole selection from the bulk bar.
+    private struct PartsEditTarget: Identifiable {
+        let volumes: [Volume]
+
+        var id: String {
+            volumes.map { "\($0.persistentModelID)" }.joined(separator: ",")
         }
     }
 
@@ -145,8 +159,19 @@ struct VolumesTableView: View {
                                         case .release: editingDateTarget = .release(volume)
                                         }
                                     },
+                                    onEditParts: { editingPartsTarget = PartsEditTarget(volumes: [volume]) },
+                                    onJoinParts: { volume.setPartCount(1) },
                                     onDelete: { deleteVolume(volume) }
                                 )
+                                ForEach(volume.sortedParts, id: \.persistentModelID) { part in
+                                    VolumePartRow(
+                                        part: part,
+                                        partCount: volume.parts.count,
+                                        isAlternate: index.isMultiple(of: 2),
+                                        onToggleRead: { volume.markPart(part, read: !part.read) },
+                                        onEditReadDate: { editingDateTarget = .partRead(part) }
+                                    )
+                                }
                             }
                         } header: {
                             columnHeader(allDisplayedSelected: allDisplayedSelected)
@@ -174,6 +199,9 @@ struct VolumesTableView: View {
         }
         .sheet(item: $editingDateTarget) { target in
             dateEditorSheet(target)
+        }
+        .sheet(item: $editingPartsTarget) { target in
+            PartsEditorSheet(volumes: target.volumes)
         }
     }
 
@@ -289,6 +317,10 @@ struct VolumesTableView: View {
             }
             .popover(isPresented: $showBulkPurchaseDatePopover, arrowEdge: .bottom) { bulkPurchaseDatePopover }
 
+            SubtleButton(title: "Części", systemImage: "square.split.1x2") {
+                editingPartsTarget = PartsEditTarget(volumes: selectedVolumes)
+            }
+
             SubtleButton(title: "Usuń", systemImage: "trash", tint: .red) {
                 for volume in selectedVolumes {
                     deleteVolume(volume)
@@ -343,12 +375,7 @@ struct VolumesTableView: View {
         guard let price = parsedBulkPrice else { return }
         for volume in selectedVolumes {
             volume.price = price
-            if !volume.owned {
-                volume.owned = true
-                if volume.purchaseDate == nil {
-                    volume.purchaseDate = .now
-                }
-            }
+            volume.markOwned(true)
         }
         showBulkPricePopover = false
     }
@@ -412,6 +439,19 @@ struct VolumesTableView: View {
                 set: { volume.releaseDate = $0 }
             )
             clear = { volume.releaseDate = nil }
+        case let .partRead(part):
+            title = "Data przeczytania"
+            selection = Binding(
+                get: { part.readDate ?? .now },
+                set: { date in
+                    part.readDate = date
+                    part.volume?.markPart(part, read: true, on: date)
+                }
+            )
+            clear = {
+                part.readDate = nil
+                part.volume?.refreshReadFromParts()
+            }
         }
 
         return VStack(alignment: .leading, spacing: 16) {
@@ -473,35 +513,13 @@ struct VolumesTableView: View {
 
     private func setOwned(_ owned: Bool, for volumes: [Volume]) {
         for volume in volumes {
-            if owned {
-                volume.owned = true
-                if volume.purchaseDate == nil {
-                    volume.purchaseDate = .now
-                }
-            } else {
-                volume.owned = false
-                volume.purchaseDate = nil
-                volume.read = false
-                volume.readDate = nil
-            }
+            volume.markOwned(owned)
         }
     }
 
     private func setRead(_ read: Bool, for volumes: [Volume]) {
         for volume in volumes {
-            if read {
-                volume.owned = true
-                volume.read = true
-                if volume.purchaseDate == nil {
-                    volume.purchaseDate = .now
-                }
-                if volume.readDate == nil {
-                    volume.readDate = .now
-                }
-            } else {
-                volume.read = false
-                volume.readDate = nil
-            }
+            volume.markRead(read)
         }
     }
 
@@ -600,6 +618,8 @@ private struct VolumeRow: View {
     let onToggleOwned: () -> Void
     let onToggleRead: () -> Void
     let onEditDate: (DateField) -> Void
+    let onEditParts: () -> Void
+    let onJoinParts: () -> Void
     let onDelete: () -> Void
 
     @State private var isHovered = false
@@ -608,6 +628,12 @@ private struct VolumeRow: View {
 
     private var isRead: Bool {
         volume.read ?? false
+    }
+
+    /// "2/3" while a split volume is under way; nothing otherwise.
+    private var partsProgress: String? {
+        guard volume.isSplit, !isRead else { return nil }
+        return "\(volume.readPartCount)/\(volume.parts.count)"
     }
 
     var body: some View {
@@ -622,7 +648,7 @@ private struct VolumeRow: View {
 
             HStack(spacing: 6) {
                 StatusChip(title: "Kupiony", icon: "cart.fill", isActive: volume.owned, action: onToggleOwned)
-                StatusChip(title: "Przeczytany", icon: "checkmark.circle.fill", isActive: isRead, action: onToggleRead)
+                StatusChip(title: "Przeczytany", icon: "checkmark.circle.fill", isActive: isRead, detail: partsProgress, action: onToggleRead)
             }
             .frame(width: Column.status, alignment: .leading)
 
@@ -639,6 +665,11 @@ private struct VolumeRow: View {
                 Button("Ustaw datę zakupu") { onEditDate(.purchase) }
                 Button("Ustaw datę przeczytania") { onEditDate(.read) }
                 Button("Ustaw datę premiery") { onEditDate(.release) }
+                Divider()
+                Button(volume.isSplit ? "Zmień podział na części…" : "Podziel na części…", action: onEditParts)
+                if volume.isSplit {
+                    Button("Usuń podział", action: onJoinParts)
+                }
                 Divider()
                 Button("Usuń tom", role: .destructive, action: onDelete)
             } label: {
@@ -723,10 +754,172 @@ private struct VolumeRow: View {
     }
 }
 
+/// One part of a split volume, under its volume's row: index, read toggle
+/// and read date, in the columns of the row above.
+private struct VolumePartRow: View {
+    let part: VolumePart
+    let partCount: Int
+    let isAlternate: Bool
+    let onToggleRead: () -> Void
+    let onEditReadDate: () -> Void
+
+    @State private var isHovered = false
+
+    private typealias Column = VolumesTableView.Column
+
+    var body: some View {
+        HStack(spacing: Column.spacing) {
+            Color.clear.frame(width: Column.checkbox, height: 1)
+
+            HStack(spacing: 3) {
+                Image(systemName: "arrow.turn.down.right")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.tertiary)
+                Text("\(part.index)/\(partCount)")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: Column.number, alignment: .leading)
+
+            StatusChip(title: "Przeczytana", icon: "checkmark.circle.fill", isActive: part.read, action: onToggleRead)
+                .frame(width: Column.status, alignment: .leading)
+
+            Color.clear.frame(width: Column.price, height: 1)
+
+            Spacer(minLength: 8)
+
+            Color.clear.frame(width: Column.date, height: 1)
+
+            Button(action: onEditReadDate) {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle")
+                        .font(.caption)
+                        .foregroundStyle(part.readDate == nil ? .tertiary : .secondary)
+                        .frame(width: 14)
+                    Text(part.readDate?.yyyyMMdd() ?? "—")
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(part.readDate == nil ? .tertiary : .primary)
+                }
+                .frame(width: Column.date, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Data przeczytania")
+
+            Color.clear.frame(width: Column.date, height: 1)
+
+            Menu {
+                Button("Ustaw datę przeczytania", action: onEditReadDate)
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: Column.menu, height: 26)
+                    .background(Color.white.opacity(isHovered ? 0.08 : 0), in: Circle())
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .frame(width: Column.menu)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 4)
+        .background(rowBackground)
+        .onHover { isHovered = $0 }
+    }
+
+    private var rowBackground: Color {
+        if isHovered {
+            return .white.opacity(0.05)
+        }
+        if part.read {
+            return .green.opacity(isAlternate ? 0.05 : 0.03)
+        }
+        return .white.opacity(isAlternate ? 0.025 : 0)
+    }
+}
+
+// MARK: - Parts editor
+
+/// How many original volumes the selected volumes bind together. One part
+/// joins a split volume back.
+private struct PartsEditorSheet: View {
+    let volumes: [Volume]
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var partCount: Int
+
+    init(volumes: [Volume]) {
+        self.volumes = volumes
+        // Opens on the largest split among the volumes, or two parts.
+        _partCount = State(initialValue: max(volumes.map(\.parts.count).max() ?? 0, 2))
+    }
+
+    private var anySplit: Bool {
+        volumes.contains(where: \.isSplit)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            DetailCardTitle(title: "Podziel na części", systemImage: "square.split.1x2")
+
+            if volumes.count == 1, let volume = volumes.first {
+                Text("Tom \(volume.number)")
+                    .font(.subheadline.weight(.semibold))
+            } else {
+                Text("Zaznaczono: \(volumes.count)")
+                    .font(.subheadline.weight(.semibold))
+            }
+
+            Stepper(value: $partCount, in: 2 ... 50) {
+                HStack {
+                    Text("Liczba części")
+                    Spacer()
+                    Text("\(partCount)")
+                        .font(.body.weight(.bold))
+                        .monospacedDigit()
+                }
+            }
+
+            Text("Wydanie zbiorcze (np. deluxe) mieści kilka oryginalnych tomów. Każdą część oznaczysz jako przeczytaną osobno, a postęp liczy się częściami.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 8) {
+                if anySplit {
+                    SubtleButton(title: "Usuń podział", systemImage: "arrow.triangle.merge", tint: .red) {
+                        for volume in volumes {
+                            volume.setPartCount(1)
+                        }
+                        dismiss()
+                    }
+                }
+                Spacer()
+                Button("Anuluj", role: .cancel) { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button("Zastosuj") {
+                    for volume in volumes {
+                        volume.setPartCount(partCount)
+                    }
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 360)
+        .background(AppBackgroundView())
+    }
+}
+
 private struct StatusChip: View {
     let title: LocalizedStringKey
     let icon: String
     let isActive: Bool
+    /// Small trailing note, e.g. how many parts are read.
+    var detail: String? = nil
     let action: () -> Void
 
     var body: some View {
@@ -736,6 +929,12 @@ private struct StatusChip: View {
                     .font(.caption2.weight(.bold))
                 Text(title)
                     .lineLimit(1)
+                if let detail {
+                    Text(detail)
+                        .font(.caption2.weight(.bold))
+                        .monospacedDigit()
+                        .foregroundStyle(Color.green)
+                }
             }
             .font(.caption.weight(.bold))
             .padding(.horizontal, 10)

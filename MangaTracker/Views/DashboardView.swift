@@ -246,7 +246,7 @@ struct DashboardView: View {
                         .foregroundStyle(Color.teal.gradient)
                         .cornerRadius(4)
                         .annotation(position: .trailing, spacing: 6) {
-                            Text("\(item.readVolumes)/\(item.totalVolumes)")
+                            Text("\(item.readUnits)/\(item.totalUnits)")
                                 .font(.caption2.monospacedDigit())
                                 .foregroundStyle(.secondary)
                         }
@@ -353,11 +353,13 @@ private struct MangaSpendData: Identifiable {
     let amount: Double
 }
 
+/// Progress counted in reading units: parts for a split volume, otherwise
+/// the volume — the same numbers the series' own progress bar shows.
 private struct MangaProgressData: Identifiable {
     let id: PersistentIdentifier
     let title: String
-    let totalVolumes: Int
-    let readVolumes: Int
+    let totalUnits: Int
+    let readUnits: Int
     let percent: Double
 }
 
@@ -388,6 +390,8 @@ private struct DashboardData {
     let totalVolumes: Int
     let ownedVolumes: Int
     let readVolumes: Int
+    private let totalUnits: Int
+    private let readUnits: Int
     let averageVolumePrice: Double
     /// Most expensive series first; series without prices are left out.
     let mangaSpend: [MangaSpendData]
@@ -399,8 +403,9 @@ private struct DashboardData {
     let currentMonthSpending: Double
     let previousMonthSpending: Double
 
+    /// Reading measured part by part for split volumes.
     var readPercent: Double {
-        totalVolumes > 0 ? Double(readVolumes) / Double(totalVolumes) * 100 : 0
+        totalUnits > 0 ? Double(readUnits) / Double(totalUnits) * 100 : 0
     }
 
     var monthlySpendingDifference: Double {
@@ -420,6 +425,8 @@ private struct DashboardData {
         var totalVolumes = 0
         var ownedVolumes = 0
         var readVolumes = 0
+        var totalUnits = 0
+        var readUnits = 0
         var ownedPriceSum = 0.0
         var ownedPriceCount = 0
         var mangaSpend: [MangaSpendData] = []
@@ -436,6 +443,8 @@ private struct DashboardData {
 
             var spent = 0.0
             var read = 0
+            var mangaUnits = 0
+            var mangaReadUnits = 0
             let volumes = manga.volumes
 
             for volume in volumes {
@@ -443,6 +452,8 @@ private struct DashboardData {
                 if isRead {
                     read += 1
                 }
+                mangaUnits += volume.unitCount
+                mangaReadUnits += volume.readUnitCount
                 if volume.owned {
                     if let price = volume.price {
                         spent += price
@@ -455,13 +466,21 @@ private struct DashboardData {
                         purchasesByMonth[month, default: (0, 0)].amount += volume.price ?? 0
                     }
                 }
-                if let readDate = volume.readDate {
+                let title = volume.manga?.title ?? unknownTitle
+                if volume.isSplit {
+                    for part in volume.parts {
+                        guard let readDate = part.readDate else { continue }
+                        let day = calendar.startOfDay(for: readDate)
+                        itemsByReadDay[day, default: []].append("\(title) #\(volume.number) (\(part.index)/\(volume.parts.count))")
+                    }
+                } else if let readDate = volume.readDate {
                     let day = calendar.startOfDay(for: readDate)
-                    let title = volume.manga?.title ?? unknownTitle
                     itemsByReadDay[day, default: []].append("\(title) #\(volume.number)")
                 }
                 if !isSold, !isPlanned {
                     totalVolumes += 1
+                    totalUnits += volume.unitCount
+                    readUnits += volume.readUnitCount
                     if volume.owned {
                         ownedVolumes += 1
                         if let price = volume.price {
@@ -478,13 +497,13 @@ private struct DashboardData {
             if spent > 0 {
                 mangaSpend.append(MangaSpendData(id: manga.persistentModelID, title: manga.title, amount: spent))
             }
-            let percent = volumes.isEmpty ? 0 : Double(read) / Double(volumes.count) * 100
+            let percent = mangaUnits > 0 ? Double(mangaReadUnits) / Double(mangaUnits) * 100 : 0
             if !isPlanned, !volumes.isEmpty, percent < 100 {
                 mangaProgress.append(MangaProgressData(
                     id: manga.persistentModelID,
                     title: manga.title,
-                    totalVolumes: volumes.count,
-                    readVolumes: read,
+                    totalUnits: mangaUnits,
+                    readUnits: mangaReadUnits,
                     percent: percent
                 ))
             }
@@ -494,6 +513,8 @@ private struct DashboardData {
         self.totalVolumes = totalVolumes
         self.ownedVolumes = ownedVolumes
         self.readVolumes = readVolumes
+        self.totalUnits = totalUnits
+        self.readUnits = readUnits
         averageVolumePrice = ownedPriceCount > 0 ? ownedPriceSum / Double(ownedPriceCount) : 0
         self.mangaSpend = mangaSpend.sorted { $0.amount > $1.amount }
         self.mangaProgress = mangaProgress.sorted { $0.percent > $1.percent }

@@ -1,6 +1,12 @@
 import Foundation
 import SwiftData
 
+struct ExportedVolumePart: Codable {
+    var index: Int
+    var read: Bool
+    var readDate: Date?
+}
+
 struct ExportedVolume: Codable {
     var number: Int
     var owned: Bool
@@ -10,6 +16,9 @@ struct ExportedVolume: Codable {
     var readDate: Date?
     var releaseDate: Date?
     var buyURL: String?
+    /// Left out for an unsplit volume, so snapshots from before parts
+    /// existed and of ordinary volumes look the same.
+    var parts: [ExportedVolumePart]?
 }
 
 struct ExportedManga: Codable {
@@ -39,6 +48,12 @@ struct ExportedManga: Codable {
 
 // MARK: - Model ↔ snapshot
 
+extension ExportedVolumePart {
+    init(_ part: VolumePart) {
+        self.init(index: part.index, read: part.read, readDate: part.readDate)
+    }
+}
+
 extension ExportedVolume {
     init(_ volume: Volume) {
         self.init(
@@ -49,7 +64,8 @@ extension ExportedVolume {
             read: volume.read,
             readDate: volume.readDate,
             releaseDate: volume.releaseDate,
-            buyURL: volume.buyURL
+            buyURL: volume.buyURL,
+            parts: volume.isSplit ? volume.sortedParts.map { ExportedVolumePart($0) } : nil
         )
     }
 }
@@ -87,6 +103,26 @@ extension ExportedManga {
     }
 }
 
+extension VolumePart {
+    convenience init(exported: ExportedVolumePart, volume: Volume? = nil) {
+        self.init(index: exported.index, read: exported.read, readDate: exported.readDate, volume: volume)
+    }
+
+    @discardableResult
+    func apply(_ exported: ExportedVolumePart) -> Bool {
+        var changed = false
+        func set<T: Equatable>(_ keyPath: ReferenceWritableKeyPath<VolumePart, T>, _ value: T) {
+            guard self[keyPath: keyPath] != value else { return }
+            self[keyPath: keyPath] = value
+            changed = true
+        }
+        set(\.index, exported.index)
+        set(\.read, exported.read)
+        set(\.readDate, exported.readDate)
+        return changed
+    }
+}
+
 extension Volume {
     convenience init(exported: ExportedVolume, manga: Manga? = nil) {
         self.init(
@@ -100,10 +136,12 @@ extension Volume {
             releaseDate: exported.releaseDate,
             buyURL: exported.buyURL
         )
+        parts = (exported.parts ?? []).map { VolumePart(exported: $0, volume: self) }
     }
 
     /// Copies every field from the snapshot, touching only the ones that
-    /// differ so an identical snapshot doesn't dirty the context.
+    /// differ so an identical snapshot doesn't dirty the context. Parts are
+    /// matched by index — updated, added, or deleted when missing.
     /// Returns whether anything changed.
     @discardableResult
     func apply(_ exported: ExportedVolume) -> Bool {
@@ -121,6 +159,32 @@ extension Volume {
         set(\.readDate, exported.readDate)
         set(\.releaseDate, exported.releaseDate)
         set(\.buyURL, exported.buyURL)
+
+        var existing: [Int: VolumePart] = [:]
+        for part in parts {
+            existing[part.index] = part
+        }
+        var seen = Set<Int>()
+        for snapshot in exported.parts ?? [] {
+            seen.insert(snapshot.index)
+            if let part = existing[snapshot.index] {
+                if part.apply(snapshot) {
+                    changed = true
+                }
+            } else {
+                parts.append(VolumePart(exported: snapshot, volume: self))
+                changed = true
+            }
+        }
+        let stale = parts.filter { !seen.contains($0.index) }
+        if !stale.isEmpty {
+            let staleIDs = Set(stale.map(\.persistentModelID))
+            parts.removeAll { staleIDs.contains($0.persistentModelID) }
+            for part in stale {
+                part.modelContext?.delete(part)
+            }
+            changed = true
+        }
         return changed
     }
 }

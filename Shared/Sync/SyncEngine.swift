@@ -25,10 +25,11 @@ enum SyncStatus: Equatable {
 /// Keeps the SwiftData library and the backend in step.
 ///
 /// Local side: every save of the main context reports which models it
-/// touched. Those are mapped to series (a changed volume marks its series)
-/// and pushed as whole documents after a short debounce. Remote side: the
-/// backend streams documents; each one that isn't a version this device
-/// already knows is written into SwiftData, volumes reconciled by number.
+/// touched. Those are mapped to series (a changed volume or part marks its
+/// series) and pushed as whole documents after a short debounce. Remote
+/// side: the backend streams documents; each one that isn't a version this
+/// device already knows is written into SwiftData, volumes reconciled by
+/// number and their parts by index.
 ///
 /// Conflicts are resolved per series, not per field: the version that
 /// reaches the server last wins everywhere, except that a series with an
@@ -220,6 +221,7 @@ final class SyncEngine {
             switch context.model(for: identifier) {
             case let model as Manga: manga = model
             case let model as Volume: manga = model.manga
+            case let model as VolumePart: manga = model.volume?.manga
             default: manga = nil
             }
             guard let manga else { continue }

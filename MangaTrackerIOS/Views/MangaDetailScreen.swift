@@ -152,7 +152,7 @@ struct MangaDetailScreen: View {
                     Text("Postęp czytania")
                         .font(.subheadline.weight(.semibold))
                     Spacer()
-                    Text("\(stats.read) / \(stats.total) · \(Int(stats.readPercent.rounded()))%")
+                    Text("\(stats.readUnits) / \(stats.totalUnits) · \(Int(stats.readPercent.rounded()))%")
                         .font(.subheadline.weight(.bold))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
@@ -204,15 +204,17 @@ struct MangaDetailScreen: View {
                     Text("Następny do przeczytania")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("Tom \(next.number)")
-                        .font(.subheadline.weight(.semibold))
+                    if let part = stats.nextUnreadPart {
+                        Text("Tom \(next.number) · część \(part.index)/\(next.parts.count)")
+                            .font(.subheadline.weight(.semibold))
+                    } else {
+                        Text("Tom \(next.number)")
+                            .font(.subheadline.weight(.semibold))
+                    }
                 }
                 Spacer()
                 AccentButton(title: "Przeczytany", systemImage: "checkmark") {
-                    next.read = true
-                    if next.readDate == nil {
-                        next.readDate = .now
-                    }
+                    next.markNextUnitRead()
                 }
             }
         } else if let missing = stats.firstMissing {

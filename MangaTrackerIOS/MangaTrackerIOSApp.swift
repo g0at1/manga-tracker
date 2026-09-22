@@ -16,7 +16,7 @@ struct MangaTrackerIOSApp: App {
     init() {
         let container: ModelContainer
         do {
-            container = try ModelContainer(for: Manga.self, Volume.self)
+            container = try ModelContainer(for: Manga.self, Volume.self, VolumePart.self)
         } catch {
             fatalError("Failed to open the manga store: \(error)")
         }

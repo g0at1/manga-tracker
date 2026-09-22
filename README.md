@@ -8,6 +8,7 @@ A lightweight macOS app — with an iPhone/iPad companion — built with **Swift
 
 - 📖 Track manga titles, volumes, and reading progress  
 - ✅ Mark volumes as **owned** and/or **read**  
+- 📚 Split a collected edition (e.g. a *Berserk Deluxe* volume holding three originals) into **parts** that are marked read one at a time; progress counts by parts  
 - 📊 Automatic progress calculation (%)  
 - 📝 Add personal notes to each manga  
 - 📅 Track purchase and reading dates  

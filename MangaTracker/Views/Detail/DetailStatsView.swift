@@ -9,7 +9,8 @@ struct DetailStatsView: View {
     @Environment(\.locale) private var locale
 
     private enum NextStep {
-        case read(Volume)
+        /// The part is set when the volume is split: the one to pick up.
+        case read(Volume, VolumePart?)
         case buy(Volume)
         case allRead
         case noVolumes
@@ -17,7 +18,7 @@ struct DetailStatsView: View {
 
     private func nextStep(_ stats: MangaVolumeStats) -> NextStep {
         if let next = stats.nextUnread {
-            return .read(next)
+            return .read(next, stats.nextUnreadPart)
         }
         if let missing = stats.firstMissing {
             return .buy(missing)
@@ -104,7 +105,7 @@ struct DetailStatsView: View {
                         Text("Postęp czytania")
                             .font(.subheadline.weight(.semibold))
                         Spacer()
-                        Text("\(stats.read) / \(stats.total) · \(Int(stats.readPercent.rounded()))%")
+                        Text("\(stats.readUnits) / \(stats.totalUnits) · \(Int(stats.readPercent.rounded()))%")
                             .font(.subheadline.weight(.bold))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
@@ -136,20 +137,22 @@ struct DetailStatsView: View {
     @ViewBuilder
     private func nextStepView(_ step: NextStep) -> some View {
         switch step {
-        case let .read(volume):
+        case let .read(volume, part):
             HStack(spacing: 12) {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("Następny do przeczytania")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("Tom \(volume.number)")
-                        .font(.subheadline.weight(.semibold))
+                    if let part {
+                        Text("Tom \(volume.number) · część \(part.index)/\(volume.parts.count)")
+                            .font(.subheadline.weight(.semibold))
+                    } else {
+                        Text("Tom \(volume.number)")
+                            .font(.subheadline.weight(.semibold))
+                    }
                 }
                 AccentButton(title: "Oznacz jako przeczytany", systemImage: "checkmark") {
-                    volume.read = true
-                    if volume.readDate == nil {
-                        volume.readDate = .now
-                    }
+                    volume.markNextUnitRead()
                 }
             }
 

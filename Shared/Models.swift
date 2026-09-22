@@ -95,6 +95,13 @@ final class Volume {
 
     var manga: Manga?
 
+    /// The original volumes a collected edition binds together (a deluxe
+    /// Berserk volume holds three), so each can be marked read on its own.
+    /// Empty for an ordinary volume. `read` on the volume is kept in step:
+    /// true once every part is read.
+    @Relationship(deleteRule: .cascade, inverse: \VolumePart.volume)
+    var parts: [VolumePart]
+
     init(
         number: Int,
         owned: Bool = false,
@@ -104,7 +111,8 @@ final class Volume {
         manga: Manga? = nil,
         readDate: Date? = nil,
         releaseDate: Date? = nil,
-        buyURL: String? = nil
+        buyURL: String? = nil,
+        parts: [VolumePart] = []
     ) {
         self.number = number
         self.owned = owned
@@ -115,5 +123,25 @@ final class Volume {
         self.readDate = readDate
         self.releaseDate = releaseDate
         self.buyURL = buyURL
+        self.parts = parts
+    }
+}
+
+/// One original volume inside a split `Volume`. Owned, priced and dated
+/// through its volume; only reading is tracked here.
+@Model
+final class VolumePart {
+    /// 1-based position within the volume.
+    var index: Int
+    var read: Bool
+    var readDate: Date?
+
+    var volume: Volume?
+
+    init(index: Int, read: Bool = false, readDate: Date? = nil, volume: Volume? = nil) {
+        self.index = index
+        self.read = read
+        self.readDate = readDate
+        self.volume = volume
     }
 }

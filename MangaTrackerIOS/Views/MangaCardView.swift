@@ -24,7 +24,7 @@ struct MangaCardView: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.green)
                     } else {
-                        Text("\(stats.read)/\(stats.total)")
+                        Text("\(stats.readUnits)/\(stats.totalUnits)")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }

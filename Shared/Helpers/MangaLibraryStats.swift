@@ -10,7 +10,8 @@ struct MangaLibraryStats {
     let ownedVolumesCount: Int
     /// Spent on owned volumes across unsold series.
     let totalPaid: Double
-    /// Share of owned volumes (unsold series) that have been read.
+    /// Share of owned volumes (unsold series) that have been read, counting
+    /// a split volume part by part.
     let totalReadPercent: Double
     let didReadToday: Bool
     let currentReadStreak: Int
@@ -19,7 +20,8 @@ struct MangaLibraryStats {
         let calendar = Calendar.current
         var mangaCount = 0
         var ownedCount = 0
-        var ownedReadCount = 0
+        var ownedUnits = 0
+        var ownedReadUnits = 0
         var totalPaid: Double = 0
         var readDays = Set<Date>()
 
@@ -29,22 +31,21 @@ struct MangaLibraryStats {
                 mangaCount += 1
             }
             for volume in manga.volumes {
-                if let readDate = volume.readDate {
+                for readDate in volume.readDates {
                     readDays.insert(calendar.startOfDay(for: readDate))
                 }
                 guard !isExcluded, volume.owned else { continue }
                 ownedCount += 1
                 totalPaid += volume.price ?? 0
-                if volume.read == true {
-                    ownedReadCount += 1
-                }
+                ownedUnits += volume.unitCount
+                ownedReadUnits += volume.readUnitCount
             }
         }
 
         self.mangaCount = mangaCount
         ownedVolumesCount = ownedCount
         self.totalPaid = totalPaid
-        totalReadPercent = ownedCount > 0 ? Double(ownedReadCount) / Double(ownedCount) * 100 : 0
+        totalReadPercent = ownedUnits > 0 ? Double(ownedReadUnits) / Double(ownedUnits) * 100 : 0
 
         let today = calendar.startOfDay(for: Date())
         didReadToday = readDays.contains(today)

@@ -57,7 +57,7 @@ final class SyncEngineTests: XCTestCase {
     /// Firebase app. Starts the engine; connects when `key` is given.
     private func makeDevice(_ name: String, key: String?) throws -> Device {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: Manga.self, Volume.self, configurations: configuration)
+        let container = try ModelContainer(for: Manga.self, Volume.self, VolumePart.self, configurations: configuration)
         let defaults = UserDefaults(suiteName: "SyncEngineTests.\(name).\(UUID().uuidString)")!
         let state = SyncState(defaults: defaults)
         state.libraryKey = key
@@ -112,10 +112,14 @@ final class SyncEngineTests: XCTestCase {
         XCTAssertEqual(onB.syncID, berserk.syncID)
         XCTAssertEqual(onB.volumes.filter(\.owned).count, 2)
 
-        // B reads a volume, adds one, renames — and A follows.
+        // B reads a volume, splits another into parts and reads one of
+        // them, adds a volume, renames — and A follows.
         let readDate = Date(timeIntervalSince1970: 1_700_000_000)
         onB.volumes.first { $0.number == 1 }?.read = true
         onB.volumes.first { $0.number == 1 }?.readDate = readDate
+        let deluxe2 = try XCTUnwrap(onB.volumes.first { $0.number == 2 })
+        deluxe2.setPartCount(3)
+        deluxe2.markPart(deluxe2.sortedParts[0], read: true, on: readDate)
         onB.volumes.append(Volume(number: 4, owned: false, manga: onB))
         onB.title = "Berserk (Deluxe)"
         onB.isFavorite = true
@@ -128,6 +132,19 @@ final class SyncEngineTests: XCTestCase {
         let volume1 = try XCTUnwrap(berserk.volumes.first { $0.number == 1 })
         XCTAssertEqual(volume1.read, true)
         XCTAssertEqual(volume1.readDate.map { $0.timeIntervalSince1970.rounded() }, readDate.timeIntervalSince1970.rounded())
+        let volume2 = try XCTUnwrap(berserk.volumes.first { $0.number == 2 })
+        XCTAssertEqual(volume2.sortedParts.map(\.read), [true, false, false])
+        XCTAssertEqual(volume2.sortedParts[0].readDate.map { $0.timeIntervalSince1970.rounded() }, readDate.timeIntervalSince1970.rounded())
+        XCTAssertEqual(volume2.read, false)
+
+        // A finishes the split volume part by part; B ends up with it read.
+        for part in volume2.sortedParts where !part.read {
+            volume2.markPart(part, read: true)
+        }
+        try a.context.save()
+        try await waitUntil("B sees the split volume finished") {
+            deluxe2.read == true && deluxe2.parts.allSatisfy(\.read)
+        }
 
         // Nothing is left queued and nothing ping-pongs.
         try await waitUntil("queues drain") {

@@ -28,7 +28,9 @@ struct ContinueReadingCardView: View {
                     .lineLimit(1)
 
                 Group {
-                    if let next = stats.nextUnread {
+                    if let next = stats.nextUnread, let part = stats.nextUnreadPart {
+                        Text("Tom \(next.number) (\(part.index)/\(next.parts.count)) z \(stats.total)")
+                    } else if let next = stats.nextUnread {
                         Text("Tom \(next.number) z \(stats.total)")
                     } else {
                         Text(verbatim: "")
