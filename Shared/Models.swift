@@ -21,6 +21,10 @@ final class Manga {
     var aniListAuthor: String?
     var aniListParentId: Int?
     var isSpinOff: Bool?
+    /// The series on MangaDex, which is where per-volume covers come
+    /// from. Resolved once from `aniListId` and kept so later refreshes
+    /// skip the search.
+    var mangaDexId: String?
     /// On the wishlist: shown under "Planowane" until unmarked.
     var isPlanned: Bool?
     /// Hearted by the user; what "Ulubione" shows.
@@ -53,6 +57,7 @@ final class Manga {
         bannerImage: String? = "",
         aniListParentId: Int? = nil,
         isSpinOff: Bool? = false,
+        mangaDexId: String? = nil,
         isPlanned: Bool? = false,
         isFavorite: Bool? = false,
         syncID: String? = UUID().uuidString
@@ -76,6 +81,7 @@ final class Manga {
         self.bannerImage = bannerImage
         self.aniListParentId = aniListParentId
         self.isSpinOff = isSpinOff
+        self.mangaDexId = mangaDexId
         self.isPlanned = isPlanned
         self.isFavorite = isFavorite
         self.syncID = syncID
@@ -92,6 +98,9 @@ final class Volume {
     var readDate: Date?
     var releaseDate: Date?
     var buyURL: String?
+    /// This volume's cover art, fetched from MangaDex. Nil until the
+    /// series' covers are pulled, and for volumes MangaDex has none for.
+    var coverURL: String?
 
     var manga: Manga?
 
@@ -112,6 +121,7 @@ final class Volume {
         readDate: Date? = nil,
         releaseDate: Date? = nil,
         buyURL: String? = nil,
+        coverURL: String? = nil,
         parts: [VolumePart] = []
     ) {
         self.number = number
@@ -123,6 +133,7 @@ final class Volume {
         self.readDate = readDate
         self.releaseDate = releaseDate
         self.buyURL = buyURL
+        self.coverURL = coverURL
         self.parts = parts
     }
 }

@@ -9,6 +9,7 @@ A lightweight macOS app — with an iPhone/iPad companion — built with **Swift
 - 📖 Track manga titles, volumes, and reading progress  
 - ✅ Mark volumes as **owned** and/or **read**  
 - 📚 Split a collected edition (e.g. a *Berserk Deluxe* volume holding three originals) into **parts** that are marked read one at a time; progress counts by parts  
+- 🖼️ Per-volume cover art, fetched automatically from **MangaDex** — AniList only has one cover per series, so the volume rows are filled from MangaDex, matched through the AniList id the series already carries (see below)
 - 📊 Automatic progress calculation (%)  
 - 📝 Add personal notes to each manga  
 - 📅 Track purchase and reading dates  
@@ -48,7 +49,7 @@ Open `MangaTracker.xcodeproj`. The project has three targets:
 | `MangaTrackerIOS` | the iOS app (`MangaTrackerIOS/` + `Shared/`) |
 | `MangaTrackerTests` | sync engine tests, run on the iOS simulator |
 
-Everything platform-neutral — models, AniList client, image cache, export format, the sync engine and a few views — lives in `Shared/`.
+Everything platform-neutral — models, AniList and MangaDex clients, image cache, export format, the sync engine and a few views — lives in `Shared/`.
 
 ### Installing the Mac app
 
@@ -59,6 +60,33 @@ scripts/install-mac.sh
 ```
 
 Pass a configuration name to install a different build, e.g. `scripts/install-mac.sh Debug`.
+
+---
+
+## 🖼️ Okładki tomów (volume covers)
+
+AniList has a cover for the *series* only, so the individual volumes come from
+[MangaDex](https://api.mangadex.org/docs/), which stores a cover per volume per language —
+and, usefully, the AniList id of every series it carries. A series that's been refreshed
+from AniList is therefore matched exactly rather than by title: a search for
+*Chainsaw Man* returns the colour edition first, and only the entry pointing back at
+AniList 105778 is accepted.
+
+Covers arrive on their own with **Odśwież z AniList** and when a series is added with the
+AniList toggle on. The volumes list also has **Pobierz okładki tomów** in its `⋯` menu to
+fetch or retry them on their own. A cover already set is never overwritten, so a
+hand-picked one survives a refresh, and the covers column only appears once a series
+actually has covers.
+
+Which edition's cover you get depends on what MangaDex has: English is preferred, with
+Japanese as the fallback — and the fallback matters, since Berserk and One Piece have no
+English covers uploaded at all while their Japanese ones are complete. Volumes MangaDex
+numbers fractionally (`7.5` side stories) are skipped, as the library has no row for them.
+Images are fetched at MangaDex's 512px width and go through the same `ImageCache` as
+series covers. Nothing here needs an API key or an account.
+
+Covers travel with the library: the URLs and the resolved MangaDex id are part of the
+sync snapshot and the JSON backup, so the other device doesn't repeat the lookup.
 
 ---
 

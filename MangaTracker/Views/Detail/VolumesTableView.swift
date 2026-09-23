@@ -18,6 +18,7 @@ struct VolumesTableView: View {
     @State private var editingPartsTarget: PartsEditTarget?
     @State private var showBulkPricePopover = false
     @State private var bulkPriceText = ""
+    @State private var isFetchingCovers = false
     @State private var showBulkPurchaseDatePopover = false
     @State private var bulkPurchaseDate: Date = .now
 
@@ -72,6 +73,8 @@ struct VolumesTableView: View {
 
     fileprivate enum Column {
         static let checkbox: CGFloat = 24
+        /// Only laid out once the series has volume covers.
+        static let cover: CGFloat = 26
         static let number: CGFloat = 44
         static let status: CGFloat = 224
         static let price: CGFloat = 124
@@ -100,6 +103,12 @@ struct VolumesTableView: View {
         case .missing: manga.volumes.filter { !$0.owned }.count
         case .unread: manga.volumes.filter { !($0.read ?? false) }.count
         }
+    }
+
+    /// The cover column only appears once there's something to put in it,
+    /// so a series whose covers were never fetched keeps its old density.
+    private var showsCovers: Bool {
+        manga.hasVolumeCovers
     }
 
     private var selectedVolumes: [Volume] {
@@ -149,6 +158,7 @@ struct VolumesTableView: View {
                                     volume: volume,
                                     isSelected: selectedVolumeIDs.contains(volume.persistentModelID),
                                     isAlternate: index.isMultiple(of: 2),
+                                    showsCover: showsCovers,
                                     onToggleSelection: { toggleSelection(volume) },
                                     onToggleOwned: { toggleOwned(volume) },
                                     onToggleRead: { toggleRead(volume) },
@@ -168,6 +178,7 @@ struct VolumesTableView: View {
                                         part: part,
                                         partCount: volume.parts.count,
                                         isAlternate: index.isMultiple(of: 2),
+                                        showsCover: showsCovers,
                                         onToggleRead: { volume.markPart(part, read: !part.read) },
                                         onEditReadDate: { editingDateTarget = .partRead(part) }
                                     )
@@ -224,6 +235,11 @@ struct VolumesTableView: View {
                 Button("Oznacz wszystkie jako kupione", systemImage: "cart") { markAllOwned() }
                 Button("Oznacz wszystkie jako przeczytane", systemImage: "checkmark.circle") { markAllRead() }
                 Divider()
+                Button("Pobierz okładki tomów", systemImage: "photo.on.rectangle") {
+                    Task { await fetchVolumeCovers() }
+                }
+                .disabled(isFetchingCovers || manga.volumes.isEmpty)
+                Divider()
                 Button("Wyczyść postęp czytania", systemImage: "arrow.counterclockwise", role: .destructive) {
                     clearReadProgress()
                 }
@@ -251,6 +267,10 @@ struct VolumesTableView: View {
                     action: toggleSelectAllDisplayed
                 )
                 .help("Zaznacz widoczne tomy")
+
+                if showsCovers {
+                    Color.clear.frame(width: Column.cover, height: 1)
+                }
 
                 Text("Tom").frame(width: Column.number, alignment: .leading)
                 Text("Status").frame(width: Column.status, alignment: .leading)
@@ -557,6 +577,31 @@ struct VolumesTableView: View {
         setRead(false, for: manga.volumes)
     }
 
+    // MARK: - MangaDex
+
+    /// Pulls this series' per-volume covers. AniList only has a cover for the
+    /// series, so the volume rows are filled from MangaDex instead, matched
+    /// through the AniList id the series already carries.
+    private func fetchVolumeCovers() async {
+        guard !isFetchingCovers else { return }
+        isFetchingCovers = true
+        defer { isFetchingCovers = false }
+
+        do {
+            let applied = try await manga.fetchVolumeCovers()
+            if applied > 0 {
+                ToastService.shared.show(L("Pobrano okładki dla %lld tomów.", applied), type: .success)
+            } else {
+                ToastService.shared.show(L("Wszystkie tomy mają już okładki."), type: .info)
+            }
+        } catch MangaDexService.ServiceError.seriesNotFound {
+            ToastService.shared.show(L("Nie znaleziono serii w MangaDex dla: %@", manga.title), type: .error)
+        } catch {
+            ToastService.shared.show(L("Nie udało się pobrać okładek tomów."), type: .error)
+            print("MangaDex covers error:", error)
+        }
+    }
+
     private func deleteVolume(_ volume: Volume) {
         manga.volumes.removeAll { $0.persistentModelID == volume.persistentModelID }
         modelContext.delete(volume)
@@ -614,6 +659,7 @@ private struct VolumeRow: View {
     let volume: Volume
     let isSelected: Bool
     let isAlternate: Bool
+    let showsCover: Bool
     let onToggleSelection: () -> Void
     let onToggleOwned: () -> Void
     let onToggleRead: () -> Void
@@ -639,6 +685,11 @@ private struct VolumeRow: View {
     var body: some View {
         HStack(spacing: Column.spacing) {
             SelectionCheckbox(isOn: isSelected, action: onToggleSelection)
+
+            if showsCover {
+                CoverImageView(url: volume.coverURL.flatMap(URL.init(string:)), cornerRadius: 3)
+                    .frame(width: Column.cover, height: Column.cover * 1.46)
+            }
 
             Text("#\(volume.number)")
                 .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -760,6 +811,7 @@ private struct VolumePartRow: View {
     let part: VolumePart
     let partCount: Int
     let isAlternate: Bool
+    let showsCover: Bool
     let onToggleRead: () -> Void
     let onEditReadDate: () -> Void
 
@@ -770,6 +822,10 @@ private struct VolumePartRow: View {
     var body: some View {
         HStack(spacing: Column.spacing) {
             Color.clear.frame(width: Column.checkbox, height: 1)
+
+            if showsCover {
+                Color.clear.frame(width: Column.cover, height: 1)
+            }
 
             HStack(spacing: 3) {
                 Image(systemName: "arrow.turn.down.right")

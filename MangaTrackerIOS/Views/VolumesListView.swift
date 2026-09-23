@@ -11,6 +11,7 @@ struct VolumesListView: View {
     @State private var filterMode: FilterMode = .all
     @State private var pendingBulkAction: BulkAction?
     @State private var editingVolume: Volume?
+    @State private var isFetchingCovers = false
 
     enum FilterMode: String, CaseIterable, Identifiable {
         case all
@@ -54,6 +55,12 @@ struct VolumesListView: View {
         }
     }
 
+    /// The cover column only appears once there's something to put in it,
+    /// so a series whose covers were never fetched keeps its old density.
+    private var showsCovers: Bool {
+        manga.hasVolumeCovers
+    }
+
     private func count(for mode: FilterMode) -> Int {
         switch mode {
         case .all: manga.volumes.count
@@ -90,6 +97,7 @@ struct VolumesListView: View {
                             VolumeRow(
                                 volume: volume,
                                 isAlternate: index.isMultiple(of: 2),
+                                showsCover: showsCovers,
                                 onToggleOwned: { toggleOwned(volume) },
                                 onToggleRead: { toggleRead(volume) },
                                 onOpen: { editingVolume = volume }
@@ -104,6 +112,7 @@ struct VolumesListView: View {
                                     part: part,
                                     partCount: volume.parts.count,
                                     isAlternate: index.isMultiple(of: 2),
+                                    showsCover: showsCovers,
                                     onToggleRead: { volume.markPart(part, read: !part.read) }
                                 )
                             }
@@ -149,6 +158,11 @@ struct VolumesListView: View {
                     Button("Oznacz wszystkie jako kupione", systemImage: "cart") { setOwned(true, for: manga.volumes) }
                     Button("Oznacz wszystkie jako przeczytane", systemImage: "checkmark.circle") { setRead(true, for: manga.volumes) }
                     Divider()
+                    Button("Pobierz okładki tomów", systemImage: "photo.on.rectangle") {
+                        Task { await fetchVolumeCovers() }
+                    }
+                    .disabled(isFetchingCovers || manga.volumes.isEmpty)
+                    Divider()
                     Button("Wyczyść postęp czytania", systemImage: "arrow.counterclockwise", role: .destructive) {
                         setRead(false, for: manga.volumes)
                     }
@@ -185,6 +199,31 @@ struct VolumesListView: View {
     private func setRead(_ read: Bool, for volumes: [Volume]) {
         for volume in volumes {
             volume.markRead(read)
+        }
+    }
+
+    // MARK: - MangaDex
+
+    /// Pulls this series' per-volume covers. AniList only has a cover for the
+    /// series, so the volume rows are filled from MangaDex instead, matched
+    /// through the AniList id the series already carries.
+    private func fetchVolumeCovers() async {
+        guard !isFetchingCovers else { return }
+        isFetchingCovers = true
+        defer { isFetchingCovers = false }
+
+        do {
+            let applied = try await manga.fetchVolumeCovers()
+            if applied > 0 {
+                ToastService.shared.show(L("Pobrano okładki dla %lld tomów.", applied), type: .success)
+            } else {
+                ToastService.shared.show(L("Wszystkie tomy mają już okładki."), type: .info)
+            }
+        } catch MangaDexService.ServiceError.seriesNotFound {
+            ToastService.shared.show(L("Nie znaleziono serii w MangaDex dla: %@", manga.title), type: .error)
+        } catch {
+            ToastService.shared.show(L("Nie udało się pobrać okładek tomów."), type: .error)
+            print("MangaDex covers error:", error)
         }
     }
 
@@ -246,6 +285,7 @@ struct VolumesListView: View {
 private struct VolumeRow: View {
     let volume: Volume
     let isAlternate: Bool
+    let showsCover: Bool
     let onToggleOwned: () -> Void
     let onToggleRead: () -> Void
     let onOpen: () -> Void
@@ -262,6 +302,11 @@ private struct VolumeRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
+            if showsCover {
+                CoverImageView(url: volume.coverURL.flatMap(URL.init(string:)), cornerRadius: 3)
+                    .frame(width: 30, height: 44)
+            }
+
             Text("#\(volume.number)")
                 .font(.system(size: 14, weight: .bold, design: .rounded))
                 .monospacedDigit()
@@ -305,10 +350,15 @@ private struct VolumePartRow: View {
     let part: VolumePart
     let partCount: Int
     let isAlternate: Bool
+    let showsCover: Bool
     let onToggleRead: () -> Void
 
     var body: some View {
         HStack(spacing: 10) {
+            if showsCover {
+                Color.clear.frame(width: 30, height: 1)
+            }
+
             HStack(spacing: 3) {
                 Image(systemName: "arrow.turn.down.right")
                     .font(.system(size: 9, weight: .bold))

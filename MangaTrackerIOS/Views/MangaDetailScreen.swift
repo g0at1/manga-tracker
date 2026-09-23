@@ -263,6 +263,13 @@ struct MangaDetailScreen: View {
                 return
             }
             manga.applyAniListInfo(info)
+
+            // AniList has a cover for the series only, so the volumes it just
+            // created are filled from MangaDex. A failure here is silent: the
+            // series data is already in, and the volume list has a menu item
+            // to try the covers again.
+            _ = try? await manga.fetchVolumeCovers()
+
             ToastService.shared.show(L("Dane z AniList odświeżone dla %@.", title), type: .success)
         } catch {
             ToastService.shared.show(L("Nie udało się odświeżyć danych z AniList."), type: .error)

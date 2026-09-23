@@ -52,6 +52,109 @@
         }
       }
     },
+    "Nie udało się pobrać okładek tomów." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't fetch the volume covers."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się pobrać okładek tomów."
+          }
+        }
+      }
+    },
+    "Nie znaleziono serii w MangaDex dla: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No MangaDex series found for: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie znaleziono serii w MangaDex dla: %@"
+          }
+        }
+      }
+    },
+    "Pobierz okładki tomów" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fetch volume covers"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pobierz okładki tomów"
+          }
+        }
+      }
+    },
+    "Pobrano okładki dla %lld tomów." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fetched a cover for %lld volume."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fetched covers for %lld volumes."
+                }
+              }
+            }
+          }
+        },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pobrano okładki dla %lld tomów."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pobrano okładki dla %lld tomów."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pobrano okładkę dla %lld tomu."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pobrano okładki dla %lld tomów."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Podziel na części" : {
       "localizations" : {
         "en" : {
@@ -144,6 +247,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usuń podział"
+          }
+        }
+      }
+    },
+    "Wszystkie tomy mają już okładki." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every volume already has a cover."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wszystkie tomy mają już okładki."
           }
         }
       }

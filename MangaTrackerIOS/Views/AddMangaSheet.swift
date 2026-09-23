@@ -74,6 +74,9 @@ struct AddMangaSheet: View {
                 do {
                     if let info = try await AniListService.fetchMangaInfo(title: trimmedTitle) {
                         manga.applyAniListInfo(info)
+                        // Volume covers, which AniList doesn't carry. Silent on
+                        // failure — the series is added either way.
+                        _ = try? await manga.fetchVolumeCovers()
                     } else {
                         ToastService.shared.show(L("Nie znaleziono danych w AniList dla: %@", trimmedTitle), type: .info)
                     }

@@ -16,6 +16,7 @@ struct ExportedVolume: Codable {
     var readDate: Date?
     var releaseDate: Date?
     var buyURL: String?
+    var coverURL: String?
     /// Left out for an unsplit volume, so snapshots from before parts
     /// existed and of ordinary volumes look the same.
     var parts: [ExportedVolumePart]?
@@ -40,6 +41,7 @@ struct ExportedManga: Codable {
     var aniListAuthor: String?
     var aniListParentId: Int?
     var isSpinOff: Bool?
+    var mangaDexId: String?
     var isPlanned: Bool?
     var isFavorite: Bool?
 
@@ -65,6 +67,7 @@ extension ExportedVolume {
             readDate: volume.readDate,
             releaseDate: volume.releaseDate,
             buyURL: volume.buyURL,
+            coverURL: volume.coverURL,
             parts: volume.isSplit ? volume.sortedParts.map { ExportedVolumePart($0) } : nil
         )
     }
@@ -94,6 +97,7 @@ extension ExportedManga {
             aniListAuthor: manga.aniListAuthor,
             aniListParentId: manga.aniListParentId,
             isSpinOff: manga.isSpinOff,
+            mangaDexId: manga.mangaDexId,
             isPlanned: manga.isPlanned,
             isFavorite: manga.isFavorite,
             volumes: manga.volumes
@@ -134,7 +138,8 @@ extension Volume {
             manga: manga,
             readDate: exported.readDate,
             releaseDate: exported.releaseDate,
-            buyURL: exported.buyURL
+            buyURL: exported.buyURL,
+            coverURL: exported.coverURL
         )
         parts = (exported.parts ?? []).map { VolumePart(exported: $0, volume: self) }
     }
@@ -159,6 +164,7 @@ extension Volume {
         set(\.readDate, exported.readDate)
         set(\.releaseDate, exported.releaseDate)
         set(\.buyURL, exported.buyURL)
+        set(\.coverURL, exported.coverURL)
 
         var existing: [Int: VolumePart] = [:]
         for part in parts {
@@ -213,6 +219,7 @@ extension Manga {
             bannerImage: exported.bannerImage,
             aniListParentId: exported.aniListParentId,
             isSpinOff: exported.isSpinOff,
+            mangaDexId: exported.mangaDexId,
             isPlanned: exported.isPlanned,
             isFavorite: exported.isFavorite,
             syncID: syncID
@@ -250,6 +257,7 @@ extension Manga {
         set(\.aniListAuthor, exported.aniListAuthor)
         set(\.aniListParentId, exported.aniListParentId)
         set(\.isSpinOff, exported.isSpinOff)
+        set(\.mangaDexId, exported.mangaDexId)
         set(\.isPlanned, exported.isPlanned)
         set(\.isFavorite, exported.isFavorite)
 
