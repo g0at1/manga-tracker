@@ -4,302 +4,6 @@
     "" : {
 
     },
-    "Części" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Parts"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Części"
-          }
-        }
-      }
-    },
-    "Część %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Part %lld"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Część %lld"
-          }
-        }
-      }
-    },
-    "Liczba części" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Number of parts"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Liczba części"
-          }
-        }
-      }
-    },
-    "Nie udało się pobrać okładek tomów." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't fetch the volume covers."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nie udało się pobrać okładek tomów."
-          }
-        }
-      }
-    },
-    "Nie znaleziono serii w MangaDex dla: %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No MangaDex series found for: %@"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nie znaleziono serii w MangaDex dla: %@"
-          }
-        }
-      }
-    },
-    "Pobierz okładki tomów" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fetch volume covers"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pobierz okładki tomów"
-          }
-        }
-      }
-    },
-    "Pobrano okładki dla %lld tomów." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Fetched a cover for %lld volume."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Fetched covers for %lld volumes."
-                }
-              }
-            }
-          }
-        },
-        "pl" : {
-          "variations" : {
-            "plural" : {
-              "few" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Pobrano okładki dla %lld tomów."
-                }
-              },
-              "many" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Pobrano okładki dla %lld tomów."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Pobrano okładkę dla %lld tomu."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Pobrano okładki dla %lld tomów."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "Podziel na części" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Split into parts"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Podziel na części"
-          }
-        }
-      }
-    },
-    "Podziel na części…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Split into parts…"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Podziel na części…"
-          }
-        }
-      }
-    },
-    "Przeczytana" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Read"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Przeczytana"
-          }
-        }
-      }
-    },
-    "Tom %lld (%lld/%lld) z %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Volume %1$lld (%2$lld/%3$lld) of %4$lld"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tom %1$lld (%2$lld/%3$lld) z %4$lld"
-          }
-        }
-      }
-    },
-    "Tom %lld · część %lld/%lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Volume %1$lld · part %2$lld/%3$lld"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tom %1$lld · część %2$lld/%3$lld"
-          }
-        }
-      }
-    },
-    "Usuń podział" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove the split"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Usuń podział"
-          }
-        }
-      }
-    },
-    "Wszystkie tomy mają już okładki." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Every volume already has a cover."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wszystkie tomy mają już okładki."
-          }
-        }
-      }
-    },
-    "Wydanie zbiorcze (np. deluxe) mieści kilka oryginalnych tomów. Każdą część oznaczysz jako przeczytaną osobno, a postęp liczy się częściami." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A collected edition (a deluxe volume, say) holds several original volumes. Each part is marked read on its own and progress counts by parts."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wydanie zbiorcze (np. deluxe) mieści kilka oryginalnych tomów. Każdą część oznaczysz jako przeczytaną osobno, a postęp liczy się częściami."
-          }
-        }
-      }
-    },
-    "Zmień podział na części…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change the split…"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zmień podział na części…"
-          }
-        }
-      }
-    },
     "–" : {
 
     },
@@ -898,6 +602,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cofnij sprzedane"
+          }
+        }
+      }
+    },
+    "Część %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Part %lld"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Część %lld"
+          }
+        }
+      }
+    },
+    "Części" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parts"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Części"
           }
         }
       }
@@ -1970,6 +1706,22 @@
         }
       }
     },
+    "Liczba części" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Number of parts"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liczba części"
+          }
+        }
+      }
+    },
     "Liczba tomów" : {
       "localizations" : {
         "en" : {
@@ -2046,6 +1798,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Manga"
+          }
+        }
+      }
+    },
+    "MangaDex nie ma więcej okładek dla tych tomów." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MangaDex has no more covers for these volumes."
           }
         }
       }
@@ -2293,40 +2056,6 @@
         }
       }
     },
-    "Nie udało się wczytać ustawień: %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't load the settings: %@"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nie udało się wczytać ustawień: %@"
-          }
-        }
-      }
-    },
-    "Nie udało się zapisać: %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't save: %@"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nie udało się zapisać: %@"
-          }
-        }
-      }
-    },
     "Nie — tylko ten tom" : {
       "localizations" : {
         "en" : {
@@ -2394,6 +2123,34 @@
         }
       }
     },
+    "Nie udało się pobrać okładek dla %lld serii." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't fetch covers for %lld series."
+          }
+        }
+      }
+    },
+    "Nie udało się pobrać okładek tomów." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't fetch the volume covers."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się pobrać okładek tomów."
+          }
+        }
+      }
+    },
     "Nie udało się pobrać okładki." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2428,6 +2185,23 @@
         }
       }
     },
+    "Nie udało się wczytać ustawień: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load the settings: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się wczytać ustawień: %@"
+          }
+        }
+      }
+    },
     "Nie udało się zapamiętać folderu: %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2441,6 +2215,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nie udało się zapamiętać folderu: %@"
+          }
+        }
+      }
+    },
+    "Nie udało się zapisać: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się zapisać: %@"
           }
         }
       }
@@ -2475,6 +2266,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nie znaleziono okładki dla: %@"
+          }
+        }
+      }
+    },
+    "Nie znaleziono serii w MangaDex dla: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No MangaDex series found for: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie znaleziono serii w MangaDex dla: %@"
           }
         }
       }
@@ -2996,6 +2804,16 @@
         }
       }
     },
+    "Oznacz tomy jako posiadane, aby pojawiły się na półce." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark volumes as owned to see them on the shelf."
+          }
+        }
+      }
+    },
     "Oznacz wszystkie jako kupione" : {
       "localizations" : {
         "en" : {
@@ -3070,6 +2888,16 @@
         }
       }
     },
+    "Pobierz brakujące okładki" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fetch missing covers"
+          }
+        }
+      }
+    },
     "Pobierz dane z AniList" : {
       "localizations" : {
         "en" : {
@@ -3082,6 +2910,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pobierz dane z AniList"
+          }
+        }
+      }
+    },
+    "Pobierz okładki tomów" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fetch volume covers"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pobierz okładki tomów"
           }
         }
       }
@@ -3108,6 +2952,59 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Downloads (default)"
+          }
+        }
+      }
+    },
+    "Pobrano okładki dla %lld tomów." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fetched a cover for %lld volume."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fetched covers for %lld volumes."
+                }
+              }
+            }
+          }
+        },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pobrano okładki dla %lld tomów."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pobrano okładki dla %lld tomów."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pobrano okładkę dla %lld tomu."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pobrano okładki dla %lld tomów."
+                }
+              }
+            }
           }
         }
       }
@@ -3188,6 +3085,38 @@
         }
       }
     },
+    "Podziel na części" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split into parts"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podziel na części"
+          }
+        }
+      }
+    },
+    "Podziel na części…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split into parts…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podziel na części…"
+          }
+        }
+      }
+    },
     "Pojedynczy tom" : {
       "localizations" : {
         "en" : {
@@ -3232,6 +3161,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Połącz komputer i telefon jednym kluczem biblioteki. Utwórz go na pierwszym urządzeniu, potem wklej na drugim."
+          }
+        }
+      }
+    },
+    "Półka" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shelf"
+          }
+        }
+      }
+    },
+    "Półka jest pusta" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The shelf is empty"
           }
         }
       }
@@ -3344,6 +3293,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Premiera"
+          }
+        }
+      }
+    },
+    "Przeczytana" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przeczytana"
           }
         }
       }
@@ -4079,6 +4044,38 @@
         }
       }
     },
+    "Tom %lld · część %lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume %1$lld · part %2$lld/%3$lld"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tom %1$lld · część %2$lld/%3$lld"
+          }
+        }
+      }
+    },
+    "Tom %lld (%lld/%lld) z %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume %1$lld (%2$lld/%3$lld) of %4$lld"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tom %1$lld (%2$lld/%3$lld) z %4$lld"
+          }
+        }
+      }
+    },
     "Tom %lld już istnieje." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4124,6 +4121,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "tomów"
+          }
+        }
+      }
+    },
+    "tomów na półce" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "volumes on the shelf"
           }
         }
       }
@@ -4204,6 +4211,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Twoja kolekcja w liczbach"
+          }
+        }
+      }
+    },
+    "Twoja kolekcja, tom po tomie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your collection, volume by volume"
           }
         }
       }
@@ -4496,6 +4513,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usuń link"
+          }
+        }
+      }
+    },
+    "Usuń podział" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove the split"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń podział"
           }
         }
       }
@@ -4884,6 +4917,23 @@
         }
       }
     },
+    "Wszystkie tomy mają już okładki." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every volume already has a cover."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wszystkie tomy mają już okładki."
+          }
+        }
+      }
+    },
     "Wszystkie tomy przeczytane" : {
       "localizations" : {
         "en" : {
@@ -5021,6 +5071,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wyczyść postęp czytania"
+          }
+        }
+      }
+    },
+    "Wydanie zbiorcze (np. deluxe) mieści kilka oryginalnych tomów. Każdą część oznaczysz jako przeczytaną osobno, a postęp liczy się częściami." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A collected edition (a deluxe volume, say) holds several original volumes. Each part is marked read on its own and progress counts by parts."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wydanie zbiorcze (np. deluxe) mieści kilka oryginalnych tomów. Każdą część oznaczysz jako przeczytaną osobno, a postęp liczy się częściami."
           }
         }
       }
@@ -5182,6 +5248,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "z linkiem do zakupu"
+          }
+        }
+      }
+    },
+    "z własną okładką" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "with own cover"
           }
         }
       }
@@ -5392,6 +5468,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zmień okładkę…"
+          }
+        }
+      }
+    },
+    "Zmień podział na części…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change the split…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień podział na części…"
           }
         }
       }

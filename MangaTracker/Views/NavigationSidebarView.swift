@@ -12,6 +12,7 @@ struct NavigationSidebarView: View {
 
     let onOpenStatistics: () -> Void
     let onOpenUpcoming: () -> Void
+    let onOpenShelf: () -> Void
     let onOpenSettings: () -> Void
 
     var body: some View {
@@ -48,6 +49,7 @@ struct NavigationSidebarView: View {
             VStack(spacing: 2) {
                 row("Statystyki", systemImage: "chart.bar", action: onOpenStatistics)
                 row("Nadchodzące", systemImage: "calendar.badge.clock", action: onOpenUpcoming)
+                row("Półka", systemImage: "books.vertical", action: onOpenShelf)
                 row(
                     "Powiadomienia",
                     systemImage: toastService.unreadInboxCount > 0 ? "bell.badge" : "bell",

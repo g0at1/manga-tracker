@@ -63,6 +63,14 @@ struct MangaTrackerApp: App {
         .defaultSize(width: 1200, height: 880)
         .modelContainer(container)
 
+        WindowGroup("Półka", id: "shelf") {
+            ShelfWindowView()
+                .localized(language)
+                .environment(syncEngine)
+        }
+        .defaultSize(width: 1300, height: 900)
+        .modelContainer(container)
+
         WindowGroup("Statystyki", id: "dashboard") {
             DashboardWindowView()
                 .localized(language)

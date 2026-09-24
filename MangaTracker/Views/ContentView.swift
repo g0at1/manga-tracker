@@ -92,6 +92,10 @@ struct ContentView: View {
                         NSApp.keyWindow?.makeFirstResponder(nil)
                         openWindow(id: "upcoming")
                     },
+                    onOpenShelf: {
+                        NSApp.keyWindow?.makeFirstResponder(nil)
+                        openWindow(id: "shelf")
+                    },
                     onOpenSettings: {
                         NSApp.keyWindow?.makeFirstResponder(nil)
                         isShowingSettings = true
