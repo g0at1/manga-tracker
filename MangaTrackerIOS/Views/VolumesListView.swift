@@ -486,8 +486,7 @@ private struct VolumeEditSheet: View {
 
                 Section("Cena") {
                     HStack {
-                        TextField("0,00", value: $volume.price, format: .number.precision(.fractionLength(2)))
-                            .keyboardType(.decimalPad)
+                        PriceField(price: $volume.price)
                         Text("PLN")
                             .foregroundStyle(.secondary)
                     }
@@ -523,6 +522,53 @@ private struct VolumeEditSheet: View {
             }
         }
         .presentationDetents([.large])
+    }
+}
+
+/// Price input backed by raw text. A `value:`/`format:` TextField reformats
+/// on every keystroke on iOS ("2" becomes "2,00", so the next "0" lands after
+/// the decimals), so the text is only formatted when the field appears and
+/// parsed into the price as the user types.
+private struct PriceField: View {
+    @Binding var price: Double?
+
+    @State private var text = ""
+
+    var body: some View {
+        TextField("0,00", text: $text)
+            .keyboardType(.decimalPad)
+            .onAppear {
+                text = price.map { $0.formatted(.number.precision(.fractionLength(2)).grouping(.never)) } ?? ""
+            }
+            .onChange(of: text) { _, newValue in
+                let sanitized = Self.sanitize(newValue)
+                if sanitized != newValue {
+                    text = sanitized
+                    return
+                }
+                let normalized = sanitized.replacingOccurrences(of: ",", with: ".")
+                price = normalized.isEmpty ? nil : Double(normalized) ?? price
+            }
+    }
+
+    /// Keeps digits and a single decimal separator with at most two decimals.
+    private static func sanitize(_ input: String) -> String {
+        var result = ""
+        var separatorSeen = false
+        var decimals = 0
+        for char in input {
+            if char.isASCII, char.isNumber {
+                if separatorSeen {
+                    guard decimals < 2 else { continue }
+                    decimals += 1
+                }
+                result.append(char)
+            } else if char == "," || char == ".", !separatorSeen {
+                separatorSeen = true
+                result.append(",")
+            }
+        }
+        return result
     }
 }
 
