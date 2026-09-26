@@ -150,7 +150,7 @@ struct FavoriteHeartButton: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .help(isFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych")
+        .tooltip(isFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych")
         .onHover { isHovered = $0 }
         .animation(.easeOut(duration: 0.12), value: isHovered)
         .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isFavorite)

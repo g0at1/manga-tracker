@@ -252,7 +252,7 @@ struct LibraryView: View {
         }
         .buttonStyle(.plain)
         .keyboardShortcut("n", modifiers: .command)
-        .help("Dodaj nową serię (⌘N)")
+        .tooltip("Dodaj nową serię (⌘N)")
         .shadow(color: .green.opacity(0.35), radius: 10, y: 4)
     }
 
@@ -454,7 +454,7 @@ struct LibraryView: View {
         .menuStyle(.borderlessButton)
         .buttonStyle(.bordered)
         .controlSize(.regular)
-        .help(isReorderable ? L("Własna kolejność: przeciągnij okładki, aby zmienić kolejność") : "")
+        .tooltip(isReorderable ? L("Własna kolejność: przeciągnij okładki, aby zmienić kolejność") : nil)
     }
 
     private var filterMenu: some View {

@@ -237,7 +237,7 @@ struct DetailHeroView: View {
                 }
             }
             .disabled(isFetchingRecommendations || manga.aniListId == nil)
-            .help(manga.aniListId == nil ? "Najpierw odśwież dane z AniList" : "")
+            .tooltip(manga.aniListId == nil ? "Najpierw odśwież dane z AniList" : nil)
 
             FavoriteHeartButton(manga: manga, size: 30)
 

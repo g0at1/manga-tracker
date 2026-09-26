@@ -84,6 +84,7 @@ struct ContentView: View {
                     categoryCounts: categoryCounts,
                     category: category,
                     toastService: toastService,
+                    onGoHome: goHome,
                     onOpenStatistics: {
                         NSApp.keyWindow?.makeFirstResponder(nil)
                         openWindow(id: "dashboard")
@@ -227,6 +228,13 @@ struct ContentView: View {
         guard let selectedManga else { return }
         lastClosedManga = selectedManga
         self.selectedManga = nil
+    }
+
+    /// Unfiltered library: closes any open series, clears the search and
+    /// selects "all".
+    private func goHome() {
+        searchText = ""
+        category.wrappedValue = .all
     }
 
     private func reopenLastClosedManga() {

@@ -32,7 +32,7 @@ struct LibraryBreadcrumbView: View {
             .onHover { isHovered = $0 }
             .animation(.easeOut(duration: 0.12), value: isHovered)
             .keyboardShortcut(.leftArrow, modifiers: .command)
-            .help("Wróć do biblioteki (⌘←)")
+            .tooltip("Wróć do biblioteki (⌘←)")
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 10, weight: .semibold))

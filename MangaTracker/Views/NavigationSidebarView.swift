@@ -10,6 +10,8 @@ struct NavigationSidebarView: View {
 
     @State private var isShowingNotifications = false
 
+    /// Header logo: back to the unfiltered library.
+    let onGoHome: () -> Void
     let onOpenStatistics: () -> Void
     let onOpenUpcoming: () -> Void
     let onOpenShelf: () -> Void
@@ -17,14 +19,19 @@ struct NavigationSidebarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 10) {
-                Image(systemName: "books.vertical.fill")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.green)
-                Text("MangaTracker")
-                    .font(.title3.weight(.bold))
-                Spacer(minLength: 0)
+            Button(action: onGoHome) {
+                HStack(spacing: 10) {
+                    Image(systemName: "books.vertical.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.green)
+                    Text("MangaTracker")
+                        .font(.title3.weight(.bold))
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .tooltip("Strona główna")
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, 22)

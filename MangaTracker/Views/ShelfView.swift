@@ -239,6 +239,6 @@ private struct ShelfVolume: View {
             .offset(y: isHovered ? -8 : 0)
             .onHover { isHovered = $0 }
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isHovered)
-            .help(Text("\(volume.manga?.title ?? "") — tom \(volume.number)"))
+            .tooltip(Text("\(volume.manga?.title ?? "") — tom \(volume.number)"))
     }
 }

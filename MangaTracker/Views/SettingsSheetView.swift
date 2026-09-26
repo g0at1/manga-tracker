@@ -118,10 +118,10 @@ struct SettingsSheetView: View {
                         Spacer()
                         if !exportFolderPath.isEmpty {
                             SubtleButton(title: "Domyślny", systemImage: "arrow.uturn.backward", action: ExportFolder.reset)
-                                .help("Wróć do folderu Pobrane")
+                                .tooltip("Wróć do folderu Pobrane")
                         }
                         SubtleButton(title: "Zmień…", systemImage: "folder", action: chooseExportFolder)
-                            .help("Wybierz inny folder")
+                            .tooltip("Wybierz inny folder")
                     }
 
                     Divider().overlay(Color.white.opacity(0.06))

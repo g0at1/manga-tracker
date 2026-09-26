@@ -253,7 +253,7 @@ struct VolumesTableView: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
-            .help("Akcje dla wszystkich tomów")
+            .tooltip("Akcje dla wszystkich tomów")
         }
     }
 
@@ -266,7 +266,7 @@ struct VolumesTableView: View {
                     isMixed: !allDisplayedSelected && !selectedVolumeIDs.isEmpty,
                     action: toggleSelectAllDisplayed
                 )
-                .help("Zaznacz widoczne tomy")
+                .tooltip("Zaznacz widoczne tomy")
 
                 if showsCovers {
                     Color.clear.frame(width: Column.cover, height: 1)
@@ -781,10 +781,10 @@ private struct VolumeRow: View {
         )
         .opacity(volume.owned ? 1 : 0.45)
         .disabled(!volume.owned)
-        .help(volume.owned ? "Cena tomu" : "Oznacz tom jako kupiony, aby wpisać cenę")
+        .tooltip(volume.owned ? "Cena tomu" : "Oznacz tom jako kupiony, aby wpisać cenę")
     }
 
-    private func dateCell(icon: String, date: Date?, help: String, action: @escaping () -> Void) -> some View {
+    private func dateCell(icon: String, date: Date?, help: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
@@ -801,7 +801,7 @@ private struct VolumeRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(help)
+        .tooltip(help)
     }
 }
 
@@ -862,7 +862,7 @@ private struct VolumePartRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Data przeczytania")
+            .tooltip("Data przeczytania")
 
             Color.clear.frame(width: Column.date, height: 1)
 
@@ -1001,7 +1001,7 @@ private struct StatusChip: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .help(isActive ? "Kliknij, aby cofnąć" : "Kliknij, aby oznaczyć")
+        .tooltip(isActive ? "Kliknij, aby cofnąć" : "Kliknij, aby oznaczyć")
     }
 }
 

@@ -113,7 +113,7 @@ private struct HeaderAction: View {
                 .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         }
         .buttonStyle(.plain)
-        .help(help)
+        .tooltip(help)
         .onHover { isHovered = $0 }
     }
 }
@@ -171,7 +171,7 @@ private struct NotificationRow: View {
                             .background(Color.white.opacity(0.1), in: Circle())
                     }
                     .buttonStyle(.plain)
-                    .help("Usuń")
+                    .tooltip("Usuń")
                 } else if !entry.isRead {
                     Circle()
                         .fill(Color.green)

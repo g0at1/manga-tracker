@@ -241,7 +241,7 @@ private struct RecommendationCard: View {
                             Label("\(rating)", systemImage: "heart.fill")
                                 .font(.caption2.weight(.semibold))
                                 .foregroundStyle(.secondary)
-                                .help("Tyle osób poleca tę serię")
+                                .tooltip("Tyle osób poleca tę serię")
                         }
                     }
                 }
@@ -249,7 +249,7 @@ private struct RecommendationCard: View {
             }
             .contentShape(Rectangle())
             .onTapGesture(perform: openOnAniList)
-            .help("Otwórz w AniList")
+            .tooltip("Otwórz w AniList")
 
             addButton
         }
@@ -311,7 +311,7 @@ private struct RecommendationCard: View {
             }
             .buttonStyle(.plain)
             .disabled(isAdding)
-            .help("Dodaj serię do listy planowanych")
+            .tooltip("Dodaj serię do listy planowanych")
         }
     }
 
