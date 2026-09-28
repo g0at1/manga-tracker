@@ -4,6 +4,9 @@ import SwiftUI
 /// page on the Mac; stacked under the volumes on the phone.
 struct DetailSidePanelView: View {
     @Bindable var manga: Manga
+    /// Under the table on a narrow Mac window: two columns, the form and
+    /// note beside the synopsis, instead of one tall stack.
+    var isWide = false
 
     @State private var newVolumeNumber = ""
     @State private var bulkFrom = ""
@@ -11,10 +14,23 @@ struct DetailSidePanelView: View {
     @State private var validationMessage: String?
 
     var body: some View {
-        VStack(spacing: 16) {
-            addVolumesCard
-            noteCard
-            summaryCard
+        if isWide {
+            HStack(alignment: .top, spacing: 16) {
+                VStack(spacing: 16) {
+                    addVolumesCard
+                    noteCard
+                }
+                .frame(maxWidth: .infinity)
+
+                summaryCard
+                    .frame(maxWidth: .infinity)
+            }
+        } else {
+            VStack(spacing: 16) {
+                addVolumesCard
+                noteCard
+                summaryCard
+            }
         }
     }
 

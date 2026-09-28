@@ -76,20 +76,82 @@ struct CoverImageView: View {
 }
 
 /// Full-bleed banner that fades in at 60% opacity, sized by its container.
+///
+/// AniList banners are at most 1900px wide, so filling a wide window on a
+/// Retina display stretches them about 2× and they turn soft and blocky.
+/// Past `maxMagnification` the banner is drawn at that size instead,
+/// centered, with its sides fading into a heavily blurred copy that fills
+/// the rest of the width.
 struct BannerImageView: View {
     let url: URL?
     let size: CGSize
 
+    @Environment(\.displayScale) private var displayScale
+
+    /// How far a banner pixel may be stretched before it starts to look soft.
+    private static let maxMagnification: CGFloat = 1.5
+    /// Width of the fade between the sharp banner and the blurred sides.
+    private static let featherWidth: CGFloat = 140
+
     var body: some View {
         CachedAsyncImage(url: url, maxPixelSize: ImageCache.bannerMaxPixelSize) { image in
             if let image {
-                Image(decorative: image, scale: 1)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: size.width, height: size.height)
-                    .clipped()
-                    .opacity(0.6)
+                ZStack {
+                    let sharpWidth = sharpWidth(for: image)
+                    if sharpWidth < size.width {
+                        filled(image)
+                            .blur(radius: 30, opaque: true)
+                        sharp(image, width: sharpWidth)
+                    } else {
+                        filled(image)
+                    }
+                }
+                .frame(width: size.width, height: size.height)
+                .clipped()
+                .opacity(0.6)
             }
         }
+    }
+
+    private func filled(_ image: CGImage) -> some View {
+        Image(decorative: image, scale: 1)
+            .resizable()
+            .scaledToFill()
+            .frame(width: size.width, height: size.height)
+            .clipped()
+    }
+
+    private func sharp(_ image: CGImage, width: CGFloat) -> some View {
+        let feather = min(Self.featherWidth / width, 0.25)
+        return Image(decorative: image, scale: 1)
+            .resizable()
+            .interpolation(.high)
+            .scaledToFill()
+            .frame(width: width, height: size.height)
+            .clipped()
+            .mask(
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .black, location: feather),
+                        .init(color: .black, location: 1 - feather),
+                        .init(color: .clear, location: 1),
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+    }
+
+    /// Width, in points, of the banner drawn without stretching it past
+    /// `maxMagnification`. It always covers the full height, so a very wide,
+    /// short banner may still be stretched more than that.
+    private func sharpWidth(for image: CGImage) -> CGFloat {
+        guard image.width > 0, image.height > 0 else { return size.width }
+        let pointsPerPixel = max(
+            Self.maxMagnification / max(displayScale, 1),
+            size.height / CGFloat(image.height)
+        )
+        return CGFloat(image.width) * pointsPerPixel
     }
 }

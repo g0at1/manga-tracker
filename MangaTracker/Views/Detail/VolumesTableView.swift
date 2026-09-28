@@ -21,6 +21,7 @@ struct VolumesTableView: View {
     @State private var isFetchingCovers = false
     @State private var showBulkPurchaseDatePopover = false
     @State private var bulkPurchaseDate: Date = .now
+    @State private var tableWidth: CGFloat = .infinity
 
     enum FilterMode: String, CaseIterable, Identifiable {
         case all
@@ -81,6 +82,21 @@ struct VolumesTableView: View {
         static let date: CGFloat = 100
         static let menu: CGFloat = 26
         static let spacing: CGFloat = 12
+        static let rowPadding: CGFloat = 18
+    }
+
+    /// Width a row needs with the first `dateColumns` date columns shown.
+    static func rowWidth(dateColumns: Int, showsCovers: Bool) -> CGFloat {
+        // Checkbox, number, status, price, the spacer before the dates and
+        // the menu; plus the cover when there is one.
+        var widths: [CGFloat] = [Column.checkbox, Column.number, Column.status, Column.price, 8, Column.menu]
+        if showsCovers {
+            widths.append(Column.cover)
+        }
+        widths += Array(repeating: Column.date, count: dateColumns)
+        return widths.reduce(0, +)
+            + Column.spacing * CGFloat(widths.count - 1)
+            + Column.rowPadding * 2
     }
 
     // MARK: - Derived
@@ -111,6 +127,16 @@ struct VolumesTableView: View {
         manga.hasVolumeCovers
     }
 
+    /// A narrow window drops date columns from the right (release first)
+    /// instead of spilling rows out of the card. The dates stay editable
+    /// from the row menu.
+    private var dateFields: [DateField] {
+        let count = (0 ... DateField.allCases.count).last {
+            Self.rowWidth(dateColumns: $0, showsCovers: showsCovers) <= tableWidth
+        } ?? 0
+        return Array(DateField.allCases.prefix(count))
+    }
+
     private var selectedVolumes: [Volume] {
         sortedVolumes.filter { selectedVolumeIDs.contains($0.persistentModelID) }
     }
@@ -127,6 +153,7 @@ struct VolumesTableView: View {
         // rows all read this instead of re-sorting.
         let displayedVolumes = displayedVolumes
         let allDisplayedSelected = allSelected(in: displayedVolumes)
+        let dateFields = dateFields
 
         DetailCard(padding: 0) {
             VStack(spacing: 0) {
@@ -159,6 +186,7 @@ struct VolumesTableView: View {
                                     isSelected: selectedVolumeIDs.contains(volume.persistentModelID),
                                     isAlternate: index.isMultiple(of: 2),
                                     showsCover: showsCovers,
+                                    dateFields: dateFields,
                                     onToggleSelection: { toggleSelection(volume) },
                                     onToggleOwned: { toggleOwned(volume) },
                                     onToggleRead: { toggleRead(volume) },
@@ -179,19 +207,21 @@ struct VolumesTableView: View {
                                         partCount: volume.parts.count,
                                         isAlternate: index.isMultiple(of: 2),
                                         showsCover: showsCovers,
+                                        dateFields: dateFields,
                                         onToggleRead: { volume.markPart(part, read: !part.read) },
                                         onEditReadDate: { editingDateTarget = .partRead(part) }
                                     )
                                 }
                             }
                         } header: {
-                            columnHeader(allDisplayedSelected: allDisplayedSelected)
+                            columnHeader(allDisplayedSelected: allDisplayedSelected, dateFields: dateFields)
                         }
                     }
                     .padding(.bottom, 6)
                 }
             }
         }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { tableWidth = $0 }
         .onChange(of: manga.volumes.count) { _, _ in
             // Drop selections that point at deleted volumes.
             let existing = Set(manga.volumes.map(\.persistentModelID))
@@ -257,7 +287,7 @@ struct VolumesTableView: View {
         }
     }
 
-    private func columnHeader(allDisplayedSelected: Bool) -> some View {
+    private func columnHeader(allDisplayedSelected: Bool, dateFields: [DateField]) -> some View {
         VStack(spacing: 0) {
             Divider().overlay(Color.white.opacity(0.06))
             HStack(spacing: Column.spacing) {
@@ -276,14 +306,21 @@ struct VolumesTableView: View {
                 Text("Status").frame(width: Column.status, alignment: .leading)
                 Text("Cena").frame(width: Column.price, alignment: .leading)
                 Spacer(minLength: 8)
-                Text("Zakup").frame(width: Column.date, alignment: .leading)
-                Text("Przeczytano").frame(width: Column.date, alignment: .leading)
-                Text("Premiera").frame(width: Column.date, alignment: .leading)
+                ForEach(dateFields, id: \.self) { field in
+                    Group {
+                        switch field {
+                        case .purchase: Text("Zakup")
+                        case .read: Text("Przeczytano")
+                        case .release: Text("Premiera")
+                        }
+                    }
+                    .frame(width: Column.date, alignment: .leading)
+                }
                 Color.clear.frame(width: Column.menu, height: 1)
             }
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 18)
+            .padding(.horizontal, Column.rowPadding)
             .padding(.vertical, 8)
             Divider().overlay(Color.white.opacity(0.08))
         }
@@ -651,7 +688,8 @@ struct VolumesTableView: View {
 
 // MARK: - Row
 
-private enum DateField {
+/// In column order, left to right.
+private enum DateField: CaseIterable {
     case purchase, read, release
 }
 
@@ -660,6 +698,7 @@ private struct VolumeRow: View {
     let isSelected: Bool
     let isAlternate: Bool
     let showsCover: Bool
+    let dateFields: [DateField]
     let onToggleSelection: () -> Void
     let onToggleOwned: () -> Void
     let onToggleRead: () -> Void
@@ -708,9 +747,16 @@ private struct VolumeRow: View {
 
             Spacer(minLength: 8)
 
-            dateCell(icon: "cart", date: volume.purchaseDate, help: "Data zakupu") { onEditDate(.purchase) }
-            dateCell(icon: "checkmark.circle", date: volume.readDate, help: "Data przeczytania") { onEditDate(.read) }
-            dateCell(icon: "sparkles", date: volume.releaseDate, help: "Data premiery") { onEditDate(.release) }
+            ForEach(dateFields, id: \.self) { field in
+                switch field {
+                case .purchase:
+                    dateCell(icon: "cart", date: volume.purchaseDate, help: "Data zakupu") { onEditDate(.purchase) }
+                case .read:
+                    dateCell(icon: "checkmark.circle", date: volume.readDate, help: "Data przeczytania") { onEditDate(.read) }
+                case .release:
+                    dateCell(icon: "sparkles", date: volume.releaseDate, help: "Data premiery") { onEditDate(.release) }
+                }
+            }
 
             Menu {
                 Button("Ustaw datę zakupu") { onEditDate(.purchase) }
@@ -734,7 +780,7 @@ private struct VolumeRow: View {
             .menuIndicator(.hidden)
             .frame(width: Column.menu)
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, Column.rowPadding)
         .padding(.vertical, 7)
         .background(rowBackground)
         .onHover { isHovered = $0 }
@@ -812,6 +858,7 @@ private struct VolumePartRow: View {
     let partCount: Int
     let isAlternate: Bool
     let showsCover: Bool
+    let dateFields: [DateField]
     let onToggleRead: () -> Void
     let onEditReadDate: () -> Void
 
@@ -845,26 +892,13 @@ private struct VolumePartRow: View {
 
             Spacer(minLength: 8)
 
-            Color.clear.frame(width: Column.date, height: 1)
-
-            Button(action: onEditReadDate) {
-                HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle")
-                        .font(.caption)
-                        .foregroundStyle(part.readDate == nil ? .tertiary : .secondary)
-                        .frame(width: 14)
-                    Text(part.readDate?.yyyyMMdd() ?? "—")
-                        .font(.caption)
-                        .monospacedDigit()
-                        .foregroundStyle(part.readDate == nil ? .tertiary : .primary)
+            ForEach(dateFields, id: \.self) { field in
+                if field == .read {
+                    readDateCell
+                } else {
+                    Color.clear.frame(width: Column.date, height: 1)
                 }
-                .frame(width: Column.date, alignment: .leading)
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .tooltip("Data przeczytania")
-
-            Color.clear.frame(width: Column.date, height: 1)
 
             Menu {
                 Button("Ustaw datę przeczytania", action: onEditReadDate)
@@ -879,10 +913,29 @@ private struct VolumePartRow: View {
             .menuIndicator(.hidden)
             .frame(width: Column.menu)
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, Column.rowPadding)
         .padding(.vertical, 4)
         .background(rowBackground)
         .onHover { isHovered = $0 }
+    }
+
+    private var readDateCell: some View {
+        Button(action: onEditReadDate) {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(part.readDate == nil ? .tertiary : .secondary)
+                    .frame(width: 14)
+                Text(part.readDate?.yyyyMMdd() ?? "—")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(part.readDate == nil ? .tertiary : .primary)
+            }
+            .frame(width: Column.date, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .tooltip("Data przeczytania")
     }
 
     private var rowBackground: Color {

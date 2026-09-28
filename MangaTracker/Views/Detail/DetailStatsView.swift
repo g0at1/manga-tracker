@@ -30,23 +30,40 @@ struct DetailStatsView: View {
         let stats = manga.volumeStats
 
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
-                StatCardView(title: "tomów", value: "\(stats.total)", systemImage: "books.vertical.fill", accentColor: .blue)
-                StatCardView(title: "kupionych", value: "\(stats.owned)", systemImage: "cart.fill", accentColor: .green)
-                StatCardView(title: "przeczytanych", value: "\(stats.read)", systemImage: "checkmark.circle.fill", accentColor: .green)
-                StatCardView(
-                    title: "wydano",
-                    value: stats.totalPaid.formatted(.number.precision(.fractionLength(2)).locale(locale)),
-                    systemImage: "wallet.pass.fill",
-                    accentColor: .yellow,
-                    unit: "PLN"
-                )
-                ratingTile
-                Spacer(minLength: 0)
+            // One row when it fits, otherwise the counts on one line and
+            // money and rating on the next.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) {
+                    countTiles(stats)
+                    otherTiles(stats)
+                }
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 12) { countTiles(stats) }
+                    HStack(spacing: 12) { otherTiles(stats) }
+                }
             }
 
             progressCard(stats)
         }
+    }
+
+    @ViewBuilder
+    private func countTiles(_ stats: MangaVolumeStats) -> some View {
+        StatCardView(title: "tomów", value: "\(stats.total)", systemImage: "books.vertical.fill", accentColor: .blue)
+        StatCardView(title: "kupionych", value: "\(stats.owned)", systemImage: "cart.fill", accentColor: .green)
+        StatCardView(title: "przeczytanych", value: "\(stats.read)", systemImage: "checkmark.circle.fill", accentColor: .green)
+    }
+
+    @ViewBuilder
+    private func otherTiles(_ stats: MangaVolumeStats) -> some View {
+        StatCardView(
+            title: "wydano",
+            value: stats.totalPaid.formatted(.number.precision(.fractionLength(2)).locale(locale)),
+            systemImage: "wallet.pass.fill",
+            accentColor: .yellow,
+            unit: "PLN"
+        )
+        ratingTile
     }
 
     private var ratingTile: some View {
