@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 /// The series' volumes: filter chips, bulk selection, and one row per volume
-/// with owned/read toggles, price and dates. A volume split into parts (a
+/// with owned/read toggles (or "on its way" for an ordered one), price and dates. A volume split into parts (a
 /// collected edition) gets a row per part underneath, each read on its own.
 struct VolumesTableView: View {
     @Environment(\.modelContext) private var modelContext
@@ -26,6 +26,7 @@ struct VolumesTableView: View {
     enum FilterMode: String, CaseIterable, Identifiable {
         case all
         case missing
+        case onTheirWay
         case unread
 
         var id: String {
@@ -36,6 +37,7 @@ struct VolumesTableView: View {
             switch self {
             case .all: "Wszystkie"
             case .missing: "Brakujące"
+            case .onTheirWay: "W drodze"
             case .unread: "Nieprzeczytane"
             }
         }
@@ -108,7 +110,8 @@ struct VolumesTableView: View {
     private var displayedVolumes: [Volume] {
         switch filterMode {
         case .all: sortedVolumes
-        case .missing: sortedVolumes.filter { !$0.owned }
+        case .missing: sortedVolumes.filter { !$0.owned && !$0.isOnItsWay }
+        case .onTheirWay: sortedVolumes.filter(\.isOnItsWay)
         case .unread: sortedVolumes.filter { !($0.read ?? false) }
         }
     }
@@ -116,9 +119,16 @@ struct VolumesTableView: View {
     private func count(for mode: FilterMode) -> Int {
         switch mode {
         case .all: manga.volumes.count
-        case .missing: manga.volumes.filter { !$0.owned }.count
+        case .missing: manga.volumes.filter { !$0.owned && !$0.isOnItsWay }.count
+        case .onTheirWay: manga.volumes.filter(\.isOnItsWay).count
         case .unread: manga.volumes.filter { !($0.read ?? false) }.count
         }
+    }
+
+    /// "W drodze" only earns a chip while something is ordered (or it's the
+    /// filter in use, so it doesn't vanish from under the selection).
+    private var filterModes: [FilterMode] {
+        FilterMode.allCases.filter { $0 != .onTheirWay || filterMode == $0 || count(for: $0) > 0 }
     }
 
     /// The cover column only appears once there's something to put in it,
@@ -161,11 +171,10 @@ struct VolumesTableView: View {
                     .padding(.horizontal, 18)
                     .padding(.vertical, 14)
 
-                if !selectedVolumeIDs.isEmpty {
-                    bulkSelectionBar
-                }
-
                 if displayedVolumes.isEmpty {
+                    if !selectedVolumeIDs.isEmpty {
+                        bulkSelectionBar
+                    }
                     Divider().overlay(Color.white.opacity(0.06))
                     ContentUnavailableView(
                         filterMode == .all ? "Brak tomów" : "Nic do pokazania",
@@ -189,6 +198,7 @@ struct VolumesTableView: View {
                                     dateFields: dateFields,
                                     onToggleSelection: { toggleSelection(volume) },
                                     onToggleOwned: { toggleOwned(volume) },
+                                    onToggleOrdered: { volume.markOrdered(!volume.isOnItsWay) },
                                     onToggleRead: { toggleRead(volume) },
                                     onEditDate: { field in
                                         switch field {
@@ -214,7 +224,16 @@ struct VolumesTableView: View {
                                 }
                             }
                         } header: {
-                            columnHeader(allDisplayedSelected: allDisplayedSelected, dateFields: dateFields)
+                            // The selection's actions stick with the column
+                            // header, so they're at hand after scrolling down
+                            // to pick more volumes.
+                            VStack(spacing: 0) {
+                                if !selectedVolumeIDs.isEmpty {
+                                    bulkSelectionBar
+                                }
+                                columnHeader(allDisplayedSelected: allDisplayedSelected, dateFields: dateFields)
+                            }
+                            .background(Self.headerBackground)
                         }
                     }
                     .padding(.bottom, 6)
@@ -253,13 +272,21 @@ struct VolumesTableView: View {
             Text("Tomy")
                 .font(.headline)
 
-            ForEach(FilterMode.allCases) { mode in
+            ForEach(filterModes) { mode in
                 FilterChip(title: mode.label, count: count(for: mode), isSelected: filterMode == mode) {
                     filterMode = mode
                 }
             }
 
             Spacer(minLength: 8)
+
+            let onTheirWay = count(for: .onTheirWay)
+            if onTheirWay > 0 {
+                SubtleButton(title: "Dostarczone (\(onTheirWay))", systemImage: "shippingbox", tint: .orange) {
+                    markOrderDelivered()
+                }
+                .tooltip("Oznacz tomy w drodze jako kupione")
+            }
 
             Menu {
                 Button("Oznacz wszystkie jako kupione", systemImage: "cart") { markAllOwned() }
@@ -324,32 +351,76 @@ struct VolumesTableView: View {
             .padding(.vertical, 8)
             Divider().overlay(Color.white.opacity(0.08))
         }
-        .background(Color(red: 0.075, green: 0.08, blue: 0.09))
     }
 
+    /// Opaque, since the pinned header has rows scrolling under it.
+    private static let headerBackground = Color(red: 0.075, green: 0.08, blue: 0.09)
+
     // MARK: - Bulk selection
+
+    /// How much of the selection bar's labels fit, most first.
+    private enum BulkBarDensity: CaseIterable {
+        /// Every action with its title.
+        case full
+        /// Titles only on marking owned / on its way / read.
+        case compact
+        /// Icons only; the titles show as tooltips.
+        case icons
+    }
 
     private var bulkSelectionBar: some View {
         HStack(spacing: 8) {
             Text("Zaznaczono: \(selectedVolumeIDs.count)")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.green)
+                .fixedSize()
 
             Button("Odznacz") { selectedVolumeIDs.removeAll() }
                 .buttonStyle(.plain)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .fixedSize()
 
-            Spacer()
+            Spacer(minLength: 8)
 
-            SubtleButton(title: "Kupione", systemImage: "cart") { setOwned(true, for: selectedVolumes) }
-            SubtleButton(title: "Przeczytane", systemImage: "checkmark.circle") { setRead(true, for: selectedVolumes) }
+            ViewThatFits(in: .horizontal) {
+                ForEach(BulkBarDensity.allCases, id: \.self) { density in
+                    bulkActions(density)
+                }
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 10)
+        .background(Color.green.opacity(0.07))
+    }
+
+    private func bulkActions(_ density: BulkBarDensity) -> some View {
+        let primaryCompact = density == .icons
+        let secondaryCompact = density != .full
+
+        return HStack(spacing: 8) {
+            bulkButton("Kupione", systemImage: "cart", compact: primaryCompact) {
+                setOwned(true, for: selectedVolumes)
+            }
+            bulkButton(
+                "W drodze",
+                systemImage: "shippingbox",
+                compact: primaryCompact,
+                help: "Zamówione, jeszcze nie dotarły — nie liczą się do statystyk"
+            ) {
+                setOrdered(true, for: selectedVolumes)
+            }
+            bulkButton("Przeczytane", systemImage: "checkmark.circle", compact: primaryCompact) {
+                setRead(true, for: selectedVolumes)
+            }
 
             Menu {
                 Button("Oznacz jako nie kupione") { setOwned(false, for: selectedVolumes) }
+                Button("Oznacz jako nie zamówione") { setOrdered(false, for: selectedVolumes) }
                 Button("Oznacz jako nieprzeczytane") { setRead(false, for: selectedVolumes) }
             } label: {
                 Label("Cofnij", systemImage: "arrow.uturn.backward")
+                    .labelStyle(BulkMenuLabelStyle(showsTitle: !secondaryCompact))
                     .font(.system(size: 12, weight: .semibold))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 7)
@@ -361,33 +432,46 @@ struct VolumesTableView: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
+            .tooltip(secondaryCompact ? Text("Cofnij") : nil)
 
-            SubtleButton(title: "Cena", systemImage: "banknote") {
+            bulkButton("Cena", systemImage: "banknote", compact: secondaryCompact) {
                 bulkPriceText = ""
                 showBulkPricePopover = true
             }
             .popover(isPresented: $showBulkPricePopover, arrowEdge: .bottom) { bulkPricePopover }
 
-            SubtleButton(title: "Data zakupu", systemImage: "calendar") {
+            bulkButton("Data zakupu", systemImage: "calendar", compact: secondaryCompact) {
                 bulkPurchaseDate = .now
                 showBulkPurchaseDatePopover = true
             }
             .popover(isPresented: $showBulkPurchaseDatePopover, arrowEdge: .bottom) { bulkPurchaseDatePopover }
 
-            SubtleButton(title: "Części", systemImage: "square.split.1x2") {
+            bulkButton("Części", systemImage: "square.split.1x2", compact: secondaryCompact) {
                 editingPartsTarget = PartsEditTarget(volumes: selectedVolumes)
             }
 
-            SubtleButton(title: "Usuń", systemImage: "trash", tint: .red) {
+            bulkButton("Usuń", systemImage: "trash", compact: secondaryCompact, tint: .red) {
                 for volume in selectedVolumes {
                     deleteVolume(volume)
                 }
                 selectedVolumeIDs.removeAll()
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 10)
-        .background(Color.green.opacity(0.07))
+        .fixedSize()
+    }
+
+    /// A selection-bar action; icon-only when `compact`, with its title
+    /// (or `help`) as the tooltip.
+    private func bulkButton(
+        _ title: LocalizedStringKey,
+        systemImage: String,
+        compact: Bool,
+        tint: Color = .primary,
+        help: LocalizedStringKey? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        SubtleButton(title: title, systemImage: systemImage, tint: tint, showsTitle: !compact, action: action)
+            .tooltip(help.map { Text($0) } ?? (compact ? Text(title) : nil))
     }
 
     private var bulkPricePopover: some View {
@@ -404,7 +488,7 @@ struct VolumesTableView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text("Tomy, które nie są kupione, zostaną oznaczone jako kupione.")
+            Text("Tomy, które nie są kupione ani w drodze, zostaną oznaczone jako kupione.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -432,7 +516,9 @@ struct VolumesTableView: View {
         guard let price = parsedBulkPrice else { return }
         for volume in selectedVolumes {
             volume.price = price
-            volume.markOwned(true)
+            if !volume.isOnItsWay {
+                volume.markOwned(true)
+            }
         }
         showBulkPricePopover = false
     }
@@ -449,8 +535,7 @@ struct VolumesTableView: View {
                 Spacer()
                 Button("Zastosuj") {
                     for volume in selectedVolumes {
-                        volume.owned = true
-                        volume.purchaseDate = bulkPurchaseDate
+                        volume.setPurchaseDate(bulkPurchaseDate)
                     }
                     showBulkPurchaseDatePopover = false
                 }
@@ -473,10 +558,7 @@ struct VolumesTableView: View {
             title = "Data zakupu"
             selection = Binding(
                 get: { volume.purchaseDate ?? .now },
-                set: {
-                    volume.purchaseDate = $0
-                    volume.owned = true
-                }
+                set: { volume.setPurchaseDate($0) }
             )
             clear = { volume.purchaseDate = nil }
         case let .read(volume):
@@ -574,14 +656,32 @@ struct VolumesTableView: View {
         }
     }
 
+    private func setOrdered(_ ordered: Bool, for volumes: [Volume]) {
+        for volume in volumes {
+            volume.markOrdered(ordered)
+        }
+    }
+
     private func setRead(_ read: Bool, for volumes: [Volume]) {
         for volume in volumes {
             volume.markRead(read)
         }
     }
 
+    private func markOrderDelivered() {
+        let count = manga.markOrderDelivered()
+        if filterMode == .onTheirWay {
+            filterMode = .all
+        }
+        ToastService.shared.show(L("Dostarczono %lld tomów — oznaczone jako kupione.", count), type: .success)
+    }
+
     private func toggleOwned(_ volume: Volume) {
-        if volume.owned {
+        if volume.isOnItsWay {
+            // It arrived: no question about earlier volumes, those are
+            // their own orders.
+            setOwned(true, for: [volume])
+        } else if volume.owned {
             setOwned(false, for: [volume])
         } else if shouldAskMarkPreviousOwned(upTo: volume) {
             pendingBulkAction = .markOwnedUpTo(volume)
@@ -701,6 +801,7 @@ private struct VolumeRow: View {
     let dateFields: [DateField]
     let onToggleSelection: () -> Void
     let onToggleOwned: () -> Void
+    let onToggleOrdered: () -> Void
     let onToggleRead: () -> Void
     let onEditDate: (DateField) -> Void
     let onEditParts: () -> Void
@@ -708,6 +809,11 @@ private struct VolumeRow: View {
     let onDelete: () -> Void
 
     @State private var isHovered = false
+    /// Set on the first hover and kept: the price field and the menu are
+    /// AppKit controls, too heavy to build for every row that scrolls in,
+    /// so a row draws plain stand-ins until the pointer reaches it.
+    @State private var isActivated = false
+    @FocusState private var isPriceFocused: Bool
 
     private typealias Column = VolumesTableView.Column
 
@@ -737,7 +843,18 @@ private struct VolumeRow: View {
                 .frame(width: Column.number, alignment: .leading)
 
             HStack(spacing: 6) {
-                StatusChip(title: "Kupiony", icon: "cart.fill", isActive: volume.owned, action: onToggleOwned)
+                if volume.isOnItsWay {
+                    StatusChip(
+                        title: "W drodze",
+                        icon: "shippingbox.fill",
+                        isActive: true,
+                        tint: .orange,
+                        help: "Kliknij, gdy dotrze — tom zostanie oznaczony jako kupiony",
+                        action: onToggleOwned
+                    )
+                } else {
+                    StatusChip(title: "Kupiony", icon: "cart.fill", isActive: volume.owned, action: onToggleOwned)
+                }
                 StatusChip(title: "Przeczytany", icon: "checkmark.circle.fill", isActive: isRead, detail: partsProgress, action: onToggleRead)
             }
             .frame(width: Column.status, alignment: .leading)
@@ -750,7 +867,7 @@ private struct VolumeRow: View {
             ForEach(dateFields, id: \.self) { field in
                 switch field {
                 case .purchase:
-                    dateCell(icon: "cart", date: volume.purchaseDate, help: "Data zakupu") { onEditDate(.purchase) }
+                    dateCell(icon: "cart", date: volume.purchaseDate, help: volume.isOnItsWay ? "Data zamówienia" : "Data zakupu") { onEditDate(.purchase) }
                 case .read:
                     dateCell(icon: "checkmark.circle", date: volume.readDate, help: "Data przeczytania") { onEditDate(.read) }
                 case .release:
@@ -758,32 +875,47 @@ private struct VolumeRow: View {
                 }
             }
 
-            Menu {
-                Button("Ustaw datę zakupu") { onEditDate(.purchase) }
-                Button("Ustaw datę przeczytania") { onEditDate(.read) }
-                Button("Ustaw datę premiery") { onEditDate(.release) }
-                Divider()
-                Button(volume.isSplit ? "Zmień podział na części…" : "Podziel na części…", action: onEditParts)
-                if volume.isSplit {
-                    Button("Usuń podział", action: onJoinParts)
-                }
-                Divider()
-                Button("Usuń tom", role: .destructive, action: onDelete)
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: Column.menu, height: 26)
-                    .background(Color.white.opacity(isHovered ? 0.08 : 0), in: Circle())
+            if isActivated {
+                rowMenu
+            } else {
+                MenuStandIn(isHovered: false)
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .frame(width: Column.menu)
         }
         .padding(.horizontal, Column.rowPadding)
         .padding(.vertical, 7)
         .background(rowBackground)
-        .onHover { isHovered = $0 }
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering {
+                isActivated = true
+            }
+        }
+    }
+
+    private var rowMenu: some View {
+        Menu {
+            Button("Ustaw datę zakupu") { onEditDate(.purchase) }
+            Button("Ustaw datę przeczytania") { onEditDate(.read) }
+            Button("Ustaw datę premiery") { onEditDate(.release) }
+            Divider()
+            if volume.isOnItsWay {
+                Button("Cofnij zamówienie", action: onToggleOrdered)
+            } else if !volume.owned {
+                Button("Oznacz jako w drodze", action: onToggleOrdered)
+            }
+            Divider()
+            Button(volume.isSplit ? "Zmień podział na części…" : "Podziel na części…", action: onEditParts)
+            if volume.isSplit {
+                Button("Usuń podział", action: onJoinParts)
+            }
+            Divider()
+            Button("Usuń tom", role: .destructive, action: onDelete)
+        } label: {
+            MenuStandIn(isHovered: isHovered)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .frame(width: Column.menu)
     }
 
     private var rowBackground: Color {
@@ -796,17 +928,38 @@ private struct VolumeRow: View {
         if isRead {
             return .green.opacity(isAlternate ? 0.05 : 0.03)
         }
+        if volume.isOnItsWay {
+            return .orange.opacity(isAlternate ? 0.05 : 0.03)
+        }
         return .white.opacity(isAlternate ? 0.025 : 0)
+    }
+
+    /// Its price is known once it's ordered, even though it only counts
+    /// once it arrives.
+    private var hasPrice: Bool {
+        volume.owned || volume.isOnItsWay
     }
 
     private var priceField: some View {
         HStack(spacing: 6) {
-            TextField(
-                "0,00",
-                value: Bindable(volume).price,
-                format: .number.precision(.fractionLength(2))
-            )
-            .textFieldStyle(.plain)
+            Group {
+                if isActivated || isPriceFocused {
+                    TextField(
+                        "0,00",
+                        value: Bindable(volume).price,
+                        format: .number.precision(.fractionLength(2))
+                    )
+                    .textFieldStyle(.plain)
+                    .focused($isPriceFocused)
+                } else if let price = volume.price {
+                    Text(price, format: .number.precision(.fractionLength(2)))
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                } else {
+                    Text("0,00")
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+            }
             .font(.subheadline.weight(.semibold))
             .monospacedDigit()
             .multilineTextAlignment(.trailing)
@@ -819,15 +972,15 @@ private struct VolumeRow: View {
         .padding(.vertical, 5)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.white.opacity(volume.owned ? 0.06 : 0.02))
+                .fill(Color.white.opacity(hasPrice ? 0.06 : 0.02))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
-        .opacity(volume.owned ? 1 : 0.45)
-        .disabled(!volume.owned)
-        .tooltip(volume.owned ? "Cena tomu" : "Oznacz tom jako kupiony, aby wpisać cenę")
+        .opacity(hasPrice ? 1 : 0.45)
+        .disabled(!hasPrice)
+        .tooltip(hasPrice ? "Cena tomu" : "Oznacz tom jako kupiony, aby wpisać cenę")
     }
 
     private func dateCell(icon: String, date: Date?, help: LocalizedStringKey, action: @escaping () -> Void) -> some View {
@@ -863,6 +1016,8 @@ private struct VolumePartRow: View {
     let onEditReadDate: () -> Void
 
     @State private var isHovered = false
+    /// See `VolumeRow.isActivated`.
+    @State private var isActivated = false
 
     private typealias Column = VolumesTableView.Column
 
@@ -900,23 +1055,28 @@ private struct VolumePartRow: View {
                 }
             }
 
-            Menu {
-                Button("Ustaw datę przeczytania", action: onEditReadDate)
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: Column.menu, height: 26)
-                    .background(Color.white.opacity(isHovered ? 0.08 : 0), in: Circle())
+            if isActivated {
+                Menu {
+                    Button("Ustaw datę przeczytania", action: onEditReadDate)
+                } label: {
+                    MenuStandIn(isHovered: isHovered)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .frame(width: Column.menu)
+            } else {
+                MenuStandIn(isHovered: false)
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .frame(width: Column.menu)
         }
         .padding(.horizontal, Column.rowPadding)
         .padding(.vertical, 4)
         .background(rowBackground)
-        .onHover { isHovered = $0 }
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering {
+                isActivated = true
+            }
+        }
     }
 
     private var readDateCell: some View {
@@ -1023,12 +1183,43 @@ private struct PartsEditorSheet: View {
     }
 }
 
+/// "Cofnij" in the selection bar: icon and title, or the icon alone.
+private struct BulkMenuLabelStyle: LabelStyle {
+    let showsTitle: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 6) {
+            configuration.icon
+            if showsTitle {
+                configuration.title
+            }
+        }
+    }
+}
+
+/// The row menu's "…" button face; also drawn on its own, without the
+/// menu, until the row is first hovered.
+private struct MenuStandIn: View {
+    let isHovered: Bool
+
+    var body: some View {
+        Image(systemName: "ellipsis")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(.secondary)
+            .frame(width: VolumesTableView.Column.menu, height: 26)
+            .background(Color.white.opacity(isHovered ? 0.08 : 0), in: Circle())
+    }
+}
+
 private struct StatusChip: View {
     let title: LocalizedStringKey
     let icon: String
     let isActive: Bool
     /// Small trailing note, e.g. how many parts are read.
     var detail: String? = nil
+    var tint: Color = .green
+    /// Overrides the generic "click to mark / undo" tooltip.
+    var help: LocalizedStringKey? = nil
     let action: () -> Void
 
     var body: some View {
@@ -1049,12 +1240,12 @@ private struct StatusChip: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .foregroundStyle(isActive ? Color.black.opacity(0.85) : .secondary)
-            .background(isActive ? Color.green : Color.white.opacity(0.06), in: Capsule())
+            .background(isActive ? tint : Color.white.opacity(0.06), in: Capsule())
             .overlay(Capsule().stroke(isActive ? Color.clear : Color.white.opacity(0.08), lineWidth: 1))
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .tooltip(isActive ? "Kliknij, aby cofnąć" : "Kliknij, aby oznaczyć")
+        .tooltip(help ?? (isActive ? "Kliknij, aby cofnąć" : "Kliknij, aby oznaczyć"))
     }
 }
 

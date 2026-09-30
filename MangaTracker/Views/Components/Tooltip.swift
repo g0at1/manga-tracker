@@ -25,21 +25,29 @@ private struct TooltipModifier: ViewModifier {
 
     @Environment(\.locale) private var locale
     @State private var id = UUID()
-    @State private var anchor = TooltipAnchorBox()
+    @State private var isHovering = false
 
     func body(content: Content) -> some View {
         // Always attached, so a tooltip that comes and goes (`cond ? "…" : nil`)
-        // doesn't change the identity of the view it's on.
+        // doesn't change the identity of the view it's on. The AppKit anchor
+        // only exists while the pointer is over the view: a long list has
+        // hundreds of tooltips, and an NSView for each makes scrolling it
+        // stutter as rows come in.
         content
-            .background(TooltipAnchor(box: anchor))
-            .onHover { isHovering in
-                if isHovering, let text, let view = anchor.view {
-                    TooltipController.shared.schedule(
-                        TooltipBubble(text: text).environment(\.locale, locale),
-                        owner: id,
-                        anchor: view
-                    )
-                } else {
+            .background {
+                if isHovering, let text {
+                    TooltipAnchor { view in
+                        TooltipController.shared.schedule(
+                            TooltipBubble(text: text).environment(\.locale, locale),
+                            owner: id,
+                            anchor: view
+                        )
+                    }
+                }
+            }
+            .onHover { hovering in
+                isHovering = hovering
+                if !hovering {
                     TooltipController.shared.cancel(owner: id)
                 }
             }
@@ -55,6 +63,8 @@ private struct TooltipBubble: View {
             .font(.system(size: 12, weight: .medium))
             .foregroundStyle(.white.opacity(0.92))
             .multilineTextAlignment(.leading)
+            // Never truncated: wraps to as many lines as it needs.
+            .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(
@@ -74,27 +84,47 @@ private struct TooltipBubble: View {
 
 // MARK: - Anchor
 
-/// Gives the modifier the AppKit view under it, to place the panel in
-/// screen coordinates.
-@MainActor
-private final class TooltipAnchorBox {
-    weak var view: NSView?
-}
-
+/// The AppKit view under a hovered control, to place the panel in screen
+/// coordinates. Reports itself once, when it's in a window and laid out.
 private struct TooltipAnchor: NSViewRepresentable {
-    let box: TooltipAnchorBox
+    let onAttach: (NSView) -> Void
 
     func makeNSView(context _: Context) -> NSView {
-        let view = PassthroughView()
-        box.view = view
-        return view
+        PassthroughView(onAttach: onAttach)
     }
 
-    func updateNSView(_ nsView: NSView, context _: Context) {
-        box.view = nsView
-    }
+    func updateNSView(_: NSView, context _: Context) {}
 
     private final class PassthroughView: NSView {
+        private let onAttach: (NSView) -> Void
+        private var didAttach = false
+
+        init(onAttach: @escaping (NSView) -> Void) {
+            self.onAttach = onAttach
+            super.init(frame: .zero)
+        }
+
+        @available(*, unavailable)
+        required init?(coder _: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            attachIfReady()
+        }
+
+        override func setFrameSize(_ newSize: NSSize) {
+            super.setFrameSize(newSize)
+            attachIfReady()
+        }
+
+        private func attachIfReady() {
+            guard !didAttach, window != nil, !bounds.isEmpty else { return }
+            didAttach = true
+            onAttach(self)
+        }
+
         override func hitTest(_: NSPoint) -> NSView? {
             nil
         }
@@ -195,7 +225,12 @@ private final class TooltipController {
 
         hosting.rootView = content
         let chrome = Self.margin * 2 + 18
-        let size = hosting.sizeThatFits(in: CGSize(width: Self.maxTextWidth + chrome, height: 10000))
+        let measured = hosting.sizeThatFits(in: CGSize(width: Self.maxTextWidth + chrome, height: 10000))
+        // Text can lay out a hair wider in the panel than it measured here
+        // (fractional sizes get snapped to the screen's pixels), and a Text
+        // short by even a fraction of a point is cut with "…". Round up and
+        // leave some slack; the bubble stays centred in the extra room.
+        let size = CGSize(width: ceil(measured.width) + 4, height: ceil(measured.height) + 2)
         let bubble = CGSize(width: size.width - Self.margin * 2, height: size.height - Self.margin * 2)
 
         let anchorRect = window.convertToScreen(anchor.convert(anchor.bounds, to: nil))

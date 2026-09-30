@@ -53,6 +53,16 @@ struct LibraryScreen: View {
         return counts
     }
 
+    /// Series with a volume ordered and not arrived yet.
+    private var onTheirWay: [Manga] {
+        mangas.filter { $0.volumes.contains(where: \.isOnItsWay) }
+    }
+
+    /// Only on the plain library view, like the Mac's home screen.
+    private var showsOnTheirWay: Bool {
+        category == .all && searchText.isEmpty && !onTheirWay.isEmpty
+    }
+
     private var stats: MangaLibraryStats {
         MangaLibraryStats(mangas: mangas)
     }
@@ -61,6 +71,10 @@ struct LibraryScreen: View {
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 18) {
                 statsStrip
+                if showsOnTheirWay {
+                    OnTheirWayCard(mangas: onTheirWay) { path.append($0) }
+                        .padding(.horizontal, horizontalPadding)
+                }
                 categoryChips
                 grid
             }

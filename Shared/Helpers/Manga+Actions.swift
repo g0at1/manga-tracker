@@ -20,3 +20,21 @@ extension Manga {
         }
     }
 }
+
+extension Manga {
+    /// Volumes ordered and not yet arrived, by number.
+    var volumesOnTheirWay: [Volume] {
+        volumes.filter(\.isOnItsWay).sorted { $0.number < $1.number }
+    }
+
+    /// The order arrived: every volume on its way becomes owned, keeping
+    /// its order date. Returns how many were marked.
+    @discardableResult
+    func markOrderDelivered(on date: Date = .now) -> Int {
+        let arriving = volumesOnTheirWay
+        for volume in arriving {
+            volume.markOwned(true, on: date)
+        }
+        return arriving.count
+    }
+}

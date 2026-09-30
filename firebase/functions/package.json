@@ -9,8 +9,8 @@
   },
   "scripts": {
     "test": "node --test",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "deploy": "npx firebase-tools deploy --only functions",
+    "logs": "npx firebase-tools functions:log"
   },
   "dependencies": {
     "firebase-admin": "^14.4.0",

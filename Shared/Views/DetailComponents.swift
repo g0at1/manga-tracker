@@ -139,6 +139,9 @@ struct SubtleButton: View {
     let title: LocalizedStringKey
     var systemImage: String? = nil
     var tint: Color = .primary
+    /// Off for an icon-only button where space is short; the title is
+    /// still its accessibility label.
+    var showsTitle = true
     let action: () -> Void
 
     @State private var isHovered = false
@@ -150,10 +153,13 @@ struct SubtleButton: View {
                     Image(systemName: systemImage)
                         .font(.system(size: 11, weight: .bold))
                 }
-                Text(title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .lineLimit(1)
+                if showsTitle || systemImage == nil {
+                    Text(title)
+                        .font(.system(size: 12, weight: .semibold))
+                        .lineLimit(1)
+                }
             }
+            .accessibilityLabel(title)
             .foregroundStyle(tint)
             .padding(.horizontal, 11)
             .padding(.vertical, 7)

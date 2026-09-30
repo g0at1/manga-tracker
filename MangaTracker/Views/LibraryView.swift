@@ -44,6 +44,11 @@ struct LibraryView: View {
             VStack(alignment: .leading, spacing: 30) {
                 header
 
+                if showsContinueReading, !onTheirWay.isEmpty {
+                    OnTheirWayCard(mangas: onTheirWay) { selectedManga = $0 }
+                        .padding(.horizontal, horizontalPadding)
+                }
+
                 if showsContinueReading, !continueReading.isEmpty {
                     continueReadingSection
                 }
@@ -99,6 +104,11 @@ struct LibraryView: View {
             .sorted { $0.lastRead > $1.lastRead }
             .prefix(8)
             .map(\.manga)
+    }
+
+    /// Series with a volume ordered and not arrived yet.
+    private var onTheirWay: [Manga] {
+        allMangas.filter { $0.volumes.contains(where: \.isOnItsWay) }
     }
 
     private var showsContinueReading: Bool {

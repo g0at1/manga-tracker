@@ -217,6 +217,20 @@ struct MangaDetailScreen: View {
                     next.markNextUnitRead()
                 }
             }
+        } else if stats.onItsWay > 0 {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Czekasz na dostawę")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("W drodze: \(stats.onItsWay)")
+                        .font(.subheadline.weight(.semibold))
+                }
+                Spacer()
+                SubtleButton(title: "Dostarczone", systemImage: "shippingbox", tint: .orange) {
+                    manga.markOrderDelivered()
+                }
+            }
         } else if let missing = stats.firstMissing {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -228,10 +242,7 @@ struct MangaDetailScreen: View {
                 }
                 Spacer()
                 SubtleButton(title: "Kupiony", systemImage: "cart") {
-                    missing.owned = true
-                    if missing.purchaseDate == nil {
-                        missing.purchaseDate = .now
-                    }
+                    missing.markOwned(true)
                 }
             }
         } else if stats.total == 0 {

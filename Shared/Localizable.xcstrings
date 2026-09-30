@@ -606,6 +606,38 @@
         }
       }
     },
+    "Cofnij zamówienie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel order"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cofnij zamówienie"
+          }
+        }
+      }
+    },
+    "Czekasz na dostawę" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for a delivery"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czekasz na dostawę"
+          }
+        }
+      }
+    },
     "Część %lld" : {
       "localizations" : {
         "en" : {
@@ -763,6 +795,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Data zakupu dla %lld tomów"
+          }
+        }
+      }
+    },
+    "Data zamówienia" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Order date"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data zamówienia"
           }
         }
       }
@@ -1070,6 +1118,107 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Default"
+          }
+        }
+      }
+    },
+    "Dostarczone" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delivered"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostarczone"
+          }
+        }
+      }
+    },
+    "Dostarczone (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delivered (%lld)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostarczone (%lld)"
+          }
+        }
+      }
+    },
+    "Dostarczono %lld tomów — oznaczone jako kupione." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delivered %lld volume — marked as owned."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delivered %lld volumes — marked as owned."
+                }
+              }
+            }
+          }
+        },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dostarczono %lld tomy — oznaczone jako kupione."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dostarczono %lld tomów — oznaczone jako kupione."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dostarczono %lld tom — oznaczony jako kupiony."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dostarczono %lld tomów — oznaczone jako kupione."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Dostarczony" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delivered"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostarczony"
           }
         }
       }
@@ -1472,6 +1621,22 @@
         }
       }
     },
+    "Kliknij, gdy dotrze — tom zostanie oznaczony jako kupiony" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Click when it arrives — the volume will be marked as owned"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kliknij, gdy dotrze — tom zostanie oznaczony jako kupiony"
+          }
+        }
+      }
+    },
     "Klucz biblioteki" : {
       "localizations" : {
         "en" : {
@@ -1670,6 +1835,182 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kwota"
+          }
+        }
+      }
+    },
+    "Nie liczą się do statystyk, dopóki nie dotrą." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Left out of the stats until they arrive."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie liczą się do statystyk, dopóki nie dotrą."
+          }
+        }
+      }
+    },
+    "Oznacz jako nie zamówione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark as not ordered"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznacz jako nie zamówione"
+          }
+        }
+      }
+    },
+    "Oznacz jako w drodze" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark as on its way"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznacz jako w drodze"
+          }
+        }
+      }
+    },
+    "Oznacz tomy w drodze jako kupione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark the volumes on their way as owned"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznacz tomy w drodze jako kupione"
+          }
+        }
+      }
+    },
+    "Tomy, które nie są kupione ani w drodze, zostaną oznaczone jako kupione." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volumes not yet owned or on their way will be marked as owned."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomy, które nie są kupione ani w drodze, zostaną oznaczone jako kupione."
+          }
+        }
+      }
+    },
+    "W drodze" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On its way"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "W drodze"
+          }
+        }
+      }
+    },
+    "W drodze: %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On its way: %lld"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "W drodze: %lld"
+          }
+        }
+      }
+    },
+    "Wszystko dostarczone (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All delivered (%lld)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wszystko dostarczone (%lld)"
+          }
+        }
+      }
+    },
+    "Wszystko przeczytane — czekasz na dostawę" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All read — waiting for a delivery"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wszystko przeczytane — czekasz na dostawę"
+          }
+        }
+      }
+    },
+    "Zamówienie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordered"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamówienie"
+          }
+        }
+      }
+    },
+    "Zamówione, jeszcze nie dotarły — nie liczą się do statystyk" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordered, not here yet — left out of the stats"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamówione, jeszcze nie dotarły — nie liczą się do statystyk"
           }
         }
       }
@@ -4150,22 +4491,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tomy"
-          }
-        }
-      }
-    },
-    "Tomy, które nie są kupione, zostaną oznaczone jako kupione." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Volumes not yet owned will be marked as owned."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tomy, które nie są kupione, zostaną oznaczone jako kupione."
           }
         }
       }

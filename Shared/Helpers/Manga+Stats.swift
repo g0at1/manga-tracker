@@ -5,6 +5,9 @@ import Foundation
 struct MangaVolumeStats {
     var total = 0
     var owned = 0
+    /// Ordered and not arrived yet; not in `owned`, `totalPaid` or
+    /// `firstMissing`.
+    var onItsWay = 0
     /// Volumes read cover to cover; a split volume counts once its last
     /// part is read.
     var read = 0
@@ -18,7 +21,7 @@ struct MangaVolumeStats {
     var nextUnread: Volume?
     /// The part of `nextUnread` to pick up, when that volume is split.
     var nextUnreadPart: VolumePart?
-    /// Lowest-numbered volume that isn't owned yet.
+    /// Lowest-numbered volume that isn't owned or on its way yet.
     var firstMissing: Volume?
     /// When the most recently read volume (or part) was finished.
     var lastReadDate: Date?
@@ -53,6 +56,8 @@ extension Manga {
                 if !isRead, volume.number < (stats.nextUnread?.number ?? .max) {
                     stats.nextUnread = volume
                 }
+            } else if volume.isOnItsWay {
+                stats.onItsWay += 1
             } else if volume.number < (stats.firstMissing?.number ?? .max) {
                 stats.firstMissing = volume
             }

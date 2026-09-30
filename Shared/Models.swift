@@ -101,6 +101,10 @@ final class Volume {
     /// This volume's cover art, fetched from MangaDex. Nil until the
     /// series' covers are pulled, and for volumes MangaDex has none for.
     var coverURL: String?
+    /// Ordered and on its way ("W drodze"). Never set together with
+    /// `owned`: the collection numbers leave it out until it arrives and is
+    /// marked bought. `purchaseDate` holds the order date meanwhile.
+    var isOrdered: Bool?
 
     var manga: Manga?
 
@@ -122,6 +126,7 @@ final class Volume {
         releaseDate: Date? = nil,
         buyURL: String? = nil,
         coverURL: String? = nil,
+        isOrdered: Bool? = nil,
         parts: [VolumePart] = []
     ) {
         self.number = number
@@ -134,6 +139,7 @@ final class Volume {
         self.releaseDate = releaseDate
         self.buyURL = buyURL
         self.coverURL = coverURL
+        self.isOrdered = isOrdered
         self.parts = parts
     }
 }

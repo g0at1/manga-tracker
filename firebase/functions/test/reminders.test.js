@@ -170,11 +170,14 @@ describe("renderReminderEmail", () => {
         { number: 1, releaseDate: releaseIn(1), buyURL: "https://shop.example/k1?a=1&b=2" },
         { number: 2, releaseDate: releaseIn(1), owned: true, buyURL: "https://shop.example/k2" },
         { number: 3, releaseDate: releaseIn(2) },
+        { number: 4, releaseDate: releaseIn(2), isOrdered: true, buyURL: "https://shop.example/k4" },
       ),
       { language: "pl", daysBefore: 3 },
     );
     assert.match(mail.html, /href="https:\/\/shop\.example\/k1\?a=1&amp;b=2"/);
     assert.doesNotMatch(mail.html, /shop\.example\/k2/, "owned volumes get no buy button");
+    assert.doesNotMatch(mail.html, /shop\.example\/k4/, "ordered volumes get no buy button");
+    assert.match(mail.html, /Zamówiony — w drodze/);
     assert.match(mail.html, /Masz już ten tom/);
     assert.match(mail.html, /Brak linku do zakupu/);
     assert.match(mail.html, /Kaiju &lt;No\. 8&gt;/);

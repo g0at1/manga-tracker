@@ -4,7 +4,8 @@ import SwiftData
 // The owned/read rules every screen shares. A read volume is an owned one;
 // un-owning clears reading; dates are stamped when a status is first set
 // and cleared when it's taken away. Parts follow the same rules through
-// their volume.
+// their volume. An ordered volume is on its way: not owned yet, and owning
+// it (or reading it) means it has arrived.
 
 extension Volume {
     var isSplit: Bool {
@@ -41,7 +42,16 @@ extension Volume {
         isSplit ? parts.compactMap(\.readDate) : readDate.map { [$0] } ?? []
     }
 
+    var isOnItsWay: Bool {
+        isOrdered == true
+    }
+
+    /// Owning clears the order, keeping its date as the purchase date;
+    /// un-owning also cancels one.
     func markOwned(_ owned: Bool, on date: Date = .now) {
+        if isOnItsWay {
+            isOrdered = false
+        }
         if owned {
             self.owned = true
             if purchaseDate == nil {
@@ -51,6 +61,30 @@ extension Volume {
             self.owned = false
             purchaseDate = nil
             markRead(false)
+        }
+    }
+
+    /// Ordered and on its way, dated as bought today. A volume already
+    /// owned stays owned. Taking the order back clears its date.
+    func markOrdered(_ ordered: Bool, on date: Date = .now) {
+        if ordered {
+            guard !owned else { return }
+            isOrdered = true
+            if purchaseDate == nil {
+                purchaseDate = date
+            }
+        } else if isOnItsWay {
+            isOrdered = false
+            purchaseDate = nil
+        }
+    }
+
+    /// A purchase date typed in by hand: the order date of a volume on its
+    /// way, otherwise it makes the volume owned.
+    func setPurchaseDate(_ date: Date) {
+        purchaseDate = date
+        if !isOnItsWay {
+            markOwned(true, on: date)
         }
     }
 

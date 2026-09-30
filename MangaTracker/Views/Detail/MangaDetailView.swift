@@ -8,6 +8,9 @@ struct MangaDetailView: View {
     @Bindable var manga: Manga
 
     @State private var contentWidth: CGFloat = .infinity
+    /// Past the top: the toolbar gets a backdrop so the breadcrumb and the
+    /// table's pinned header don't float over the rows scrolling under them.
+    @State private var isScrolled = false
 
     private let horizontalPadding: CGFloat = 28
     private let sidePanelWidth: CGFloat = 320
@@ -47,8 +50,39 @@ struct MangaDetailView: View {
             }
             .padding(.bottom, 32)
         }
+        .onScrollGeometryChange(for: Bool.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top > 4
+        } action: { _, scrolled in
+            isScrolled = scrolled
+        }
+        .overlay(alignment: .top) {
+            ToolbarBackdrop()
+                .opacity(isScrolled ? 1 : 0)
+                .animation(.easeOut(duration: 0.15), value: isScrolled)
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppBackgroundView())
         .navigationTitle(manga.title.isEmpty ? "Szczegóły" : manga.title)
+    }
+}
+
+/// Opaque strip behind the window toolbar, which is otherwise transparent
+/// so the hero banner runs up under it. Covers exactly the toolbar's height.
+private struct ToolbarBackdrop: View {
+    var body: some View {
+        GeometryReader { proxy in
+            VStack(spacing: 0) {
+                Color(red: 0.055, green: 0.06, blue: 0.07)
+                    .frame(height: proxy.safeAreaInsets.top)
+                    .overlay(alignment: .bottom) {
+                        Rectangle()
+                            .fill(Color.white.opacity(0.07))
+                            .frame(height: 1)
+                    }
+                Spacer(minLength: 0)
+            }
+        }
+        .ignoresSafeArea(edges: .top)
+        .allowsHitTesting(false)
     }
 }

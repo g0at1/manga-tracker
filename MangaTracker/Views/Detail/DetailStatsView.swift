@@ -11,6 +11,8 @@ struct DetailStatsView: View {
     private enum NextStep {
         /// The part is set when the volume is split: the one to pick up.
         case read(Volume, VolumePart?)
+        /// Nothing left to read until the ordered volumes arrive.
+        case arriving(Int)
         case buy(Volume)
         case allRead
         case noVolumes
@@ -19,6 +21,9 @@ struct DetailStatsView: View {
     private func nextStep(_ stats: MangaVolumeStats) -> NextStep {
         if let next = stats.nextUnread {
             return .read(next, stats.nextUnreadPart)
+        }
+        if stats.onItsWay > 0 {
+            return .arriving(stats.onItsWay)
         }
         if let missing = stats.firstMissing {
             return .buy(missing)
@@ -173,6 +178,20 @@ struct DetailStatsView: View {
                 }
             }
 
+        case let .arriving(count):
+            HStack(spacing: 12) {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Wszystko przeczytane — czekasz na dostawę")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("W drodze: \(count)")
+                        .font(.subheadline.weight(.semibold))
+                }
+                SubtleButton(title: "Dostarczone", systemImage: "shippingbox", tint: .orange) {
+                    manga.markOrderDelivered()
+                }
+            }
+
         case let .buy(volume):
             HStack(spacing: 12) {
                 VStack(alignment: .trailing, spacing: 2) {
@@ -183,10 +202,7 @@ struct DetailStatsView: View {
                         .font(.subheadline.weight(.semibold))
                 }
                 SubtleButton(title: "Oznacz jako kupiony", systemImage: "cart") {
-                    volume.owned = true
-                    if volume.purchaseDate == nil {
-                        volume.purchaseDate = .now
-                    }
+                    volume.markOwned(true)
                 }
             }
 

@@ -81,6 +81,8 @@ export function collectUpcoming(mangas, { now, timeZone }) {
         daysUntil,
         buyURL: buyLink(volume.buyURL),
         owned: volume.owned === true,
+        // Pre-ordered in the app ("W drodze"): no point offering to buy it.
+        ordered: volume.isOrdered === true,
       });
     }
   }
@@ -144,6 +146,7 @@ const COPY = {
       `Te tomy z Twojej biblioteki wychodzą w ciągu ${daysBefore === 1 ? "1 dnia" : `${daysBefore} dni`}:`,
     buy: "Kup tom",
     owned: "✓ Masz już ten tom",
+    ordered: "📦 Zamówiony — w drodze",
     noLink: "Brak linku do zakupu — dodaj go w aplikacji",
     footer: (daysBefore) =>
       `Ten e-mail wysłała aplikacja MangaTracker: w Ustawieniach → Przypomnienia e-mail włączone są przypomnienia ${daysBefore === 1 ? "1 dzień" : `${daysBefore} dni`} przed premierą. Żeby przestać je dostawać, wyłącz je tam.`,
@@ -170,6 +173,7 @@ const COPY = {
       `These volumes from your library come out within ${daysBefore === 1 ? "1 day" : `${daysBefore} days`}:`,
     buy: "Buy",
     owned: "✓ Already in your collection",
+    ordered: "📦 Ordered — on its way",
     noLink: "No purchase link — add one in the app",
     footer: (daysBefore) =>
       `Sent by MangaTracker because Settings → E-mail reminders is set to remind you ${daysBefore === 1 ? "1 day" : `${daysBefore} days`} before a release. Turn it off there to stop these e-mails.`,
@@ -227,6 +231,7 @@ function byDay(entries) {
 
 function entryAction(entry, copy) {
   if (entry.owned) return { text: copy.owned, html: `<span style="color:#3c8a4e;font-size:13px;">${escapeHTML(copy.owned)}</span>` };
+  if (entry.ordered) return { text: copy.ordered, html: `<span style="color:#c77d1a;font-size:13px;">${escapeHTML(copy.ordered)}</span>` };
   if (entry.buyURL) {
     return {
       text: `${copy.buy}: ${entry.buyURL}`,

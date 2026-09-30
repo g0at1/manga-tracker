@@ -108,6 +108,9 @@ struct BannerImageView: View {
                 }
                 .frame(width: size.width, height: size.height)
                 .clipped()
+                // Flattened once, so scrolling moves a finished picture
+                // instead of re-running the 30pt blur every frame.
+                .drawingGroup()
                 .opacity(0.6)
             }
         }

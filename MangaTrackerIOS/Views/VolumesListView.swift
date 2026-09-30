@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 /// The series' volumes: filter chips and one row per volume with
-/// owned/read toggles, plus a row per part under a split volume. Tapping a
+/// owned/read toggles (or "on its way" for an ordered one), plus a row per part under a split volume. Tapping a
 /// volume opens the full editor, where the split is set up.
 struct VolumesListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -16,6 +16,7 @@ struct VolumesListView: View {
     enum FilterMode: String, CaseIterable, Identifiable {
         case all
         case missing
+        case onTheirWay
         case unread
 
         var id: String {
@@ -26,6 +27,7 @@ struct VolumesListView: View {
             switch self {
             case .all: "Wszystkie"
             case .missing: "Brakujące"
+            case .onTheirWay: "W drodze"
             case .unread: "Nieprzeczytane"
             }
         }
@@ -50,7 +52,8 @@ struct VolumesListView: View {
     private var displayedVolumes: [Volume] {
         switch filterMode {
         case .all: sortedVolumes
-        case .missing: sortedVolumes.filter { !$0.owned }
+        case .missing: sortedVolumes.filter { !$0.owned && !$0.isOnItsWay }
+        case .onTheirWay: sortedVolumes.filter(\.isOnItsWay)
         case .unread: sortedVolumes.filter { !($0.read ?? false) }
         }
     }
@@ -64,9 +67,16 @@ struct VolumesListView: View {
     private func count(for mode: FilterMode) -> Int {
         switch mode {
         case .all: manga.volumes.count
-        case .missing: manga.volumes.filter { !$0.owned }.count
+        case .missing: manga.volumes.filter { !$0.owned && !$0.isOnItsWay }.count
+        case .onTheirWay: manga.volumes.filter(\.isOnItsWay).count
         case .unread: manga.volumes.filter { !($0.read ?? false) }.count
         }
+    }
+
+    /// "W drodze" only earns a chip while something is ordered (or it's the
+    /// filter in use).
+    private var filterModes: [FilterMode] {
+        FilterMode.allCases.filter { $0 != .onTheirWay || filterMode == $0 || count(for: $0) > 0 }
     }
 
     var body: some View {
@@ -104,6 +114,12 @@ struct VolumesListView: View {
                             )
                             .contextMenu {
                                 Button("Edytuj tom…", systemImage: "pencil") { editingVolume = volume }
+                                if volume.isOnItsWay {
+                                    Button("Dostarczony", systemImage: "cart") { volume.markOwned(true) }
+                                    Button("Cofnij zamówienie", systemImage: "arrow.uturn.backward") { volume.markOrdered(false) }
+                                } else if !volume.owned {
+                                    Button("W drodze", systemImage: "shippingbox") { volume.markOrdered(true) }
+                                }
                                 Divider()
                                 Button("Usuń tom", systemImage: "trash", role: .destructive) { deleteVolume(volume) }
                             }
@@ -154,6 +170,12 @@ struct VolumesListView: View {
                 Text("Tomy")
                     .font(.headline)
                 Spacer()
+                let onTheirWay = count(for: .onTheirWay)
+                if onTheirWay > 0 {
+                    SubtleButton(title: "Dostarczone (\(onTheirWay))", systemImage: "shippingbox", tint: .orange) {
+                        markOrderDelivered()
+                    }
+                }
                 Menu {
                     Button("Oznacz wszystkie jako kupione", systemImage: "cart") { setOwned(true, for: manga.volumes) }
                     Button("Oznacz wszystkie jako przeczytane", systemImage: "checkmark.circle") { setRead(true, for: manga.volumes) }
@@ -177,7 +199,7 @@ struct VolumesListView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    ForEach(FilterMode.allCases) { mode in
+                    ForEach(filterModes) { mode in
                         FilterChip(title: mode.label, count: count(for: mode), isSelected: filterMode == mode) {
                             filterMode = mode
                         }
@@ -200,6 +222,14 @@ struct VolumesListView: View {
         for volume in volumes {
             volume.markRead(read)
         }
+    }
+
+    private func markOrderDelivered() {
+        let count = manga.markOrderDelivered()
+        if filterMode == .onTheirWay {
+            filterMode = .all
+        }
+        ToastService.shared.show(L("Dostarczono %lld tomów — oznaczone jako kupione.", count), type: .success)
     }
 
     // MARK: - MangaDex
@@ -228,7 +258,10 @@ struct VolumesListView: View {
     }
 
     private func toggleOwned(_ volume: Volume) {
-        if volume.owned {
+        if volume.isOnItsWay {
+            // It arrived; earlier volumes are their own orders.
+            setOwned(true, for: [volume])
+        } else if volume.owned {
             setOwned(false, for: [volume])
         } else if let previous = manga.volumes.first(where: { $0.number == volume.number - 1 }), !previous.owned {
             pendingBulkAction = .markOwnedUpTo(volume)
@@ -313,13 +346,17 @@ private struct VolumeRow: View {
                 .foregroundStyle(volume.owned ? .primary : .secondary)
                 .frame(width: 40, alignment: .leading)
 
-            StatusChip(icon: "cart.fill", title: "Kupiony", isActive: volume.owned, action: onToggleOwned)
+            if volume.isOnItsWay {
+                StatusChip(icon: "shippingbox.fill", title: "W drodze", isActive: true, tint: .orange, action: onToggleOwned)
+            } else {
+                StatusChip(icon: "cart.fill", title: "Kupiony", isActive: volume.owned, action: onToggleOwned)
+            }
             StatusChip(icon: "checkmark.circle.fill", title: "Przeczytany", isActive: isRead, detail: partsProgress, action: onToggleRead)
 
             Spacer(minLength: 4)
 
             HStack(spacing: 6) {
-                if volume.owned, let price = volume.price, price > 0 {
+                if volume.owned || volume.isOnItsWay, let price = volume.price, price > 0 {
                     Text(price, format: .currency(code: "PLN"))
                         .font(.caption.weight(.semibold))
                         .monospacedDigit()
@@ -340,6 +377,9 @@ private struct VolumeRow: View {
     private var rowBackground: Color {
         if isRead {
             return .green.opacity(isAlternate ? 0.05 : 0.03)
+        }
+        if volume.isOnItsWay {
+            return .orange.opacity(isAlternate ? 0.05 : 0.03)
         }
         return .white.opacity(isAlternate ? 0.025 : 0)
     }
@@ -395,6 +435,7 @@ private struct StatusChip: View {
     /// Shown instead of the title when set — how many parts are read;
     /// the row is too narrow for both next to the price.
     var detail: String? = nil
+    var tint: Color = .green
     let action: () -> Void
 
     var body: some View {
@@ -415,7 +456,7 @@ private struct StatusChip: View {
             .padding(.horizontal, 9)
             .padding(.vertical, 6)
             .foregroundStyle(isActive ? Color.black.opacity(0.85) : .secondary)
-            .background(isActive ? Color.green : Color.white.opacity(0.06), in: Capsule())
+            .background(isActive ? tint : Color.white.opacity(0.06), in: Capsule())
             .overlay(Capsule().stroke(isActive ? Color.clear : Color.white.opacity(0.08), lineWidth: 1))
             .contentShape(Capsule())
         }
@@ -434,6 +475,12 @@ private struct VolumeEditSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showDeleteConfirm = false
 
+    /// Its price is known once it's ordered, even though it only counts
+    /// once it arrives.
+    private var hasPrice: Bool {
+        volume.owned || volume.isOnItsWay
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -442,6 +489,12 @@ private struct VolumeEditSheet: View {
                         get: { volume.owned },
                         set: { volume.markOwned($0) }
                     ))
+                    if !volume.owned {
+                        Toggle("W drodze", isOn: Binding(
+                            get: { volume.isOnItsWay },
+                            set: { volume.markOrdered($0) }
+                        ))
+                    }
                     Toggle("Przeczytany", isOn: Binding(
                         get: { volume.read ?? false },
                         set: { volume.markRead($0) }
@@ -490,12 +543,17 @@ private struct VolumeEditSheet: View {
                         Text("PLN")
                             .foregroundStyle(.secondary)
                     }
-                    .disabled(!volume.owned)
-                    .foregroundStyle(volume.owned ? .primary : .secondary)
+                    .disabled(!hasPrice)
+                    .foregroundStyle(hasPrice ? .primary : .secondary)
                 }
 
                 Section("Daty") {
-                    OptionalDateRow(title: "Zakup", date: $volume.purchaseDate) { volume.markOwned(true) }
+                    OptionalDateRow(title: volume.isOnItsWay ? "Zamówienie" : "Zakup", date: $volume.purchaseDate) {
+                        // An order's date stays an order date until it arrives.
+                        if !volume.isOnItsWay {
+                            volume.markOwned(true)
+                        }
+                    }
                     OptionalDateRow(title: "Przeczytano", date: $volume.readDate) { volume.markRead(true) }
                     OptionalDateRow(title: "Premiera", date: $volume.releaseDate)
                 }
