@@ -29,9 +29,6 @@
         }
       }
     },
-    "“A good story stays with you.”" : {
-
-    },
     "(%lld)" : {
 
     },
@@ -1839,182 +1836,6 @@
         }
       }
     },
-    "Nie liczą się do statystyk, dopóki nie dotrą." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Left out of the stats until they arrive."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nie liczą się do statystyk, dopóki nie dotrą."
-          }
-        }
-      }
-    },
-    "Oznacz jako nie zamówione" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mark as not ordered"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oznacz jako nie zamówione"
-          }
-        }
-      }
-    },
-    "Oznacz jako w drodze" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mark as on its way"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oznacz jako w drodze"
-          }
-        }
-      }
-    },
-    "Oznacz tomy w drodze jako kupione" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mark the volumes on their way as owned"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oznacz tomy w drodze jako kupione"
-          }
-        }
-      }
-    },
-    "Tomy, które nie są kupione ani w drodze, zostaną oznaczone jako kupione." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Volumes not yet owned or on their way will be marked as owned."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tomy, które nie są kupione ani w drodze, zostaną oznaczone jako kupione."
-          }
-        }
-      }
-    },
-    "W drodze" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On its way"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "W drodze"
-          }
-        }
-      }
-    },
-    "W drodze: %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On its way: %lld"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "W drodze: %lld"
-          }
-        }
-      }
-    },
-    "Wszystko dostarczone (%lld)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All delivered (%lld)"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wszystko dostarczone (%lld)"
-          }
-        }
-      }
-    },
-    "Wszystko przeczytane — czekasz na dostawę" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All read — waiting for a delivery"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wszystko przeczytane — czekasz na dostawę"
-          }
-        }
-      }
-    },
-    "Zamówienie" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ordered"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zamówienie"
-          }
-        }
-      }
-    },
-    "Zamówione, jeszcze nie dotarły — nie liczą się do statystyk" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ordered, not here yet — left out of the stats"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zamówione, jeszcze nie dotarły — nie liczą się do statystyk"
-          }
-        }
-      }
-    },
     "Łączenie…" : {
       "localizations" : {
         "en" : {
@@ -2409,6 +2230,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nie — tylko ten tom"
+          }
+        }
+      }
+    },
+    "Nie liczą się do statystyk, dopóki nie dotrą." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Left out of the stats until they arrive."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie liczą się do statystyk, dopóki nie dotrą."
           }
         }
       }
@@ -3049,6 +2886,22 @@
         }
       }
     },
+    "Oznacz jako nie zamówione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark as not ordered"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznacz jako nie zamówione"
+          }
+        }
+      }
+    },
     "Oznacz jako nieprzeczytane" : {
       "localizations" : {
         "en" : {
@@ -3093,6 +2946,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oznacz jako spin-off"
+          }
+        }
+      }
+    },
+    "Oznacz jako w drodze" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark as on its way"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznacz jako w drodze"
           }
         }
       }
@@ -3151,6 +3020,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mark volumes as owned to see them on the shelf."
+          }
+        }
+      }
+    },
+    "Oznacz tomy w drodze jako kupione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark the volumes on their way as owned"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznacz tomy w drodze jako kupione"
           }
         }
       }
@@ -4495,6 +4380,22 @@
         }
       }
     },
+    "Tomy, które nie są kupione ani w drodze, zostaną oznaczone jako kupione." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volumes not yet owned or on their way will be marked as owned."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomy, które nie są kupione ani w drodze, zostaną oznaczone jako kupione."
+          }
+        }
+      }
+    },
     "Top serie" : {
       "localizations" : {
         "en" : {
@@ -4993,6 +4894,38 @@
         }
       }
     },
+    "W drodze" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On its way"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "W drodze"
+          }
+        }
+      }
+    },
+    "W drodze: %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On its way: %lld"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "W drodze: %lld"
+          }
+        }
+      }
+    },
     "W trakcie" : {
       "localizations" : {
         "en" : {
@@ -5291,6 +5224,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wszystkie tomy z tego zakresu już są."
+          }
+        }
+      }
+    },
+    "Wszystko dostarczone (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All delivered (%lld)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wszystko dostarczone (%lld)"
+          }
+        }
+      }
+    },
+    "Wszystko przeczytane — czekasz na dostawę" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All read — waiting for a delivery"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wszystko przeczytane — czekasz na dostawę"
           }
         }
       }
@@ -5699,6 +5664,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zamknij"
+          }
+        }
+      }
+    },
+    "Zamówienie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordered"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamówienie"
+          }
+        }
+      }
+    },
+    "Zamówione, jeszcze nie dotarły — nie liczą się do statystyk" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordered, not here yet — left out of the stats"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamówione, jeszcze nie dotarły — nie liczą się do statystyk"
           }
         }
       }

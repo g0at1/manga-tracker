@@ -219,11 +219,11 @@ struct LibraryView: View {
                     )
 
                     VStack(alignment: .trailing, spacing: 6) {
-                        Text("\u{201C}A good story stays with you.\u{201D}")
+                        Text(featured.title)
                             .font(.system(size: 22, weight: .regular, design: .serif))
                             .italic()
                             .foregroundStyle(.white.opacity(0.8))
-                        Text(featured.title)
+                        Text(featured.aniListAuthor ?? "")
                             .font(.caption.weight(.medium))
                             .foregroundStyle(.white.opacity(0.55))
                     }
