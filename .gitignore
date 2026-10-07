@@ -46,3 +46,6 @@ GoogleService-Info.plist
 # Which Firebase project the CLI deploys to (`firebase use --add`); also per developer.
 firebase/.firebaserc
 TestResults.xcresult
+
+# Local helper: builds and installs the iOS app on a personal iPhone.
+scripts/install-ios.sh
