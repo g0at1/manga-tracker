@@ -4,6 +4,7 @@ import SwiftUI
 enum LibraryCategory: String, CaseIterable, Identifiable {
     case all
     case inProgress
+    case unread
     case completed
     case favorites
     case planned
@@ -17,6 +18,7 @@ enum LibraryCategory: String, CaseIterable, Identifiable {
         switch self {
         case .all: "Biblioteka"
         case .inProgress: "W trakcie"
+        case .unread: "Nieprzeczytane"
         case .completed: "Ukończone"
         case .favorites: "Ulubione"
         case .planned: "Planowane"
@@ -33,6 +35,7 @@ enum LibraryCategory: String, CaseIterable, Identifiable {
         switch self {
         case .all: "books.vertical.fill"
         case .inProgress: "book"
+        case .unread: "book.closed"
         case .completed: "checkmark.circle"
         case .favorites: "heart"
         case .planned: "bookmark"
@@ -63,6 +66,10 @@ enum LibraryCategory: String, CaseIterable, Identifiable {
             guard !isSold, !isPlanned else { return false }
             let stats = stats ?? manga.volumeStats
             return stats.ownsAnything && !manga.isCompleted(stats)
+        case .unread:
+            // Owns at least one volume that's still waiting to be read.
+            guard !isSold, !isPlanned else { return false }
+            return (stats ?? manga.volumeStats).nextUnread != nil
         case .completed:
             guard !isSold, !isPlanned else { return false }
             return manga.isCompleted(stats ?? manga.volumeStats)
