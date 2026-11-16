@@ -14,6 +14,7 @@ struct DetailHeroView: View {
     @State private var recommendations: [AniListRecommendation] = []
     @State private var showRecommendationsSheet = false
     @State private var showCoverPopover = false
+    @State private var showMarketSheet = false
 
     /// Placeholder titles a new series gets, in either language.
     private let defaultTitles: Set<String> = ["Nowa manga", "New manga"]
@@ -58,6 +59,9 @@ struct DetailHeroView: View {
                 bannerURL: (manga.bannerImage ?? "").isEmpty ? nil : URL(string: manga.bannerImage ?? ""),
                 recommendations: recommendations
             )
+        }
+        .sheet(isPresented: $showMarketSheet) {
+            MarketSearchView(initialQuery: manga.title)
         }
     }
 
@@ -238,6 +242,11 @@ struct DetailHeroView: View {
             }
             .disabled(isFetchingRecommendations || manga.aniListId == nil)
             .tooltip(manga.aniListId == nil ? "Najpierw odśwież dane z AniList" : nil)
+
+            GlassButton(title: "Ogłoszenia", systemImage: "tag") {
+                showMarketSheet = true
+            }
+            .disabled(manga.title.trimmingCharacters(in: .whitespaces).isEmpty)
 
             FavoriteHeartButton(manga: manga, size: 30)
 

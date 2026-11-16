@@ -55,6 +55,7 @@ struct MangaDetailView: View {
         } action: { _, scrolled in
             isScrolled = scrolled
         }
+        .tracksScrollActivity()
         .overlay(alignment: .top) {
             ToolbarBackdrop()
                 .opacity(isScrolled ? 1 : 0)

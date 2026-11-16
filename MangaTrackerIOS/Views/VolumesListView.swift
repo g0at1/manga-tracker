@@ -103,34 +103,38 @@ struct VolumesListView: View {
                     .frame(minHeight: 180)
                 } else {
                     LazyVStack(spacing: 0) {
+                        // One lazy item per volume, its parts included, so the stack
+                        // can size rows without resolving every volume's parts up front.
                         ForEach(Array(displayedVolumes.enumerated()), id: \.element.persistentModelID) { index, volume in
-                            VolumeRow(
-                                volume: volume,
-                                isAlternate: index.isMultiple(of: 2),
-                                showsCover: showsCovers,
-                                onToggleOwned: { toggleOwned(volume) },
-                                onToggleRead: { toggleRead(volume) },
-                                onOpen: { editingVolume = volume }
-                            )
-                            .contextMenu {
-                                Button("Edytuj tom…", systemImage: "pencil") { editingVolume = volume }
-                                if volume.isOnItsWay {
-                                    Button("Dostarczony", systemImage: "cart") { volume.markOwned(true) }
-                                    Button("Cofnij zamówienie", systemImage: "arrow.uturn.backward") { volume.markOrdered(false) }
-                                } else if !volume.owned {
-                                    Button("W drodze", systemImage: "shippingbox") { volume.markOrdered(true) }
-                                }
-                                Divider()
-                                Button("Usuń tom", systemImage: "trash", role: .destructive) { deleteVolume(volume) }
-                            }
-                            ForEach(volume.sortedParts, id: \.persistentModelID) { part in
-                                VolumePartRow(
-                                    part: part,
-                                    partCount: volume.parts.count,
+                            VStack(spacing: 0) {
+                                VolumeRow(
+                                    volume: volume,
                                     isAlternate: index.isMultiple(of: 2),
                                     showsCover: showsCovers,
-                                    onToggleRead: { volume.markPart(part, read: !part.read) }
+                                    onToggleOwned: { toggleOwned(volume) },
+                                    onToggleRead: { toggleRead(volume) },
+                                    onOpen: { editingVolume = volume }
                                 )
+                                .contextMenu {
+                                    Button("Edytuj tom…", systemImage: "pencil") { editingVolume = volume }
+                                    if volume.isOnItsWay {
+                                        Button("Dostarczony", systemImage: "cart") { volume.markOwned(true) }
+                                        Button("Cofnij zamówienie", systemImage: "arrow.uturn.backward") { volume.markOrdered(false) }
+                                    } else if !volume.owned {
+                                        Button("W drodze", systemImage: "shippingbox") { volume.markOrdered(true) }
+                                    }
+                                    Divider()
+                                    Button("Usuń tom", systemImage: "trash", role: .destructive) { deleteVolume(volume) }
+                                }
+                                ForEach(volume.sortedParts, id: \.persistentModelID) { part in
+                                    VolumePartRow(
+                                        part: part,
+                                        partCount: volume.parts.count,
+                                        isAlternate: index.isMultiple(of: 2),
+                                        showsCover: showsCovers,
+                                        onToggleRead: { volume.markPart(part, read: !part.read) }
+                                    )
+                                }
                             }
                         }
                     }
@@ -336,8 +340,12 @@ private struct VolumeRow: View {
     var body: some View {
         HStack(spacing: 10) {
             if showsCover {
-                CoverImageView(url: volume.coverURL.flatMap(URL.init(string:)), cornerRadius: 3)
-                    .frame(width: 30, height: 44)
+                CoverImageView(
+                    url: volume.coverURL.flatMap(URL.init(string:)),
+                    cornerRadius: 3,
+                    maxPixelSize: ImageCache.thumbnailMaxPixelSize
+                )
+                .frame(width: 30, height: 44)
             }
 
             Text("#\(volume.number)")

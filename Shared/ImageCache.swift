@@ -18,6 +18,10 @@ actor ImageCache {
     /// upscaled. Core Animation keeps its own copy of every drawn bitmap,
     /// so decoding larger than this costs memory twice.
     static let coverMaxPixelSize = 600
+    /// Volume-list thumbnails are at most ~44pt tall (132px at 3×). A
+    /// full-size cover per row would fill the memory cache a few dozen rows
+    /// in, so scrolling a long series would keep re-decoding from disk.
+    static let thumbnailMaxPixelSize = 160
     /// Banners span the whole window, so they keep more detail.
     static let bannerMaxPixelSize = 2400
 

@@ -61,6 +61,26 @@ scripts/install-mac.sh
 
 Pass a configuration name to install a different build, e.g. `scripts/install-mac.sh Debug`.
 
+### Command-line tool
+
+`mangatracker` lists things from the Mac app's library in the terminal. It's a Swift package in `cli/` that compiles the app's own models and reading rules (symlinked from `Shared/`), so `--unread` means exactly what the "Nieprzeczytane" filter does. It never opens the live store: SQLite's backup API copies it to a temporary file (consistent even while the app is running), and that copy is what gets read.
+
+```bash
+scripts/install-cli.sh            # builds in Release, copies to ~/.local/bin
+```
+
+```bash
+mangatracker --unread             # owned volumes still to read, per series
+mangatracker --missing berserk    # gaps in one series (title filter)
+mangatracker --in-progress        # also --all, --completed, --favorites, --planned, --sold
+mangatracker --ordered            # on their way
+mangatracker --upcoming           # release dates from today on
+mangatracker --stats
+mangatracker --unread --json      # any list as JSON
+```
+
+`mangatracker --help` shows every option.
+
 ---
 
 ## 🖼️ Okładki tomów (volume covers)

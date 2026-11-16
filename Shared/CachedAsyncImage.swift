@@ -54,9 +54,10 @@ struct CachedAsyncImage<Content: View>: View {
 struct CoverImageView: View {
     let url: URL?
     var cornerRadius: CGFloat = 8
+    var maxPixelSize: Int = ImageCache.coverMaxPixelSize
 
     var body: some View {
-        CachedAsyncImage(url: url) { image in
+        CachedAsyncImage(url: url, maxPixelSize: maxPixelSize) { image in
             ZStack {
                 if let image {
                     Image(decorative: image, scale: 1)

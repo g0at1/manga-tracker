@@ -13,6 +13,7 @@ struct MangaDetailScreen: View {
     @State private var isRefreshingAniList = false
     @State private var isEditing = false
     @State private var showDeleteConfirm = false
+    @State private var showMarketSheet = false
     @State private var hoveredRating: Double?
 
     private let horizontalPadding: CGFloat = 16
@@ -75,6 +76,9 @@ struct MangaDetailScreen: View {
         .sheet(isPresented: $isEditing) {
             EditMangaSheet(manga: manga)
         }
+        .sheet(isPresented: $showMarketSheet) {
+            MarketSearchView(initialQuery: manga.title)
+        }
         .confirmationDialog("Usunąć tę serię?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Usuń", role: .destructive) {
                 dismiss()
@@ -98,6 +102,11 @@ struct MangaDetailScreen: View {
                 Task { await refreshAniListInfo() }
             }
             .disabled(isRefreshingAniList || manga.title.trimmingCharacters(in: .whitespaces).isEmpty)
+
+            GlassButton(title: "Ogłoszenia", systemImage: "tag") {
+                showMarketSheet = true
+            }
+            .disabled(manga.title.trimmingCharacters(in: .whitespaces).isEmpty)
 
             Spacer(minLength: 0)
 

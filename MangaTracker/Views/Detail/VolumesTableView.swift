@@ -189,38 +189,43 @@ struct VolumesTableView: View {
                 } else {
                     LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                         Section {
+                            // One lazy item per volume, its parts included, so
+                            // the stack can size rows without resolving every
+                            // volume's parts up front.
                             ForEach(Array(displayedVolumes.enumerated()), id: \.element.persistentModelID) { index, volume in
-                                VolumeRow(
-                                    volume: volume,
-                                    isSelected: selectedVolumeIDs.contains(volume.persistentModelID),
-                                    isAlternate: index.isMultiple(of: 2),
-                                    showsCover: showsCovers,
-                                    dateFields: dateFields,
-                                    onToggleSelection: { toggleSelection(volume) },
-                                    onToggleOwned: { toggleOwned(volume) },
-                                    onToggleOrdered: { volume.markOrdered(!volume.isOnItsWay) },
-                                    onToggleRead: { toggleRead(volume) },
-                                    onEditDate: { field in
-                                        switch field {
-                                        case .purchase: editingDateTarget = .purchase(volume)
-                                        case .read: editingDateTarget = .read(volume)
-                                        case .release: editingDateTarget = .release(volume)
-                                        }
-                                    },
-                                    onEditParts: { editingPartsTarget = PartsEditTarget(volumes: [volume]) },
-                                    onJoinParts: { volume.setPartCount(1) },
-                                    onDelete: { deleteVolume(volume) }
-                                )
-                                ForEach(volume.sortedParts, id: \.persistentModelID) { part in
-                                    VolumePartRow(
-                                        part: part,
-                                        partCount: volume.parts.count,
+                                VStack(spacing: 0) {
+                                    VolumeRow(
+                                        volume: volume,
+                                        isSelected: selectedVolumeIDs.contains(volume.persistentModelID),
                                         isAlternate: index.isMultiple(of: 2),
                                         showsCover: showsCovers,
                                         dateFields: dateFields,
-                                        onToggleRead: { volume.markPart(part, read: !part.read) },
-                                        onEditReadDate: { editingDateTarget = .partRead(part) }
+                                        onToggleSelection: { toggleSelection(volume) },
+                                        onToggleOwned: { toggleOwned(volume) },
+                                        onToggleOrdered: { volume.markOrdered(!volume.isOnItsWay) },
+                                        onToggleRead: { toggleRead(volume) },
+                                        onEditDate: { field in
+                                            switch field {
+                                            case .purchase: editingDateTarget = .purchase(volume)
+                                            case .read: editingDateTarget = .read(volume)
+                                            case .release: editingDateTarget = .release(volume)
+                                            }
+                                        },
+                                        onEditParts: { editingPartsTarget = PartsEditTarget(volumes: [volume]) },
+                                        onJoinParts: { volume.setPartCount(1) },
+                                        onDelete: { deleteVolume(volume) }
                                     )
+                                    ForEach(volume.sortedParts, id: \.persistentModelID) { part in
+                                        VolumePartRow(
+                                            part: part,
+                                            partCount: volume.parts.count,
+                                            isAlternate: index.isMultiple(of: 2),
+                                            showsCover: showsCovers,
+                                            dateFields: dateFields,
+                                            onToggleRead: { volume.markPart(part, read: !part.read) },
+                                            onEditReadDate: { editingDateTarget = .partRead(part) }
+                                        )
+                                    }
                                 }
                             }
                         } header: {
@@ -811,11 +816,18 @@ private struct VolumeRow: View {
     @State private var isHovered = false
     /// Set on the first hover and kept: the price field and the menu are
     /// AppKit controls, too heavy to build for every row that scrolls in,
-    /// so a row draws plain stand-ins until the pointer reaches it.
+    /// so a row draws plain stand-ins until the pointer rests on it.
     @State private var isActivated = false
     @FocusState private var isPriceFocused: Bool
+    @Environment(\.isScrolling) private var isScrolling
 
     private typealias Column = VolumesTableView.Column
+
+    /// Rows sliding under a still pointer mid-scroll don't count: lighting
+    /// each up, and building its controls, is what made scrolling stutter.
+    private var showsHover: Bool {
+        isHovered && !isScrolling
+    }
 
     private var isRead: Bool {
         volume.read ?? false
@@ -832,8 +844,12 @@ private struct VolumeRow: View {
             SelectionCheckbox(isOn: isSelected, action: onToggleSelection)
 
             if showsCover {
-                CoverImageView(url: volume.coverURL.flatMap(URL.init(string:)), cornerRadius: 3)
-                    .frame(width: Column.cover, height: Column.cover * 1.46)
+                CoverImageView(
+                    url: volume.coverURL.flatMap(URL.init(string:)),
+                    cornerRadius: 3,
+                    maxPixelSize: ImageCache.thumbnailMaxPixelSize
+                )
+                .frame(width: Column.cover, height: Column.cover * 1.46)
             }
 
             Text("#\(volume.number)")
@@ -884,9 +900,9 @@ private struct VolumeRow: View {
         .padding(.horizontal, Column.rowPadding)
         .padding(.vertical, 7)
         .background(rowBackground)
-        .onHover { hovering in
-            isHovered = hovering
-            if hovering {
+        .onHover { isHovered = $0 }
+        .onChange(of: showsHover) { _, hovered in
+            if hovered {
                 isActivated = true
             }
         }
@@ -911,7 +927,7 @@ private struct VolumeRow: View {
             Divider()
             Button("Usuń tom", role: .destructive, action: onDelete)
         } label: {
-            MenuStandIn(isHovered: isHovered)
+            MenuStandIn(isHovered: showsHover)
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
@@ -922,7 +938,7 @@ private struct VolumeRow: View {
         if isSelected {
             return .green.opacity(0.12)
         }
-        if isHovered {
+        if showsHover {
             return .white.opacity(0.05)
         }
         if isRead {
@@ -1018,6 +1034,12 @@ private struct VolumePartRow: View {
     @State private var isHovered = false
     /// See `VolumeRow.isActivated`.
     @State private var isActivated = false
+    @Environment(\.isScrolling) private var isScrolling
+
+    /// See `VolumeRow.showsHover`.
+    private var showsHover: Bool {
+        isHovered && !isScrolling
+    }
 
     private typealias Column = VolumesTableView.Column
 
@@ -1059,7 +1081,7 @@ private struct VolumePartRow: View {
                 Menu {
                     Button("Ustaw datę przeczytania", action: onEditReadDate)
                 } label: {
-                    MenuStandIn(isHovered: isHovered)
+                    MenuStandIn(isHovered: showsHover)
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
@@ -1071,9 +1093,9 @@ private struct VolumePartRow: View {
         .padding(.horizontal, Column.rowPadding)
         .padding(.vertical, 4)
         .background(rowBackground)
-        .onHover { hovering in
-            isHovered = hovering
-            if hovering {
+        .onHover { isHovered = $0 }
+        .onChange(of: showsHover) { _, hovered in
+            if hovered {
                 isActivated = true
             }
         }
@@ -1099,7 +1121,7 @@ private struct VolumePartRow: View {
     }
 
     private var rowBackground: Color {
-        if isHovered {
+        if showsHover {
             return .white.opacity(0.05)
         }
         if part.read {

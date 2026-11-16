@@ -24,6 +24,7 @@ private struct TooltipModifier: ViewModifier {
     let text: Text?
 
     @Environment(\.locale) private var locale
+    @Environment(\.isScrolling) private var isScrolling
     @State private var id = UUID()
     @State private var isHovering = false
 
@@ -32,10 +33,11 @@ private struct TooltipModifier: ViewModifier {
         // doesn't change the identity of the view it's on. The AppKit anchor
         // only exists while the pointer is over the view: a long list has
         // hundreds of tooltips, and an NSView for each makes scrolling it
-        // stutter as rows come in.
+        // stutter as rows come in. Nor while a scroll slides controls under
+        // the pointer.
         content
             .background {
-                if isHovering, let text {
+                if isHovering, !isScrolling, let text {
                     TooltipAnchor { view in
                         TooltipController.shared.schedule(
                             TooltipBubble(text: text).environment(\.locale, locale),
