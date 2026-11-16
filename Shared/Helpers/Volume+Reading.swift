@@ -26,8 +26,14 @@ extension Volume {
         max(parts.count, 1)
     }
 
-    var readUnitCount: Int {
-        isSplit ? readPartCount : (read == true ? 1 : 0)
+    /// How much of the volume is read, from 0 to 1: a split volume counts
+    /// its read parts as fractions, so progress is measured in volumes.
+    var readFraction: Double {
+        if read == true {
+            return 1
+        }
+        guard isSplit else { return 0 }
+        return Double(readPartCount) / Double(parts.count)
     }
 
     /// Lowest-indexed part not read yet; `nil` for an unsplit volume.

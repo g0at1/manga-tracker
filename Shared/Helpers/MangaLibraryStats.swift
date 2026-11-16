@@ -20,8 +20,7 @@ struct MangaLibraryStats {
         let calendar = Calendar.current
         var mangaCount = 0
         var ownedCount = 0
-        var ownedUnits = 0
-        var ownedReadUnits = 0
+        var ownedReadProgress = 0.0
         var totalPaid: Double = 0
         var readDays = Set<Date>()
 
@@ -37,15 +36,14 @@ struct MangaLibraryStats {
                 guard !isExcluded, volume.owned else { continue }
                 ownedCount += 1
                 totalPaid += volume.price ?? 0
-                ownedUnits += volume.unitCount
-                ownedReadUnits += volume.readUnitCount
+                ownedReadProgress += volume.readFraction
             }
         }
 
         self.mangaCount = mangaCount
         ownedVolumesCount = ownedCount
         self.totalPaid = totalPaid
-        totalReadPercent = ownedUnits > 0 ? Double(ownedReadUnits) / Double(ownedUnits) * 100 : 0
+        totalReadPercent = ownedCount > 0 ? ownedReadProgress / Double(ownedCount) * 100 : 0
 
         let today = calendar.startOfDay(for: Date())
         didReadToday = readDays.contains(today)

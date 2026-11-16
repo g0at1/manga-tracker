@@ -140,7 +140,9 @@ enum VintedService {
                 case UInt8(ascii: "["), UInt8(ascii: "{"): depth += 1
                 case UInt8(ascii: "]"), UInt8(ascii: "}"):
                     depth -= 1
-                    if depth == 0 { return Data(bytes[start ... cursor]) }
+                    if depth == 0 {
+                        return Data(bytes[start ... cursor])
+                    }
                 default: break
                 }
             }

@@ -70,10 +70,10 @@ struct Options {
             case "-o", "--ordered": try choose(argument, .ordered)
             case "--upcoming": try choose(argument, .upcoming)
             case "--stats": try choose(argument, .stats)
-            case "-s", "--search": words.append(try value(for: argument))
+            case "-s", "--search": try words.append(value(for: argument))
             case "--json": json = true
             case "--store":
-                storeURL = URL(fileURLWithPath: (try value(for: argument) as NSString).expandingTildeInPath)
+                storeURL = try URL(fileURLWithPath: (value(for: argument) as NSString).expandingTildeInPath)
             case "-h", "--help":
                 throw HelpRequested()
             default:
@@ -128,7 +128,7 @@ func printJSON(_ value: some Encodable) throws {
         var container = encoder.singleValueContainer()
         try container.encode(date.yyyyMMdd())
     }
-    print(String(decoding: try encoder.encode(value), as: UTF8.self))
+    try print(String(decoding: encoder.encode(value), as: UTF8.self))
 }
 
 func printEmpty(_ message: String, json: Bool) throws {
@@ -174,7 +174,9 @@ func printSeries(_ mangas: [Manga], category: LibraryCategory, json: Bool) throw
             nextUnread: stats.nextUnread?.number
         )
     }
-    if json { return try printJSON(rows) }
+    if json {
+        return try printJSON(rows)
+    }
     guard !rows.isEmpty else { return try printEmpty("Nothing here.", json: false) }
 
     let width = min(rows.map(\.title.count).max() ?? 0, 40)
@@ -215,7 +217,9 @@ func printVolumeGroups(
         let entries = select(manga)
         return entries.isEmpty ? nil : VolumeGroup(title: manga.title, volumes: entries)
     }
-    if json { return try printJSON(groups) }
+    if json {
+        return try printJSON(groups)
+    }
     guard !groups.isEmpty else { return try printEmpty(empty, json: false) }
 
     let width = min(groups.map { $0.title.count + 4 }.max() ?? 0, 44)
@@ -251,7 +255,9 @@ func printUpcoming(_ mangas: [Manga], json: Bool) throws {
     }
     .sorted { ($0.date, $0.title, $0.volume) < ($1.date, $1.title, $1.volume) }
 
-    if json { return try printJSON(rows) }
+    if json {
+        return try printJSON(rows)
+    }
     guard !rows.isEmpty else { return try printEmpty("No upcoming releases.", json: false) }
     for row in rows {
         let status = row.owned ? " (owned)" : row.ordered ? " (ordered)" : ""
@@ -278,7 +284,11 @@ func printStats(_ mangas: [Manga], json: Bool) throws {
     for manga in mangas where manga.isInCollection {
         for volume in manga.volumes {
             if volume.owned {
-                if volume.read == true { read += 1 } else { unread += 1 }
+                if volume.read == true {
+                    read += 1
+                } else {
+                    unread += 1
+                }
             } else if volume.isOnItsWay {
                 onItsWay += 1
             } else {
@@ -298,7 +308,9 @@ func printStats(_ mangas: [Manga], json: Bool) throws {
         readToday: library.didReadToday,
         readStreak: library.currentReadStreak
     )
-    if json { return try printJSON(report) }
+    if json {
+        return try printJSON(report)
+    }
 
     let paid = report.totalPaid.formatted(.currency(code: "PLN").locale(Locale(identifier: "pl_PL")))
     let lines: [(String, String)] = [

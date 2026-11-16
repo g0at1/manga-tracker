@@ -127,7 +127,7 @@ struct DetailStatsView: View {
                         Text("Postęp czytania")
                             .font(.subheadline.weight(.semibold))
                         Spacer()
-                        Text("\(stats.readUnits) / \(stats.totalUnits) · \(Int(stats.readPercent.rounded()))%")
+                        Text("\(stats.read) / \(stats.total) · \(Int(stats.readPercent.rounded()))%")
                             .font(.subheadline.weight(.bold))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)

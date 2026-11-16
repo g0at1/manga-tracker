@@ -155,7 +155,7 @@ final class VolumePartsTests: XCTestCase {
 
     // MARK: - Numbers
 
-    func testProgressCountsPartsButTilesCountVolumes() throws {
+    func testProgressCountsVolumesWithPartialSplitVolumes() throws {
         let manga = try makeManga(volumes: 3)
         let first = try volume(1, of: manga)
         first.setPartCount(3)
@@ -165,16 +165,15 @@ final class VolumePartsTests: XCTestCase {
         let stats = manga.volumeStats
         XCTAssertEqual(stats.total, 3)
         XCTAssertEqual(stats.read, 1)
-        XCTAssertEqual(stats.totalUnits, 5)
-        XCTAssertEqual(stats.readUnits, 2)
-        XCTAssertEqual(stats.readPercent, 40, accuracy: 0.001)
+        XCTAssertEqual(stats.readProgress, 4.0 / 3.0, accuracy: 0.001, "a third of volume 1 plus all of volume 2")
+        XCTAssertEqual(stats.readPercent, 400.0 / 9.0, accuracy: 0.001)
         XCTAssertEqual(stats.nextUnread?.number, 1)
         XCTAssertEqual(stats.nextUnreadPart?.index, 2)
         XCTAssertFalse(stats.allRead)
 
         let library = MangaLibraryStats(mangas: [manga])
         XCTAssertEqual(library.ownedVolumesCount, 3)
-        XCTAssertEqual(library.totalReadPercent, 40, accuracy: 0.001)
+        XCTAssertEqual(library.totalReadPercent, 400.0 / 9.0, accuracy: 0.001)
     }
 
     func testReadDaysComeFromPartsOfASplitVolume() throws {

@@ -11,10 +11,9 @@ struct MangaVolumeStats {
     /// Volumes read cover to cover; a split volume counts once its last
     /// part is read.
     var read = 0
-    /// Reading measured in parts: a split volume contributes each of its
-    /// parts, any other volume one. What the progress bar shows.
-    var totalUnits = 0
-    var readUnits = 0
+    /// Reading measured in volumes, a split volume adding the share of its
+    /// parts already read. What the progress bar shows.
+    var readProgress: Double = 0
     /// Sum of the prices of owned volumes.
     var totalPaid: Double = 0
     /// Lowest-numbered owned volume that hasn't been read yet.
@@ -27,7 +26,7 @@ struct MangaVolumeStats {
     var lastReadDate: Date?
 
     var readPercent: Double {
-        totalUnits > 0 ? Double(readUnits) / Double(totalUnits) * 100 : 0
+        total > 0 ? readProgress / Double(total) * 100 : 0
     }
 
     var ownsAnything: Bool {
@@ -44,8 +43,7 @@ extension Manga {
         var stats = MangaVolumeStats()
         for volume in volumes {
             stats.total += 1
-            stats.totalUnits += volume.unitCount
-            stats.readUnits += volume.readUnitCount
+            stats.readProgress += volume.readFraction
             let isRead = volume.read == true
             if isRead {
                 stats.read += 1
