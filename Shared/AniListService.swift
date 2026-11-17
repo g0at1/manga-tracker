@@ -18,6 +18,10 @@ struct AniListMangaInfo {
     let bannerImage: String?
     let parentId: Int?
     let volumes: Int?
+    /// The series' names on AniList, for matching a title found elsewhere
+    /// (a scanned ISBN) against the library.
+    var englishTitle: String? = nil
+    var romajiTitle: String? = nil
 }
 
 struct AniListRecommendation: Identifiable {
@@ -260,7 +264,9 @@ enum AniListService {
                 .first(where: { $0.relationType == "PARENT" })?
                 .node
                 .id,
-            volumes: media.volumes
+            volumes: media.volumes,
+            englishTitle: media.title?.english,
+            romajiTitle: media.title?.romaji
         )
     }
 

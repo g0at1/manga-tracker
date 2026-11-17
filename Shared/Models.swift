@@ -105,6 +105,10 @@ final class Volume {
     /// `owned`: the collection numbers leave it out until it arrives and is
     /// marked bought. `purchaseDate` holds the order date meanwhile.
     var isOrdered: Bool?
+    /// ISBN-13 of this volume's Polish edition, digits only. Set when the
+    /// volume was added by scanning its barcode, so the next scan of the
+    /// same book finds it exactly.
+    var isbn: String?
 
     var manga: Manga?
 
@@ -127,6 +131,7 @@ final class Volume {
         buyURL: String? = nil,
         coverURL: String? = nil,
         isOrdered: Bool? = nil,
+        isbn: String? = nil,
         parts: [VolumePart] = []
     ) {
         self.number = number
@@ -140,6 +145,7 @@ final class Volume {
         self.buyURL = buyURL
         self.coverURL = coverURL
         self.isOrdered = isOrdered
+        self.isbn = isbn
         self.parts = parts
     }
 }

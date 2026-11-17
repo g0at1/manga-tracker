@@ -17,6 +17,7 @@ struct LibraryScreen: View {
 
     @State private var searchText = ""
     @State private var isAddingManga = false
+    @State private var isScanningVolume = false
     @State private var isShowingSettings = false
     @State private var mangaToDelete: Manga?
 
@@ -95,6 +96,11 @@ struct LibraryScreen: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 sortMenu
                 Button {
+                    isScanningVolume = true
+                } label: {
+                    Label("Skanuj tom", systemImage: "barcode.viewfinder")
+                }
+                Button {
                     isAddingManga = true
                 } label: {
                     Label("Dodaj mangę", systemImage: "plus")
@@ -103,6 +109,14 @@ struct LibraryScreen: View {
         }
         .sheet(isPresented: $isAddingManga) {
             AddMangaSheet(nextSortOrder: (mangas.compactMap(\.sortOrder).max() ?? -1) + 1) { manga in
+                path.append(manga)
+            }
+        }
+        .sheet(isPresented: $isScanningVolume) {
+            ScanVolumeSheet(
+                mangas: mangas,
+                nextSortOrder: (mangas.compactMap(\.sortOrder).max() ?? -1) + 1
+            ) { manga in
                 path.append(manga)
             }
         }

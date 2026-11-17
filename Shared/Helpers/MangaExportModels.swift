@@ -20,6 +20,9 @@ struct ExportedVolume: Codable {
     /// Left out unless the volume is on its way, so older snapshots and
     /// ordinary volumes look the same.
     var isOrdered: Bool?
+    /// Left out unless the volume was scanned, so older snapshots decode
+    /// and older apps skip it.
+    var isbn: String?
     /// Left out for an unsplit volume, so snapshots from before parts
     /// existed and of ordinary volumes look the same.
     var parts: [ExportedVolumePart]?
@@ -72,6 +75,7 @@ extension ExportedVolume {
             buyURL: volume.buyURL,
             coverURL: volume.coverURL,
             isOrdered: volume.isOnItsWay ? true : nil,
+            isbn: volume.isbn,
             parts: volume.isSplit ? volume.sortedParts.map { ExportedVolumePart($0) } : nil
         )
     }
@@ -144,7 +148,8 @@ extension Volume {
             releaseDate: exported.releaseDate,
             buyURL: exported.buyURL,
             coverURL: exported.coverURL,
-            isOrdered: exported.isOrdered
+            isOrdered: exported.isOrdered,
+            isbn: exported.isbn
         )
         parts = (exported.parts ?? []).map { VolumePart(exported: $0, volume: self) }
     }
@@ -170,6 +175,7 @@ extension Volume {
         set(\.releaseDate, exported.releaseDate)
         set(\.buyURL, exported.buyURL)
         set(\.coverURL, exported.coverURL)
+        set(\.isbn, exported.isbn)
         // Nil and false both mean "not ordered"; don't dirty the context
         // swapping one for the other.
         if isOnItsWay != (exported.isOrdered == true) {
