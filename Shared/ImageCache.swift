@@ -102,6 +102,9 @@ actor ImageCache {
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+            // Decode the pixels here, off the main thread, instead of
+            // lazily on the first draw — which lands mid-scroll.
+            kCGImageSourceShouldCacheImmediately: true,
         ]
         return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }

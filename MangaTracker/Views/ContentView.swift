@@ -52,24 +52,24 @@ struct ContentView: View {
         sortOption == .manual
     }
 
-    var filteredMangas: [Manga] {
+    func filteredMangas(_ statsByID: MangaStatsByID) -> [Manga] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         let section = category.wrappedValue
         let matching = mangas.filter { manga in
             (!hideSpinOffs || manga.isSpinOff != true)
                 && (query.isEmpty || manga.title.localizedCaseInsensitiveContains(query))
-                && section.contains(manga)
+                && section.contains(manga, stats: statsByID.stats(for: manga))
         }
-        let sorted = sortOption.sorted(matching)
+        let sorted = sortOption.sorted(matching) { statsByID.stats(for: $0) }
         return sortAscending ? sorted : sorted.reversed()
     }
 
     /// Series per section for the sidebar and filter chips, from one pass
     /// over the library.
-    var categoryCounts: [LibraryCategory: Int] {
+    func categoryCounts(_ statsByID: MangaStatsByID) -> [LibraryCategory: Int] {
         var counts: [LibraryCategory: Int] = [:]
         for manga in mangas where !hideSpinOffs || manga.isSpinOff != true {
-            let stats = manga.volumeStats
+            let stats = statsByID.stats(for: manga)
             for section in LibraryCategory.allCases where section.contains(manga, stats: stats) {
                 counts[section, default: 0] += 1
             }
@@ -78,6 +78,11 @@ struct ContentView: View {
     }
 
     var body: some View {
+        // One walk over every series' volumes per update, shared by the
+        // sidebar counts, the filter and every card in the grid.
+        let statsByID = mangas.volumeStatsByID
+        let categoryCounts = categoryCounts(statsByID)
+
         ZStack {
             NavigationSplitView {
                 NavigationSidebarView(
@@ -114,7 +119,8 @@ struct ContentView: View {
                     } else {
                         LibraryView(
                             allMangas: mangas,
-                            filteredMangas: filteredMangas,
+                            filteredMangas: filteredMangas(statsByID),
+                            volumeStats: statsByID,
                             categoryCounts: categoryCounts,
                             selectedManga: $selectedManga,
                             category: category,

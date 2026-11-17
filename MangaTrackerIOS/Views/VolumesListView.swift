@@ -81,6 +81,9 @@ struct VolumesListView: View {
 
     var body: some View {
         let displayedVolumes = displayedVolumes
+        // Read once here: the rows are built lazily while scrolling, and each
+        // reading `showsCovers` itself would walk every volume again.
+        let showsCovers = showsCovers
 
         DetailCard(padding: 0) {
             VStack(spacing: 0) {

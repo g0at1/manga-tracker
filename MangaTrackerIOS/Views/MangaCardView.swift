@@ -1,14 +1,17 @@
 import SwiftUI
 
 /// A single series in the library grid: cover, title, reading progress.
+///
+/// `stats` comes from the library, which computes them for every series in
+/// one pass; walking `manga.volumes` here would fault the volumes and their
+/// parts in on the main thread each time a card scrolls into view.
 struct MangaCardView: View {
     let manga: Manga
+    let stats: MangaVolumeStats
 
     private static let cornerRadius: CGFloat = 14
 
     var body: some View {
-        let stats = manga.volumeStats
-
         VStack(alignment: .leading, spacing: 10) {
             cover
 
@@ -36,9 +39,7 @@ struct MangaCardView: View {
                         .foregroundStyle(.tertiary)
                 }
 
-                ProgressView(value: stats.readPercent, total: 100)
-                    .tint(.green)
-                    .scaleEffect(y: 0.7)
+                ReadingProgressBar(fraction: stats.readPercent / 100)
 
                 Text(stats.totalPaid, format: .currency(code: "PLN"))
                     .font(.caption2)
@@ -90,11 +91,9 @@ struct MangaCardView: View {
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.red)
                         .frame(width: 26, height: 26)
-                        .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.45))
-                                .background(.ultraThinMaterial, in: Circle())
-                        )
+                        // A flat fill rather than a material: a blur per card
+                        // has to be re-sampled every frame while scrolling.
+                        .background(Circle().fill(Color.black.opacity(0.6)))
                         .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
                         .padding(8)
                 }

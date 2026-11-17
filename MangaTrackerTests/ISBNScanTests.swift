@@ -199,7 +199,7 @@ final class ISBNScanTests: XCTestCase {
         XCTAssertEqual(volume.isbn, "9788374712026")
     }
 
-    func testVolumeOnItsWayArrives() throws {
+    func testVolumeOnItsWayArrives() {
         let manga = insert("One Piece", volumes: [1])
         let volume = manga.volumes[0]
         let orderDate = Date(timeIntervalSince1970: 1_600_000_000)

@@ -24,7 +24,7 @@ private struct TooltipModifier: ViewModifier {
     let text: Text?
 
     @Environment(\.locale) private var locale
-    @Environment(\.isScrolling) private var isScrolling
+    @Environment(\.scrollActivity) private var scrollActivity
     @State private var id = UUID()
     @State private var isHovering = false
 
@@ -37,7 +37,7 @@ private struct TooltipModifier: ViewModifier {
         // the pointer.
         content
             .background {
-                if isHovering, !isScrolling, let text {
+                if isHovering, !(scrollActivity?.isScrolling ?? false), let text {
                     TooltipAnchor { view in
                         TooltipController.shared.schedule(
                             TooltipBubble(text: text).environment(\.locale, locale),

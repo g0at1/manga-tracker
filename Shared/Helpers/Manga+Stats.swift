@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// Everything the UI derives from a series' volumes, gathered in one pass so
 /// a view doesn't walk the relationship once per number it shows.
@@ -75,5 +76,27 @@ extension Manga {
     /// Every volume read and the series itself finished on AniList.
     func isCompleted(_ stats: MangaVolumeStats) -> Bool {
         stats.allRead && aniListStatus == "FINISHED"
+    }
+}
+
+/// Each series' volume stats by model id. Library screens build this once
+/// per update and hand it to every card, so a card scrolling into view
+/// doesn't fault its volumes and parts in on the main thread.
+typealias MangaStatsByID = [PersistentIdentifier: MangaVolumeStats]
+
+extension [Manga] {
+    var volumeStatsByID: MangaStatsByID {
+        var result = MangaStatsByID(minimumCapacity: count)
+        for manga in self {
+            result[manga.persistentModelID] = manga.volumeStats
+        }
+        return result
+    }
+}
+
+extension MangaStatsByID {
+    /// Stats for `manga`, computed on the spot if it's missing.
+    func stats(for manga: Manga) -> MangaVolumeStats {
+        self[manga.persistentModelID] ?? manga.volumeStats
     }
 }

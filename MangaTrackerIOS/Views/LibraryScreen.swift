@@ -31,22 +31,23 @@ struct LibraryScreen: View {
         LibraryCategory(rawValue: categoryRaw) ?? .all
     }
 
-    private var filteredMangas: [Manga] {
+    private func filteredMangas(_ statsByID: MangaStatsByID) -> [Manga] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stats: (Manga) -> MangaVolumeStats = { statsByID.stats(for: $0) }
         let matching = mangas.filter { manga in
             (!hideSpinOffs || manga.isSpinOff != true)
                 && (query.isEmpty || manga.title.localizedCaseInsensitiveContains(query))
-                && category.contains(manga)
+                && category.contains(manga, stats: stats(manga))
         }
-        let sorted = sortOption.sorted(matching)
+        let sorted = sortOption.sorted(matching, stats: stats)
         return sortAscending ? sorted : sorted.reversed()
     }
 
-    /// Series per section for the chips, from one pass over the library.
-    private var categoryCounts: [LibraryCategory: Int] {
+    /// Series per section for the chips.
+    private func categoryCounts(_ statsByID: MangaStatsByID) -> [LibraryCategory: Int] {
         var counts: [LibraryCategory: Int] = [:]
         for manga in mangas where !hideSpinOffs || manga.isSpinOff != true {
-            let stats = manga.volumeStats
+            let stats = statsByID.stats(for: manga)
             for section in LibraryCategory.allCases where section.contains(manga, stats: stats) {
                 counts[section, default: 0] += 1
             }
@@ -55,13 +56,8 @@ struct LibraryScreen: View {
     }
 
     /// Series with a volume ordered and not arrived yet.
-    private var onTheirWay: [Manga] {
-        mangas.filter { $0.volumes.contains(where: \.isOnItsWay) }
-    }
-
-    /// Only on the plain library view, like the Mac's home screen.
-    private var showsOnTheirWay: Bool {
-        category == .all && searchText.isEmpty && !onTheirWay.isEmpty
+    private func onTheirWay(_ statsByID: MangaStatsByID) -> [Manga] {
+        mangas.filter { (statsByID[$0.persistentModelID]?.onItsWay ?? 0) > 0 }
     }
 
     private var stats: MangaLibraryStats {
@@ -69,15 +65,19 @@ struct LibraryScreen: View {
     }
 
     var body: some View {
+        let statsByID = mangas.volumeStatsByID
+        let ordered = onTheirWay(statsByID)
+
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 18) {
                 statsStrip
-                if showsOnTheirWay {
-                    OnTheirWayCard(mangas: onTheirWay) { path.append($0) }
+                // Only on the plain library view, like the Mac's home screen.
+                if category == .all, searchText.isEmpty, !ordered.isEmpty {
+                    OnTheirWayCard(mangas: ordered) { path.append($0) }
                         .padding(.horizontal, horizontalPadding)
                 }
-                categoryChips
-                grid
+                categoryChips(counts: categoryCounts(statsByID))
+                grid(mangas: filteredMangas(statsByID), statsByID: statsByID)
             }
             .padding(.top, 8)
             .padding(.bottom, 32)
@@ -146,7 +146,11 @@ struct LibraryScreen: View {
     // MARK: - Header
 
     private var statsStrip: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        // Computed once: every tile reading `self.stats` would walk the
+        // whole library again.
+        let stats = stats
+
+        return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 StatCardView(
                     title: "serii",
@@ -184,14 +188,14 @@ struct LibraryScreen: View {
         }
     }
 
-    private var categoryChips: some View {
+    private func categoryChips(counts: [LibraryCategory: Int]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ForEach(LibraryCategory.allCases) { section in
                     FilterChip(
                         title: section.chipLabel,
                         systemImage: section.systemImage,
-                        count: categoryCounts[section, default: 0],
+                        count: counts[section, default: 0],
                         isSelected: category == section
                     ) {
                         categoryRaw = section.rawValue
@@ -230,7 +234,10 @@ struct LibraryScreen: View {
 
     // MARK: - Grid
 
-    private var grid: some View {
+    private func grid(
+        mangas filteredMangas: [Manga],
+        statsByID: MangaStatsByID
+    ) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(category == .all ? "Wszystkie serie" : category.label)
@@ -261,11 +268,12 @@ struct LibraryScreen: View {
             } else {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
                     ForEach(filteredMangas) { manga in
+                        let stats = statsByID.stats(for: manga)
                         NavigationLink(value: manga) {
-                            MangaCardView(manga: manga)
+                            MangaCardView(manga: manga, stats: stats)
                         }
                         .buttonStyle(.plain)
-                        .contextMenu { contextMenu(for: manga) }
+                        .contextMenu { contextMenu(for: manga, stats: stats) }
                     }
                 }
             }
@@ -274,8 +282,8 @@ struct LibraryScreen: View {
     }
 
     @ViewBuilder
-    private func contextMenu(for manga: Manga) -> some View {
-        if manga.volumeStats.nextUnread != nil {
+    private func contextMenu(for manga: Manga, stats: MangaVolumeStats) -> some View {
+        if stats.nextUnread != nil {
             Button("Oznacz kolejny tom jako przeczytany", systemImage: "checkmark.circle") {
                 manga.markNextAsRead()
             }

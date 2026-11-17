@@ -3,12 +3,12 @@ import SwiftUI
 /// Wide card in the "Kontynuuj czytanie" row: cover, next volume, progress.
 struct ContinueReadingCardView: View {
     let manga: Manga
+    let stats: MangaVolumeStats
     let onOpen: () -> Void
 
     @State private var isHovered = false
 
     var body: some View {
-        let stats = manga.volumeStats
         let percent = stats.readPercent
 
         HStack(alignment: .top, spacing: 14) {
@@ -40,9 +40,7 @@ struct ContinueReadingCardView: View {
                 .foregroundStyle(.secondary)
 
                 HStack(spacing: 8) {
-                    ProgressView(value: percent, total: 100)
-                        .tint(.green)
-                        .scaleEffect(y: 0.8)
+                    ReadingProgressBar(fraction: percent / 100, height: 4)
                     Text("\(Int(percent.rounded()))%")
                         .font(.caption2.monospacedDigit())
                         .foregroundStyle(.secondary)

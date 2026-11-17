@@ -4,14 +4,22 @@ import SwiftUI
 /// Lifts and glows on hover so it reads as clickable.
 struct MangaGridCardView: View {
     let manga: Manga
+    /// From the library's one pass over every series; walking
+    /// `manga.volumes` here would fault them in as each card scrolls in.
+    let stats: MangaVolumeStats
 
     @State private var isHovered = false
+    @Environment(\.scrollActivity) private var scrollActivity
+
+    /// Cards sliding under a still pointer mid-scroll don't light up:
+    /// each would animate its lift, shadow and heart button.
+    private var showsHover: Bool {
+        isHovered && !(scrollActivity?.isScrolling ?? false)
+    }
 
     private static let cornerRadius: CGFloat = 14
 
     var body: some View {
-        let stats = manga.volumeStats
-
         VStack(alignment: .leading, spacing: 10) {
             cover
 
@@ -38,9 +46,7 @@ struct MangaGridCardView: View {
                         .foregroundStyle(.tertiary)
                 }
 
-                ProgressView(value: stats.readPercent, total: 100)
-                    .tint(.green)
-                    .scaleEffect(y: 0.7)
+                ReadingProgressBar(fraction: stats.readPercent / 100)
 
                 Text(stats.totalPaid, format: .currency(code: "PLN"))
                     .font(.caption2)
@@ -52,26 +58,26 @@ struct MangaGridCardView: View {
         .padding(10)
         .background(
             RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
-                .fill(Color.white.opacity(isHovered ? 0.08 : 0.04))
+                .fill(Color.white.opacity(showsHover ? 0.08 : 0.04))
         )
         .overlay(
             RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
                 .stroke(
-                    Color.white.opacity(isHovered ? 0.18 : 0.07),
+                    Color.white.opacity(showsHover ? 0.18 : 0.07),
                     lineWidth: 1
                 )
         )
         .shadow(
-            color: .black.opacity(isHovered ? 0.35 : 0),
-            radius: isHovered ? 14 : 0,
-            y: isHovered ? 8 : 0
+            color: .black.opacity(showsHover ? 0.35 : 0),
+            radius: showsHover ? 14 : 0,
+            y: showsHover ? 8 : 0
         )
-        .scaleEffect(isHovered ? 1.02 : 1)
+        .scaleEffect(showsHover ? 1.02 : 1)
         .contentShape(RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
         .onHover { hovering in
             isHovered = hovering
         }
-        .animation(.easeOut(duration: 0.16), value: isHovered)
+        .animation(.easeOut(duration: 0.16), value: showsHover)
     }
 
     /// 2:3 cover with status badges pinned to the top-right corner.
@@ -97,7 +103,7 @@ struct MangaGridCardView: View {
                 .padding(8)
             }
             .overlay(alignment: .topLeading) {
-                if isHovered || manga.isFavorite ?? false {
+                if showsHover || manga.isFavorite ?? false {
                     FavoriteHeartButton(manga: manga)
                         .padding(8)
                         .transition(.opacity)
@@ -141,9 +147,10 @@ struct FavoriteHeartButton: View {
                 .foregroundStyle(isFavorite ? Color.red : .white.opacity(0.92))
                 .frame(width: size, height: size)
                 .background(
+                    // A flat fill rather than a material: a blur on every
+                    // favourite card is re-sampled each frame while scrolling.
                     Circle()
-                        .fill(Color.black.opacity(isHovered ? 0.6 : 0.45))
-                        .background(.ultraThinMaterial, in: Circle())
+                        .fill(Color.black.opacity(isHovered ? 0.72 : 0.6))
                 )
                 .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
                 .scaleEffect(isHovered ? 1.08 : 1)

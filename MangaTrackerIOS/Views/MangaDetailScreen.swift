@@ -117,11 +117,8 @@ struct MangaDetailScreen: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(manga.isFavorite == true ? Color.red : .white.opacity(0.92))
                     .frame(width: 34, height: 34)
-                    .background(
-                        Circle()
-                            .fill(Color.black.opacity(0.45))
-                            .background(.ultraThinMaterial, in: Circle())
-                    )
+                    // Flat, like `GlassButton`: no blur to re-sample while scrolling.
+                    .background(Circle().fill(Color.black.opacity(0.6)))
                     .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
             }
             .buttonStyle(.plain)
@@ -416,7 +413,13 @@ private struct DetailHeaderView: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(Color.white.opacity(0.12), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.55), radius: 18, y: 10)
+            // Shadow cast by a plain shape behind the cover: shadowing the
+            // image itself needs an offscreen pass on every scrolled frame.
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.black)
+                    .shadow(color: .black.opacity(0.55), radius: 18, y: 10)
+            )
             .overlay(alignment: .topTrailing) {
                 VStack(alignment: .trailing, spacing: 6) {
                     if manga.isSold ?? false {

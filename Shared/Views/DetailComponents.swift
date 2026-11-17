@@ -64,9 +64,10 @@ struct GlassButton: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
             .background(
+                // A flat fill rather than a material: a blur sitting in the
+                // scrolling page is re-sampled on every frame of the scroll.
                 Capsule()
-                    .fill(Color.black.opacity(isHovered && isEnabled ? 0.55 : 0.4))
-                    .background(.ultraThinMaterial, in: Capsule())
+                    .fill(Color.black.opacity(isHovered && isEnabled ? 0.68 : 0.55))
             )
             .overlay(Capsule().stroke(Color.white.opacity(0.18), lineWidth: 1))
             .contentShape(Capsule())

@@ -38,8 +38,11 @@ enum LibrarySortOption: String, CaseIterable, Identifiable {
     }
 
     /// Sorts in ascending order for this option; the caller reverses for descending.
-    func sorted(_ mangas: [Manga]) -> [Manga] {
-        switch self {
+    /// Pass `stats` when the caller already has each series' volume stats, so
+    /// the volumes aren't walked again.
+    func sorted(_ mangas: [Manga], stats: ((Manga) -> MangaVolumeStats)? = nil) -> [Manga] {
+        let stats = stats ?? { $0.volumeStats }
+        return switch self {
         case .manual:
             mangas.sorted { ($0.sortOrder ?? 0) < ($1.sortOrder ?? 0) }
         case .title:
@@ -49,11 +52,11 @@ enum LibrarySortOption: String, CaseIterable, Identifiable {
         case .dateAdded:
             mangas.sorted { $0.createdAt < $1.createdAt }
         case .totalPrice:
-            Self.sorted(mangas) { $0.totalPaid }
+            Self.sorted(mangas, stats: stats) { $0.totalPaid }
         case .ownedVolumes:
-            Self.sorted(mangas) { $0.owned }
+            Self.sorted(mangas, stats: stats) { $0.owned }
         case .readPercent:
-            Self.sorted(mangas) { $0.readPercent }
+            Self.sorted(mangas, stats: stats) { $0.readPercent }
         }
     }
 
@@ -61,10 +64,11 @@ enum LibrarySortOption: String, CaseIterable, Identifiable {
     /// than once per comparison.
     private static func sorted<Key: Comparable>(
         _ mangas: [Manga],
+        stats: (Manga) -> MangaVolumeStats,
         by key: (MangaVolumeStats) -> Key
     ) -> [Manga] {
         mangas
-            .map { (manga: $0, key: key($0.volumeStats)) }
+            .map { (manga: $0, key: key(stats($0))) }
             .sorted { $0.key < $1.key }
             .map(\.manga)
     }

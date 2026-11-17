@@ -111,7 +111,13 @@ struct DetailHeroView: View {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(Color.white.opacity(0.12), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.55), radius: 24, y: 14)
+            // Shadow cast by a plain shape behind the cover: shadowing the
+            // image itself needs an offscreen pass on every scrolled frame.
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.black)
+                    .shadow(color: .black.opacity(0.55), radius: 24, y: 14)
+            )
             .overlay(alignment: .topTrailing) {
                 VStack(alignment: .trailing, spacing: 6) {
                     if manga.isSold ?? false {
@@ -275,9 +281,9 @@ struct DetailHeroView: View {
                     .foregroundStyle(.white.opacity(0.92))
                     .frame(width: 30, height: 30)
                     .background(
+                        // Flat, like `GlassButton`: no blur to re-sample while scrolling.
                         Circle()
-                            .fill(Color.black.opacity(0.4))
-                            .background(.ultraThinMaterial, in: Circle())
+                            .fill(Color.black.opacity(0.55))
                     )
                     .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
             }

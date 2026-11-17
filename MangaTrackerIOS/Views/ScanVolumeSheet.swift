@@ -402,7 +402,6 @@ private struct ScanConfirmationForm: View {
         .onChange(of: draft.volumeNumber) { draft.refreshOutcome(in: mangas) }
     }
 
-    @ViewBuilder
     private var foundSection: some View {
         Section {
             LabeledContent("ISBN", value: ISBN.formatted(draft.isbn))

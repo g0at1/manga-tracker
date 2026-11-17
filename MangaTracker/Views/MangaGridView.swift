@@ -4,6 +4,7 @@ import SwiftUI
 
 struct MangaGridView: View {
     let mangas: [Manga]
+    let volumeStats: MangaStatsByID
 
     @Binding var selectedManga: Manga?
     @Binding var draggedManga: Manga?
@@ -77,7 +78,7 @@ struct MangaGridView: View {
 
     @ViewBuilder
     private func card(for manga: Manga) -> some View {
-        let card = MangaGridCardView(manga: manga)
+        let card = MangaGridCardView(manga: manga, stats: volumeStats.stats(for: manga))
             .onTapGesture {
                 selectedManga = manga
             }

@@ -8,6 +8,8 @@ struct LibraryView: View {
     let allMangas: [Manga]
     /// What the grid shows after category, spin-off and search filtering.
     let filteredMangas: [Manga]
+    /// Every series' volume stats, computed once by the caller.
+    let volumeStats: MangaStatsByID
     /// Series per section, for the filter chips.
     let categoryCounts: [LibraryCategory: Int]
 
@@ -40,23 +42,29 @@ struct LibraryView: View {
     private let horizontalPadding: CGFloat = 28
 
     var body: some View {
+        let showsContinueReading = showsContinueReading
+        let onTheirWay = showsContinueReading ? onTheirWay : []
+        let continueReading = showsContinueReading ? continueReading : []
+
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 30) {
                 header
 
-                if showsContinueReading, !onTheirWay.isEmpty {
+                if !onTheirWay.isEmpty {
                     OnTheirWayCard(mangas: onTheirWay) { selectedManga = $0 }
                         .padding(.horizontal, horizontalPadding)
                 }
 
-                if showsContinueReading, !continueReading.isEmpty {
-                    continueReadingSection
+                if !continueReading.isEmpty {
+                    continueReadingSection(continueReading)
                 }
 
                 allSeriesSection
             }
             .padding(.bottom, 32)
         }
+        // Cards sliding under a still pointer don't light up mid-scroll.
+        .tracksScrollActivity()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppBackgroundView())
         .onTapGesture {
@@ -97,7 +105,7 @@ struct LibraryView: View {
         allMangas
             .compactMap { manga -> (manga: Manga, lastRead: Date)? in
                 guard manga.isSold != true, !hideSpinOffs || manga.isSpinOff != true else { return nil }
-                let stats = manga.volumeStats
+                let stats = volumeStats.stats(for: manga)
                 guard stats.nextUnread != nil else { return nil }
                 return (manga, stats.lastReadDate ?? .distantPast)
             }
@@ -108,7 +116,7 @@ struct LibraryView: View {
 
     /// Series with a volume ordered and not arrived yet.
     private var onTheirWay: [Manga] {
-        allMangas.filter { $0.volumes.contains(where: \.isOnItsWay) }
+        allMangas.filter { volumeStats.stats(for: $0).onItsWay > 0 }
     }
 
     private var showsContinueReading: Bool {
@@ -131,7 +139,11 @@ struct LibraryView: View {
     // MARK: - Header
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        // Computed once: every tile reading `self.stats` would walk the
+        // whole library again.
+        let stats = stats
+
+        return VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Biblioteka")
@@ -317,7 +329,7 @@ struct LibraryView: View {
 
     // MARK: - Continue reading
 
-    private var continueReadingSection: some View {
+    private func continueReadingSection(_ continueReading: [Manga]) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Button {
                 category = .inProgress
@@ -336,7 +348,7 @@ struct LibraryView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {
                     ForEach(continueReading) { manga in
-                        ContinueReadingCardView(manga: manga) {
+                        ContinueReadingCardView(manga: manga, stats: volumeStats.stats(for: manga)) {
                             selectedManga = manga
                         }
                         .contextMenu {
@@ -402,6 +414,7 @@ struct LibraryView: View {
             } else {
                 MangaGridView(
                     mangas: filteredMangas,
+                    volumeStats: volumeStats,
                     selectedManga: $selectedManga,
                     draggedManga: $draggedManga,
                     onDeleteManga: onDeleteManga,

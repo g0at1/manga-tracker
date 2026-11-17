@@ -164,6 +164,9 @@ struct VolumesTableView: View {
         let displayedVolumes = displayedVolumes
         let allDisplayedSelected = allSelected(in: displayedVolumes)
         let dateFields = dateFields
+        // Read once here: rows are built lazily while scrolling, and each
+        // reading `showsCovers` itself would walk every volume again.
+        let showsCovers = showsCovers
 
         DetailCard(padding: 0) {
             VStack(spacing: 0) {
@@ -819,14 +822,14 @@ private struct VolumeRow: View {
     /// so a row draws plain stand-ins until the pointer rests on it.
     @State private var isActivated = false
     @FocusState private var isPriceFocused: Bool
-    @Environment(\.isScrolling) private var isScrolling
+    @Environment(\.scrollActivity) private var scrollActivity
 
     private typealias Column = VolumesTableView.Column
 
     /// Rows sliding under a still pointer mid-scroll don't count: lighting
     /// each up, and building its controls, is what made scrolling stutter.
     private var showsHover: Bool {
-        isHovered && !isScrolling
+        isHovered && !(scrollActivity?.isScrolling ?? false)
     }
 
     private var isRead: Bool {
@@ -1034,11 +1037,11 @@ private struct VolumePartRow: View {
     @State private var isHovered = false
     /// See `VolumeRow.isActivated`.
     @State private var isActivated = false
-    @Environment(\.isScrolling) private var isScrolling
+    @Environment(\.scrollActivity) private var scrollActivity
 
     /// See `VolumeRow.showsHover`.
     private var showsHover: Bool {
-        isHovered && !isScrolling
+        isHovered && !(scrollActivity?.isScrolling ?? false)
     }
 
     private typealias Column = VolumesTableView.Column
